@@ -35,6 +35,8 @@ class GameEngine:
     
     def new_game(self, console):
         """Start a new game with character creation"""
+        from config import GAME_SETTINGS, DIFFICULTY_SETTINGS
+        
         ui.clear_screen()
         ui.display_header(console, "CHARACTER CREATION")
         
@@ -72,6 +74,33 @@ class GameEngine:
             stats=selected_class['stats']
         )
         
+        # Apply difficulty settings to starting stats if needed
+        difficulty = GAME_SETTINGS.get("difficulty", "normal")
+        difficulty_mods = DIFFICULTY_SETTINGS.get(difficulty, {})
+        
+        # Apply health bonus from difficulty
+        health_bonus = difficulty_mods.get("starting_health_bonus", 0)
+        if health_bonus != 0:
+            self.player.max_health += health_bonus
+            self.player.health = self.player.max_health
+            
+            # Show message about difficulty adjustment
+            if health_bonus > 0:
+                console.print(f"[green]Difficulty bonus: +{health_bonus} starting health[/green]")
+            else:
+                console.print(f"[red]Difficulty penalty: {health_bonus} starting health[/red]")
+        
+        # Apply credits bonus from difficulty
+        credits_bonus = difficulty_mods.get("starting_credits_bonus", 0)
+        if credits_bonus != 0:
+            self.player.credits += credits_bonus
+            
+            # Show message about difficulty adjustment
+            if credits_bonus > 0:
+                console.print(f"[green]Difficulty bonus: +{credits_bonus} starting credits[/green]")
+            else:
+                console.print(f"[red]Difficulty penalty: {credits_bonus} starting credits[/red]")
+        
         # Add starting items based on class
         if selected_class['name'] == "NetRunner":
             self.player.inventory.add_item("Cyberdeck", 1)
@@ -89,6 +118,11 @@ class GameEngine:
         # Common starting items
         self.player.inventory.add_item("Credchip", 1)
         self.player.inventory.add_item("Stimpack", 2)
+        
+        # Extra items on easy difficulty
+        if difficulty == "easy":
+            self.player.inventory.add_item("Stimpack", 1)  # One extra stimpack
+            console.print(f"[green]Difficulty bonus: Extra Stimpack[/green]")
         
         # Start the intro sequence
         self.current_node = "intro"
@@ -362,13 +396,22 @@ class GameEngine:
     
     def handle_combat(self, console, node):
         """Process a combat encounter"""
+        from config import GAME_SETTINGS, DIFFICULTY_SETTINGS
+        
         enemy_data = node.get('enemy', {})
         
-        # Initialize the enemy
+        # Get difficulty settings
+        difficulty = GAME_SETTINGS.get("difficulty", "normal")
+        difficulty_mods = DIFFICULTY_SETTINGS.get(difficulty, {})
+        
+        # Apply difficulty modifiers to enemy stats
+        enemy_damage_mult = difficulty_mods.get("enemy_damage_multiplier", 1.0)
+        
+        # Initialize the enemy with difficulty modifications
         enemy = combat.Enemy(
             name=enemy_data.get('name', 'Unknown Enemy'),
             health=enemy_data.get('health', 10),
-            damage=enemy_data.get('damage', 2),
+            damage=int(enemy_data.get('damage', 2) * enemy_damage_mult),
             defense=enemy_data.get('defense', 1)
         )
         
@@ -381,8 +424,24 @@ class GameEngine:
         
         console.print(Panel(f"[red]{node['text']}[/red]", title=f"COMBAT: {enemy.name}"))
         
-        # Start the combat loop
-        combat_result = combat.run_combat(console, self.player, enemy)
+        # Display difficulty information if not normal
+        if difficulty == "easy":
+            console.print(f"[green]Easy difficulty: Your attacks deal more damage, enemy attacks deal less damage.[/green]")
+        elif difficulty == "hard":
+            console.print(f"[red]Hard difficulty: Your attacks deal less damage, enemy attacks deal more damage.[/red]")
+        
+        # Pass difficulty modifiers to combat system
+        player_damage_mult = difficulty_mods.get("player_damage_multiplier", 1.0)
+        combat_animations = GAME_SETTINGS.get("combat_animations", True)
+        
+        # Start the combat loop with difficulty settings
+        combat_result = combat.run_combat(
+            console, 
+            self.player, 
+            enemy, 
+            player_damage_multiplier=player_damage_mult,
+            use_animations=combat_animations
+        )
         
         # Process combat outcome
         if combat_result == 'victory':

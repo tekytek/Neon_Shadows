@@ -76,7 +76,7 @@ def display_combat_status(console, player, enemy):
     console.print(table)
     console.print("-" * 60, style=f"{COLORS['primary']}")
 
-def run_combat(console, player, enemy):
+def run_combat(console, player, enemy, player_damage_multiplier=1.0, use_animations=True):
     """Run a complete combat encounter"""
     # Initialize combat
     turn = 1
@@ -107,7 +107,25 @@ def run_combat(console, player, enemy):
             # Determine attack damage based on strength and a random factor
             base_damage = player.stats.get("strength", 3)
             damage_mod = random.uniform(0.8, 1.5)
-            attack_damage = round(base_damage * damage_mod)
+            
+            # Apply difficulty multiplier to player damage
+            attack_damage = round(base_damage * damage_mod * player_damage_multiplier)
+            
+            # Apply combat animation if enabled
+            if use_animations:
+                # Show attack animation
+                attack_frames = [
+                    f"[{COLORS['text']}]Attacking...[/{COLORS['text']}]",
+                    f"[{COLORS['text']}]Attacking...[/{COLORS['text']}] *",
+                    f"[{COLORS['text']}]Attacking...[/{COLORS['text']}] **",
+                    f"[{COLORS['text']}]Attacking...[/{COLORS['text']}] ***"
+                ]
+                
+                for frame in attack_frames:
+                    console.print(frame, end="\r")
+                    time.sleep(0.1)
+                
+                console.print(" " * 30, end="\r")  # Clear the line
             
             # Apply damage to enemy
             actual_damage = enemy.take_damage(attack_damage)
@@ -116,6 +134,14 @@ def run_combat(console, player, enemy):
             
             # Check if enemy is defeated
             if enemy.is_defeated():
+                if use_animations:
+                    # Show defeat animation
+                    for i in range(3):
+                        console.print(f"[{COLORS['primary']}]{enemy.name} is defeated![/{COLORS['primary']}]")
+                        time.sleep(0.2)
+                        console.print(" " * 30, end="\r")  # Clear the line
+                        time.sleep(0.1)
+                
                 console.print(f"[{COLORS['primary']}]You defeated {enemy.name}![/{COLORS['primary']}]")
                 combat_active = False
                 result = "victory"

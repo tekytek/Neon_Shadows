@@ -24,6 +24,28 @@ def clear_screen():
     else:
         os.system('clear')
 
+def typewriter_print(console, text, speed=None):
+    """Print text with a typewriter effect based on settings"""
+    from config import GAME_SETTINGS, TEXT_SPEED
+    
+    # If no speed specified, use the setting from config
+    if speed is None:
+        speed_setting = GAME_SETTINGS.get("text_speed", "medium")
+        speed = TEXT_SPEED.get(speed_setting, 0.02)
+    
+    # If speed is 0 or very small, just print normally
+    if speed < 0.001:
+        console.print(text)
+        return
+    
+    # Apply typewriter effect
+    for char in text:
+        console.print(char, end="")
+        time.sleep(speed)
+    
+    # Add newline at the end
+    console.print("")
+
 def display_splash_screen(console):
     """Display the game's splash screen"""
     clear_screen()
@@ -128,12 +150,116 @@ def main_menu(console):
 
 def options_menu(console):
     """Display options menu"""
-    clear_screen()
-    display_header(console, "OPTIONS")
+    import settings
+    from config import GAME_SETTINGS
     
-    console.print(f"[{COLORS['text']}]Options are not available in this version.[/{COLORS['text']}]")
-    console.print(f"\n[{COLORS['secondary']}]Press Enter to return to main menu...[/{COLORS['secondary']}]")
-    input()
+    while True:
+        clear_screen()
+        display_header(console, "OPTIONS")
+        
+        # Create options table
+        from rich.table import Table
+        table = Table(show_header=False, box=None, padding=(0, 2))
+        
+        table.add_column("Option", style=f"bold {COLORS['secondary']}")
+        table.add_column("Value", style=COLORS['text'])
+        
+        # Add rows for each setting
+        table.add_row("1. Difficulty", GAME_SETTINGS["difficulty"].capitalize())
+        table.add_row("2. Text Speed", GAME_SETTINGS["text_speed"].capitalize())
+        table.add_row("3. Combat Animations", "Enabled" if GAME_SETTINGS["combat_animations"] else "Disabled")
+        table.add_row("4. Sound Effects", "Enabled" if GAME_SETTINGS["sound_effects"] else "Disabled")
+        table.add_row("5. Auto Save", "Enabled" if GAME_SETTINGS["auto_save"] else "Disabled")
+        table.add_row("6. Show Hints", "Enabled" if GAME_SETTINGS["show_hints"] else "Disabled")
+        table.add_row("7. Enable Ollama", "Enabled" if GAME_SETTINGS["enable_ollama"] else "Disabled")
+        table.add_row("8. Reset to Defaults", "")
+        table.add_row("0. Back to Main Menu", "")
+        
+        # Display the table
+        console.print(table)
+        
+        # Display additional information based on current settings
+        if GAME_SETTINGS["difficulty"] == "easy":
+            console.print(f"[{COLORS['text']}]Easy difficulty: Increased player damage, reduced enemy damage, and bonus starting resources.[/{COLORS['text']}]")
+        elif GAME_SETTINGS["difficulty"] == "hard":
+            console.print(f"[{COLORS['text']}]Hard difficulty: Reduced player damage, increased enemy damage, and fewer starting resources.[/{COLORS['text']}]")
+        
+        # Get user choice
+        choice = Prompt.ask("[bold cyan]Select an option to change[/bold cyan]", 
+                          choices=["1", "2", "3", "4", "5", "6", "7", "8", "0"])
+        
+        if choice == "0":
+            # Save settings before returning to menu
+            settings.save_settings()
+            break
+            
+        elif choice == "1":
+            # Change difficulty
+            clear_screen()
+            display_header(console, "DIFFICULTY SETTINGS")
+            
+            console.print(f"[{COLORS['text']}]Select game difficulty:[/{COLORS['text']}]")
+            console.print(f"[{COLORS['secondary']}]1. Easy[/{COLORS['secondary']}] - Increased player damage, reduced enemy damage")
+            console.print(f"[{COLORS['secondary']}]2. Normal[/{COLORS['secondary']}] - Balanced experience")
+            console.print(f"[{COLORS['secondary']}]3. Hard[/{COLORS['secondary']}] - Reduced player damage, increased enemy damage")
+            
+            diff_choice = Prompt.ask("[bold cyan]Select difficulty[/bold cyan]", choices=["1", "2", "3"])
+            
+            if diff_choice == "1":
+                settings.update_setting("difficulty", "easy")
+            elif diff_choice == "2":
+                settings.update_setting("difficulty", "normal")
+            elif diff_choice == "3":
+                settings.update_setting("difficulty", "hard")
+                
+        elif choice == "2":
+            # Change text speed
+            clear_screen()
+            display_header(console, "TEXT SPEED SETTINGS")
+            
+            console.print(f"[{COLORS['text']}]Select text display speed:[/{COLORS['text']}]")
+            console.print(f"[{COLORS['secondary']}]1. Slow[/{COLORS['secondary']}] - More time to read each line")
+            console.print(f"[{COLORS['secondary']}]2. Medium[/{COLORS['secondary']}] - Balanced reading pace")
+            console.print(f"[{COLORS['secondary']}]3. Fast[/{COLORS['secondary']}] - Quick text display")
+            
+            speed_choice = Prompt.ask("[bold cyan]Select text speed[/bold cyan]", choices=["1", "2", "3"])
+            
+            if speed_choice == "1":
+                settings.update_setting("text_speed", "slow")
+            elif speed_choice == "2":
+                settings.update_setting("text_speed", "medium")
+            elif speed_choice == "3":
+                settings.update_setting("text_speed", "fast")
+                
+        elif choice == "3":
+            # Toggle combat animations
+            settings.update_setting("combat_animations", not GAME_SETTINGS["combat_animations"])
+            
+        elif choice == "4":
+            # Toggle sound effects
+            settings.update_setting("sound_effects", not GAME_SETTINGS["sound_effects"])
+            
+        elif choice == "5":
+            # Toggle auto save
+            settings.update_setting("auto_save", not GAME_SETTINGS["auto_save"])
+            
+        elif choice == "6":
+            # Toggle hints
+            settings.update_setting("show_hints", not GAME_SETTINGS["show_hints"])
+            
+        elif choice == "7":
+            # Toggle Ollama integration
+            new_value = not GAME_SETTINGS["enable_ollama"]
+            settings.update_setting("enable_ollama", new_value)
+            
+            # The update_setting function will handle updating USE_OLLAMA in config.py
+            
+        elif choice == "8":
+            # Reset to defaults
+            if Prompt.ask("[bold red]Reset all settings to defaults?[/bold red]", choices=["y", "n"]) == "y":
+                settings.reset_to_defaults()
+                console.print(f"[{COLORS['text']}]Settings reset to defaults.[/{COLORS['text']}]")
+                time.sleep(1)
 
 def display_credits(console):
     """Display game credits"""
