@@ -1,0 +1,257 @@
+{
+  "Stimpack": {
+    "description": "Emergency medical stimulant. Restores 5 health immediately.",
+    "type": "consumable",
+    "usable": true,
+    "usable_in_combat": true,
+    "effects": {
+      "health": 5
+    }
+  },
+  "Med Nanites": {
+    "description": "Advanced medical nanobots. Restores 10 health and removes one negative status effect.",
+    "type": "consumable",
+    "usable": true,
+    "usable_in_combat": true,
+    "effects": {
+      "health": 10,
+      "special": "remove_status"
+    }
+  },
+  "Cyberdeck": {
+    "description": "Standard hacking device. Required for bypassing electronic security and accessing networks.",
+    "type": "equipment",
+    "usable": false
+  },
+  "ICEbreaker": {
+    "description": "Specialized program for breaking through corporate Intrusion Countermeasures Electronics.",
+    "type": "software",
+    "usable": false
+  },
+  "Heavy Pistol": {
+    "description": "High-caliber handgun. Effective against unarmored targets.",
+    "type": "weapon",
+    "usable": false,
+    "damage": 5
+  },
+  "Armored Vest": {
+    "description": "Ballistic protection. Reduces physical damage.",
+    "type": "armor",
+    "usable": false,
+    "defense": 2
+  },
+  "Encrypted Phone": {
+    "description": "Secure communication device. Untraceable and encrypted.",
+    "type": "equipment",
+    "usable": false
+  },
+  "Concealed Pistol": {
+    "description": "Small, easily hidden firearm. Lower damage but harder to detect.",
+    "type": "weapon",
+    "usable": false,
+    "damage": 3
+  },
+  "Multi-tool": {
+    "description": "Versatile tool set. Useful for repairs and bypassing physical security.",
+    "type": "equipment",
+    "usable": false
+  },
+  "Diagnostic Scanner": {
+    "description": "Analyzes electronic systems and cyberware for vulnerabilities.",
+    "type": "equipment",
+    "usable": false
+  },
+  "Credchip": {
+    "description": "Digital wallet loaded with cryptocurrency. Universal payment method.",
+    "type": "currency",
+    "usable": false
+  },
+  "Neural Booster": {
+    "description": "Temporary intelligence enhancement. +2 Intelligence for 3 encounters.",
+    "type": "consumable",
+    "usable": true,
+    "usable_in_combat": true,
+    "effects": {
+      "stats": {"intelligence": 2},
+      "duration": 3
+    }
+  },
+  "Reflex Booster": {
+    "description": "Temporary enhancement. +2 Reflex for 3 encounters.",
+    "type": "consumable",
+    "usable": true,
+    "usable_in_combat": true,
+    "effects": {
+      "stats": {"reflex": 2},
+      "duration": 3
+    }
+  },
+  "Immunity Chip": {
+    "description": "Protects against common toxins and pathogens for 24 hours.",
+    "type": "consumable",
+    "usable": true,
+    "usable_in_combat": false,
+    "effects": {
+      "special": "toxin_immunity",
+      "duration": 10
+    }
+  },
+  "EMP Grenade": {
+    "description": "Disables electronic devices and cyberware in a small radius.",
+    "type": "consumable",
+    "usable": true,
+    "usable_in_combat": true,
+    "effects": {
+      "special": "emp_disable",
+      "duration": 2
+    }
+  },
+  "Memory Shard": {
+    "description": "Storage device for neural data and programs.",
+    "type": "storage",
+    "usable": false
+  },
+  "Security Keycard": {
+    "description": "Access card for security systems. Grants entry to restricted areas.",
+    "type": "key",
+    "usable": false
+  },
+  "Specialized Data Shard": {
+    "description": "High-capacity data storage designed for secure extraction of sensitive information.",
+    "type": "mission_item",
+    "usable": false
+  },
+  "Facility Access Codes": {
+    "description": "Encrypted access codes for an Orison Industries research facility.",
+    "type": "mission_item",
+    "usable": false
+  },
+  "Zhi's Location Data": {
+    "description": "Digital coordinates and access information for reaching Zhi, a memory specialist.",
+    "type": "mission_item",
+    "usable": false
+  },
+  "Synth-Adrenaline": {
+    "description": "Combat stimulant that enhances reflexes and strength temporarily. +2 to Strength and Reflex for 3 encounters.",
+    "type": "consumable",
+    "usable": true,
+    "usable_in_combat": true,
+    "effects": {
+      "stats": {"strength": 2, "reflex": 2},
+      "duration": 3
+    }
+  },
+  "Neural Scrambler": {
+    "description": "Temporary disables enemies with cybernetic implants. Effective against most corporate security.",
+    "type": "weapon",
+    "usable": true,
+    "usable_in_combat": true,
+    "effects": {
+      "special": "neural_stun",
+      "duration": 1
+    }
+  },
+  "Tactical Visor": {
+    "description": "Enhanced reality display that highlights threats and vulnerabilities.",
+    "type": "equipment",
+    "usable": false,
+    "effects": {
+      "stats": {"reflex": 1}
+    }
+  },
+  "Black Market Cybereye": {
+    "description": "Aftermarket visual enhancement with thermal and electromagnetic spectrum capabilities.",
+    "type": "augmentation",
+    "usable": false,
+    "permanent": true,
+    "effects": {
+      "stats": {"intelligence": 1}
+    }
+  },
+  "Encrypted Datapad": {
+    "description": "Secure information storage with military-grade encryption. Contains sensitive information.",
+    "type": "mission_item",
+    "usable": false
+  },
+  "Stealth Cloak": {
+    "description": "Active camouflage technology that bends light around the wearer. Reduces detection chance.",
+    "type": "equipment",
+    "usable": true,
+    "usable_in_combat": false,
+    "effects": {
+      "special": "stealth_boost",
+      "duration": 3
+    }
+  },
+  "Smart Bullets": {
+    "description": "Self-guided ammunition that increases accuracy and damage. Can be used with compatible firearms.",
+    "type": "ammo",
+    "usable": false,
+    "damage_bonus": 2
+  },
+  "Subdermal Armor": {
+    "description": "Implanted protective mesh that reduces physical damage.",
+    "type": "augmentation",
+    "usable": false,
+    "permanent": true,
+    "defense": 1
+  },
+  "Trauma Pack": {
+    "description": "Emergency medical system that automatically stabilizes critical injuries.",
+    "type": "consumable",
+    "usable": true,
+    "usable_in_combat": true,
+    "effects": {
+      "health": 15,
+      "special": "remove_status"
+    }
+  },
+  "Charisma Implant": {
+    "description": "Subtle facial muscle enhancers and voice modulation for improved social interactions.",
+    "type": "augmentation",
+    "usable": false,
+    "permanent": true,
+    "effects": {
+      "stats": {"charisma": 2}
+    }
+  },
+  "Reinforced Jacket": {
+    "description": "Stylish armor disguised as street fashion. Offers moderate protection against physical attacks.",
+    "type": "armor",
+    "usable": false,
+    "defense": 1
+  },
+  "Corporate Access Card": {
+    "description": "Stolen corporate ID with mid-level clearance to corporate facilities.",
+    "type": "key",
+    "usable": false
+  },
+  "Holo-Disguise": {
+    "description": "Projects a different appearance around the user. Duration limited by power cell capacity.",
+    "type": "equipment",
+    "usable": true,
+    "usable_in_combat": false,
+    "effects": {
+      "special": "disguise",
+      "duration": 5
+    }
+  },
+  "Neural Framework": {
+    "description": "Brain implant that enhances cognitive processing and memory recall.",
+    "type": "augmentation", 
+    "usable": false,
+    "permanent": true,
+    "effects": {
+      "stats": {"intelligence": 2}
+    }
+  },
+  "Muscle Grafts": {
+    "description": "Synthetic muscle fibers integrated with natural tissue for enhanced strength.",
+    "type": "augmentation",
+    "usable": false,
+    "permanent": true,
+    "effects": {
+      "stats": {"strength": 2}
+    }
+  }
+}

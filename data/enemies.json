@@ -1,0 +1,189 @@
+{
+  "Corporate Security Guard": {
+    "description": "Standard corporate security personnel equipped with light armor and non-lethal weaponry.",
+    "health": 15,
+    "damage": 3,
+    "defense": 2,
+    "experience_reward": 75,
+    "credit_reward": 30,
+    "loot_table": {
+      "Security Keycard": 0.7,
+      "Stimpack": 0.5,
+      "Credchip": 0.9
+    }
+  },
+  "Street Thug": {
+    "description": "Common criminal looking for an easy score. Typically armed with improvised weapons.",
+    "health": 12,
+    "damage": 4,
+    "defense": 1,
+    "experience_reward": 50,
+    "credit_reward": 20,
+    "loot_table": {
+      "Credchip": 0.8,
+      "Concealed Pistol": 0.3
+    }
+  },
+  "Cyberpsycho": {
+    "description": "Individual suffering from cyberware-induced psychosis. Highly dangerous and unpredictable.",
+    "health": 30,
+    "damage": 6,
+    "defense": 3,
+    "experience_reward": 150,
+    "credit_reward": 50,
+    "loot_table": {
+      "Cyberdeck": 0.2,
+      "Neural Booster": 0.4,
+      "Med Nanites": 0.6
+    }
+  },
+  "Corporate Enforcer": {
+    "description": "Elite corporate security with military-grade augmentations and weaponry.",
+    "health": 25,
+    "damage": 5,
+    "defense": 4,
+    "experience_reward": 120,
+    "credit_reward": 45,
+    "loot_table": {
+      "Heavy Pistol": 0.4,
+      "Armored Vest": 0.3,
+      "Security Keycard": 0.9,
+      "Stimpack": 0.7
+    }
+  },
+  "Rogue AI Drone": {
+    "description": "Autonomous security drone that has broken free from its programming constraints.",
+    "health": 18,
+    "damage": 4,
+    "defense": 5,
+    "experience_reward": 90,
+    "credit_reward": 10,
+    "loot_table": {
+      "Memory Shard": 0.5,
+      "EMP Grenade": 0.3
+    }
+  },
+  "Black Market Surgeon": {
+    "description": "Unethical medical professional who deals in illegal augmentations and organs.",
+    "health": 15,
+    "damage": 3,
+    "defense": 2,
+    "experience_reward": 80,
+    "credit_reward": 60,
+    "loot_table": {
+      "Med Nanites": 0.8,
+      "Stimpack": 0.9,
+      "Neural Booster": 0.4
+    }
+  },
+  "NetRunner": {
+    "description": "Elite hacker who can attack through both physical and digital means.",
+    "health": 14,
+    "damage": 5,
+    "defense": 2,
+    "experience_reward": 100,
+    "credit_reward": 40,
+    "loot_table": {
+      "Cyberdeck": 0.6,
+      "ICEbreaker": 0.4,
+      "Memory Shard": 0.7
+    }
+  },
+  "Combat Robot": {
+    "description": "Heavily armored autonomous combat unit designed for urban pacification.",
+    "health": 35,
+    "damage": 7,
+    "defense": 6,
+    "experience_reward": 200,
+    "credit_reward": 25,
+    "loot_table": {
+      "EMP Grenade": 0.7,
+      "Smart Bullets": 0.5
+    }
+  },
+  "Corpo Assassin": {
+    "description": "Corporate hitman with state-of-the-art stealth augmentations and weaponry.",
+    "health": 20,
+    "damage": 8,
+    "defense": 3,
+    "experience_reward": 180,
+    "credit_reward": 75,
+    "loot_table": {
+      "Stealth Cloak": 0.3,
+      "Neural Scrambler": 0.4,
+      "Concealed Pistol": 0.6
+    }
+  },
+  "Gang Lieutenant": {
+    "description": "High-ranking gang member with extensive combat augmentations.",
+    "health": 28,
+    "damage": 6,
+    "defense": 3,
+    "experience_reward": 160,
+    "credit_reward": 65,
+    "loot_table": {
+      "Heavy Pistol": 0.6,
+      "Synth-Adrenaline": 0.5,
+      "Credchip": 0.9
+    }
+  },
+  "Street Doc": {
+    "description": "Underground medical practitioner specializing in illegal cybernetic enhancements.",
+    "health": 12,
+    "damage": 2,
+    "defense": 1,
+    "experience_reward": 70,
+    "credit_reward": 55,
+    "loot_table": {
+      "Stimpack": 0.9,
+      "Med Nanites": 0.6,
+      "Neural Booster": 0.4
+    }
+  },
+  "Mercenary": {
+    "description": "Professional soldier for hire, equipped with military-grade weapons and tactical training.",
+    "health": 22,
+    "damage": 5,
+    "defense": 3,
+    "experience_reward": 110,
+    "credit_reward": 50,
+    "loot_table": {
+      "Heavy Pistol": 0.5,
+      "Armored Vest": 0.4,
+      "Smart Bullets": 0.3
+    }
+  },
+  "Corporate Scientist": {
+    "description": "Researcher with cybernetic enhancements to boost cognitive function, often protected by security systems.",
+    "health": 10,
+    "damage": 2,
+    "defense": 1,
+    "experience_reward": 60,
+    "credit_reward": 40,
+    "loot_table": {
+      "Memory Shard": 0.8,
+      "Neural Booster": 0.6,
+      "Encrypted Datapad": 0.4
+    }
+  },
+  "Cyber-Dog": {
+    "description": "Augmented canine with combat implants and reinforced skeleton.",
+    "health": 16,
+    "damage": 4,
+    "defense": 2,
+    "experience_reward": 70,
+    "credit_reward": 0,
+    "loot_table": {}
+  },
+  "Security Turret": {
+    "description": "Automated weapon system with motion tracking and facial recognition.",
+    "health": 25,
+    "damage": 6,
+    "defense": 8,
+    "experience_reward": 90,
+    "credit_reward": 0,
+    "loot_table": {
+      "Memory Shard": 0.2
+    }
+  }
+}
