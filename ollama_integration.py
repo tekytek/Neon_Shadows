@@ -48,8 +48,14 @@ class OllamaIntegration:
         # If all retries fail
         return None
     
-    def generate_story_node(self, node_id, player):
-        """Generate a dynamic story node based on the current game state"""
+    def generate_story_node(self, node_id, player, choice_history=None):
+        """Generate a dynamic story node based on the current game state and previous choices
+        
+        Args:
+            node_id (str): The ID of the story node to generate
+            player (Character): The player character object
+            choice_history (ChoiceHistory, optional): The player's choice history
+        """
         # Check if we should use Ollama
         from config import USE_OLLAMA
         
@@ -62,8 +68,8 @@ class OllamaIntegration:
             self.console.print("[bold red]Ollama is not available. Using fallback content.[/bold red]")
             return self._generate_fallback_node(node_id)
         
-        # Create a prompt with the current game state
-        prompt = self._create_story_prompt(node_id, player)
+        # Create a prompt with the current game state and choice history
+        prompt = self._create_story_prompt(node_id, player, choice_history)
         
         # Make the request to Ollama
         response = self._make_request(prompt)
@@ -102,91 +108,108 @@ class OllamaIntegration:
         except Exception:
             return False
     
-    def _create_story_prompt(self, node_id, player):
-        """Create a prompt for story generation based on current game state"""
-        prompt = f"""
-        You are the storyteller for a cyberpunk text adventure game. The player has reached a story node with ID "{node_id}".
+    def _create_story_prompt(self, node_id, player, choice_history=None):
+        """Create a prompt for story generation based on current game state and choice history
         
-        Player information:
-        - Name: {player.name}
-        - Class: {player.char_class}
-        - Level: {player.level}
-        - Stats: {json.dumps(player.stats)}
-        - Health: {player.health}/{player.max_health}
-        - Inventory: {json.dumps(player.inventory.get_all_items())}
-        
-        Based on this information, generate a story node in JSON format with the following structure:
-        
-        For a standard narrative node:
-        {{
-            "text": "Detailed and atmospheric description of the situation.",
-            "choices": [
-                {{
-                    "text": "Description of the first choice",
-                    "next_node": "unique_id_for_next_node",
-                    "requirements": {{
-                        "stats": {{"stat_name": minimum_value}},
-                        "item": "required_item_name"
-                    }},
-                    "consequences": {{
-                        "items_gained": {{"item_name": quantity}},
-                        "items_lost": {{"item_name": quantity}},
-                        "stats_change": {{"stat_name": change_amount}},
-                        "health_change": change_amount,
-                        "credits_change": change_amount
-                    }}
-                }},
-                {{
-                    "text": "Description of the second choice",
-                    "next_node": "another_unique_id"
-                }}
-            ]
-        }}
-        
-        OR for a combat node:
-        {{
-            "type": "combat",
-            "text": "Description of the combat situation",
-            "enemy": {{
-                "name": "Enemy Name",
-                "health": health_value,
-                "damage": damage_value,
-                "defense": defense_value
-            }},
-            "victory_node": "node_after_winning",
-            "escape_node": "node_after_escaping",
-            "rewards": {{
-                "experience": amount,
-                "credits": amount,
-                "items": {{
-                    "item_name": quantity
-                }}
-            }}
-        }}
-        
-        OR for a skill check node:
-        {{
-            "type": "skill_check",
-            "text": "Description of the situation requiring a skill check",
-            "skill": "skill_name",
-            "difficulty": difficulty_value,
-            "success_node": "node_after_success",
-            "failure_node": "node_after_failure",
-            "success_rewards": {{
-                "experience": amount,
-                "items": {{
-                    "item_name": quantity
-                }}
-            }},
-            "failure_consequences": {{
-                "health_loss": amount
-            }}
-        }}
-        
-        Create a compelling and atmospheric cyberpunk scene that fits with a world where corporations control everything, technology and humanity have merged, and the divide between rich and poor is extreme. Include appropriate cyberpunk themes, terminology, and atmosphere.
-        
-        The response should be ONLY the JSON object, nothing else.
+        Args:
+            node_id (str): The ID of the story node to generate
+            player (Character): The player character object
+            choice_history (ChoiceHistory, optional): The player's choice history
         """
+        # Build the prompt piece by piece
+        header = f"You are the storyteller for a cyberpunk text adventure game. The player has reached a story node with ID \"{node_id}\".\n\n"
+        
+        player_info = f"Player information:\n"
+        player_info += f"- Name: {player.name}\n"
+        player_info += f"- Class: {player.char_class}\n"
+        player_info += f"- Level: {player.level}\n"
+        player_info += f"- Stats: {json.dumps(player.stats)}\n"
+        player_info += f"- Health: {player.health}/{player.max_health}\n"
+        player_info += f"- Inventory: {json.dumps(player.inventory.get_all_items())}\n\n"
+        
+        # Add choice history if available
+        history_section = ""
+        if choice_history:
+            # Get a narrative summary of recent choices
+            narrative = choice_history.get_narrative_summary(limit=10)
+            history_section = f"Recent Player History:\n{narrative}\n\n"
+        
+        # Instructions for response format
+        instructions = "Based on this information, generate a story node in JSON format with the following structure:\n\n"
+        instructions += "For a standard narrative node:\n"
+        instructions += '{\n'
+        instructions += '    "text": "Detailed and atmospheric description of the situation.",\n'
+        instructions += '    "choices": [\n'
+        instructions += '        {\n'
+        instructions += '            "text": "Description of the first choice",\n'
+        instructions += '            "next_node": "unique_id_for_next_node",\n'
+        instructions += '            "requirements": {\n'
+        instructions += '                "stats": {"stat_name": minimum_value},\n'
+        instructions += '                "item": "required_item_name"\n'
+        instructions += '            },\n'
+        instructions += '            "consequences": {\n'
+        instructions += '                "items_gained": {"item_name": quantity},\n'
+        instructions += '                "items_lost": {"item_name": quantity},\n'
+        instructions += '                "stats_change": {"stat_name": change_amount},\n'
+        instructions += '                "health_change": change_amount,\n'
+        instructions += '                "credits_change": change_amount\n'
+        instructions += '            }\n'
+        instructions += '        },\n'
+        instructions += '        {\n'
+        instructions += '            "text": "Description of the second choice",\n'
+        instructions += '            "next_node": "another_unique_id"\n'
+        instructions += '        }\n'
+        instructions += '    ]\n'
+        instructions += '}\n\n'
+        
+        instructions += 'OR for a combat node:\n'
+        instructions += '{\n'
+        instructions += '    "type": "combat",\n'
+        instructions += '    "text": "Description of the combat situation",\n'
+        instructions += '    "enemy": {\n'
+        instructions += '        "name": "Enemy Name",\n'
+        instructions += '        "health": health_value,\n'
+        instructions += '        "damage": damage_value,\n'
+        instructions += '        "defense": defense_value\n'
+        instructions += '    },\n'
+        instructions += '    "victory_node": "node_after_winning",\n'
+        instructions += '    "escape_node": "node_after_escaping",\n'
+        instructions += '    "rewards": {\n'
+        instructions += '        "experience": amount,\n'
+        instructions += '        "credits": amount,\n'
+        instructions += '        "items": {\n'
+        instructions += '            "item_name": quantity\n'
+        instructions += '        }\n'
+        instructions += '    }\n'
+        instructions += '}\n\n'
+        
+        instructions += 'OR for a skill check node:\n'
+        instructions += '{\n'
+        instructions += '    "type": "skill_check",\n'
+        instructions += '    "text": "Description of the situation requiring a skill check",\n'
+        instructions += '    "skill": "skill_name",\n'
+        instructions += '    "difficulty": difficulty_value,\n'
+        instructions += '    "success_node": "node_after_success",\n'
+        instructions += '    "failure_node": "node_after_failure",\n'
+        instructions += '    "success_rewards": {\n'
+        instructions += '        "experience": amount,\n'
+        instructions += '        "items": {\n'
+        instructions += '            "item_name": quantity\n'
+        instructions += '        }\n'
+        instructions += '    },\n'
+        instructions += '    "failure_consequences": {\n'
+        instructions += '        "health_loss": amount\n'
+        instructions += '    }\n'
+        instructions += '}\n\n'
+        
+        # Style and content guidance
+        guidance = "Create a compelling and atmospheric cyberpunk scene that fits with a world where corporations control everything, "
+        guidance += "technology and humanity have merged, and the divide between rich and poor is extreme. "
+        guidance += "Include appropriate cyberpunk themes, terminology, and atmosphere.\n\n"
+        guidance += "The response should be ONLY the JSON object, nothing else."
+        
+        # Combine all parts
+        prompt = header + player_info + history_section + instructions + guidance
         
         return prompt
     

@@ -29,6 +29,10 @@ class GameEngine:
         self.game_over = False
         self.ollama = ollama_integration.OllamaIntegration()
         
+        # Initialize choice history tracker
+        import choice_history
+        self.choice_history = choice_history.ChoiceHistory()
+        
         # Ensure save directory exists
         if not os.path.exists(SAVE_DIR):
             os.makedirs(SAVE_DIR)
@@ -169,6 +173,11 @@ class GameEngine:
             self.player = character.Character.from_dict(save_data['player'])
             self.current_node = save_data['current_node']
             
+            # Load choice history if it exists
+            if 'choice_history' in save_data:
+                import choice_history
+                self.choice_history = choice_history.ChoiceHistory.from_dict(save_data['choice_history'])
+            
             console.print("[bold green]Game loaded successfully![/bold green]")
             time.sleep(1)
             return True
@@ -194,6 +203,7 @@ class GameEngine:
         save_data = {
             'player': self.player.to_dict(),
             'current_node': self.current_node,
+            'choice_history': self.choice_history.to_dict(),
             'metadata': {
                 'character_name': self.player.name,
                 'character_class': self.player.char_class,
@@ -227,7 +237,12 @@ class GameEngine:
             
             if not node:
                 # If node doesn't exist in predefined story, generate it with Ollama
-                node = self.ollama.generate_story_node(self.current_node, self.player)
+                # Pass the choice history to enhance the generation
+                node = self.ollama.generate_story_node(
+                    self.current_node, 
+                    self.player,
+                    self.choice_history
+                )
                 
                 if not node:
                     # Fallback if Ollama fails
@@ -386,8 +401,17 @@ class GameEngine:
                 if 'delay' in consequences:
                     time.sleep(consequences['delay'])
                 
+                # Record the choice in the history
+                next_node = selected_choice.get('next_node', self.current_node)
+                self.choice_history.add_choice(
+                    node_id=self.current_node,
+                    choice_text=selected_choice['text'],
+                    next_node=next_node,
+                    consequences=consequences
+                )
+                
                 # Move to the next node
-                self.current_node = selected_choice.get('next_node', self.current_node)
+                self.current_node = next_node
         else:
             # No choices available, just continue to the next node
             console.print("\n[cyan]Press Enter to continue...[/cyan]")
