@@ -1,0 +1,12 @@
+{
+  "difficulty": "normal",
+  "text_speed": "medium",
+  "combat_animations": true,
+  "music_enabled": true,
+  "effects_enabled": true,
+  "music_volume": 0.5,
+  "effects_volume": 0.7,
+  "auto_save": true,
+  "show_hints": true,
+  "enable_ollama": false
+}

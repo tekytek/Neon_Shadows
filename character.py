@@ -37,6 +37,9 @@ class Character:
         
         # Character status effects
         self.status_effects = {}
+        
+        # Reputation system
+        self.reputation = ReputationSystem()
     
     @classmethod
     def from_dict(cls, data):
@@ -60,6 +63,10 @@ class Character:
         # Load status effects
         character.status_effects = data.get('status_effects', {})
         
+        # Load reputation
+        if 'reputation' in data:
+            character.reputation = ReputationSystem.from_dict(data.get('reputation', {}))
+        
         return character
     
     def to_dict(self):
@@ -74,7 +81,8 @@ class Character:
             'health': self.health,
             'credits': self.credits,
             'inventory': self.inventory.to_dict(),
-            'status_effects': self.status_effects
+            'status_effects': self.status_effects,
+            'reputation': self.reputation.to_dict()
         }
     
     def add_experience(self, amount, audio_system=None):

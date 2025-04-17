@@ -194,7 +194,7 @@ class DistrictManager:
                 district_id="downtown",
                 name="Downtown",
                 description="The heart of the city, towering skyscrapers and corporate headquarters. High security, but opportunities for those who know where to look.",
-                danger_level=2,
+                danger_level=3,  # Moderate danger
                 connected_districts=["industrial", "residential"],
                 ascii_art="downtown"
             )
@@ -205,7 +205,7 @@ class DistrictManager:
                 district_id="industrial",
                 name="Industrial Zone",
                 description="Factories and warehouses dominate this polluted district. Home to smugglers and underground operations.",
-                danger_level=3,
+                danger_level=4,  # High danger
                 connected_districts=["downtown", "outskirts"],
                 ascii_art="industrial"
             )
@@ -216,7 +216,7 @@ class DistrictManager:
                 district_id="residential",
                 name="Residential Sector",
                 description="Dense apartment blocks where most of the city's population lives. Varying levels of safety depending on the block.",
-                danger_level=2,
+                danger_level=2,  # Lower danger
                 connected_districts=["downtown", "outskirts"],
                 ascii_art="residential"
             )
@@ -227,7 +227,7 @@ class DistrictManager:
                 district_id="outskirts",
                 name="City Outskirts",
                 description="The fringe of the city, lawless and dangerous. Only the desperate or the powerful venture here willingly.",
-                danger_level=4,
+                danger_level=5,  # Extremely dangerous
                 connected_districts=["industrial", "residential"],
                 ascii_art="outskirts"
             )
@@ -238,7 +238,7 @@ class DistrictManager:
                 district_id="corporate",
                 name="Corporate Sector",
                 description="The pristine and heavily guarded zone where the elite live and work. Access is strictly controlled.",
-                danger_level=1,
+                danger_level=1,  # Safest area
                 connected_districts=["downtown"],
                 ascii_art="corporate"
             )
@@ -323,65 +323,4 @@ class DistrictManager:
 # Create default ASCII art for districts
 def add_district_ascii_art():
     """Add ASCII art for districts to the assets module"""
-    import data.ascii_art as ascii_art
-    
-    # Downtown district ASCII art
-    if not hasattr(ascii_art, 'downtown'):
-        ascii_art.downtown = """
-        ╭─┬┬─╮  ╭─┬┬─╮  ╭┬──┬╮
-        │ ││ │  │ ││ │  ││  ││
-        │ ││ │  │ ││ │  ││  ││
-        │ ││ ╰──┤ ││ ╰──┤│  │╰──
-        │ ││    │ ││    ││  │
-        │ ││    │ ││    ││  │
-        ╰─┴┴─╯  ╰─┴┴─╯  ╰┴──┴╯
-         DOWNTOWN DISTRICT
-        """
-    
-    # Industrial district ASCII art
-    if not hasattr(ascii_art, 'industrial'):
-        ascii_art.industrial = """
-        ╭──┬╮  ╭┬╮  ╭─╮  ╭╮ ╭╮  ╭╮
-        │  ││  ││  │ │  ││ ││  ││
-        │  ││  ││  │ │  ││ ││  ││
-        │  ││  ││  │ │  ││ ││  ││
-        │  ││  ││  │ │  ││ ││  ││
-        ╰──┴╯  ╰┴╯  ╰─╯  ╰╯ ╰╯  ╰╯
-          INDUSTRIAL ZONE
-        """
-    
-    # Residential district ASCII art
-    if not hasattr(ascii_art, 'residential'):
-        ascii_art.residential = """
-        ╭──╮ ╭┬╮ ╭─┬─╮ ╭─┬╮
-        │┌┐│ ││ │ │ │ │ ││
-        ││││ ││ │ │ │ │ ││
-        ││││ ││ │ │ │ │ ││
-        │└┘│ ││ │ │ │ │ ││
-        ╰──╯ ╰┴╯ ╰─┴─╯ ╰─┴╯
-        RESIDENTIAL SECTOR
-        """
-    
-    # Outskirts district ASCII art
-    if not hasattr(ascii_art, 'outskirts'):
-        ascii_art.outskirts = """
-        ╭─╮  ╭╮ ╭╮  ╭──╮  ╭╮╭╮  ╭╮  ╭┬╮  ╭──╮  ╭──╮
-        │ │  ││ ││  │  │  │││  ││  ││  │  │  │  │
-        │ │  ││ ││  │  │  │┴┘  ││  ││  │  │  │  │
-        │ │  ││ ││  │  │  │╭╮  ││  ││  │  │  │  ╰──╮
-        │ │  ││ ││  │  │  │││  ││  ││  │  │  │     │
-        ╰─╯  ╰╯ ╰╯  ╰──╯  ╰╯╰╮ ╰╯  ╰┴╯  ╰──╯  ╰───╯
-                             OUTSKIRTS
-        """
-    
-    # Corporate district ASCII art
-    if not hasattr(ascii_art, 'corporate'):
-        ascii_art.corporate = """
-        ╭───╮  ╭─╮  ╭───╮  ╭───╮  ╭─╮  ╭───╮  ╭───╮  ╭──╮  ╭───╮
-        │      │ │  │   │  │   │  │ │  │   │  │   │  │  │  │
-        │      │ │  │   │  │   │  │ │  │   │  │   │  │  │  │
-        │      │ │  ╰───╯  ╰───╯  │ │  ╰───╯  ╰───╯  │  │  ╰───╮
-        │      │ │  │   │  │      │ │  │   │     │   │  │      │
-        ╰───╯  ╰─╯  │   │  │      ╰─╯  │   │     │   ╰──╯  ╰───╯
-                       CORPORATE SECTOR
-        """
+    from data.ascii_art import ASCII_ART

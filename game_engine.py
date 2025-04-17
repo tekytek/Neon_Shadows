@@ -16,6 +16,8 @@ import combat
 import inventory
 import save_system
 import ollama_integration
+import districts
+from districts import DistrictManager, District
 from config import GAME_TITLE, SAVE_DIR
 
 class GameEngine:
@@ -32,6 +34,9 @@ class GameEngine:
         # Initialize choice history tracker
         import choice_history
         self.choice_history = choice_history.ChoiceHistory()
+        
+        # Initialize district manager
+        self.district_manager = DistrictManager()
         
         # Initialize audio system if available
         try:
@@ -187,6 +192,10 @@ class GameEngine:
             if 'choice_history' in save_data:
                 import choice_history
                 self.choice_history = choice_history.ChoiceHistory.from_dict(save_data['choice_history'])
+                
+            # Load district manager if it exists
+            if 'district_manager' in save_data:
+                self.district_manager = DistrictManager.from_dict(save_data['district_manager'])
             
             console.print("[bold green]Game loaded successfully![/bold green]")
             time.sleep(1)
@@ -214,6 +223,7 @@ class GameEngine:
             'player': self.player.to_dict(),
             'current_node': self.current_node,
             'choice_history': self.choice_history.to_dict(),
+            'district_manager': self.district_manager.to_dict(),
             'metadata': {
                 'character_name': self.player.name,
                 'character_class': self.player.char_class,
@@ -325,18 +335,21 @@ class GameEngine:
             
             # Add game options
             console.print("[yellow]I. Inventory[/yellow]")
+            console.print("[yellow]M. Map (Travel)[/yellow]")
             console.print("[yellow]S. Save Game[/yellow]")
             console.print("[yellow]Q. Quit to Main Menu[/yellow]")
             
             # Get player choice
             valid_choices = [str(i) for i in range(1, len(choices)+1)]
-            valid_choices.extend(['i', 'I', 's', 'S', 'q', 'Q'])
+            valid_choices.extend(['i', 'I', 'm', 'M', 's', 'S', 'q', 'Q'])
             
             choice = Prompt.ask("[bold green]Enter your choice[/bold green]", choices=valid_choices)
             
             # Process the choice
             if choice.upper() == 'I':
                 self.handle_inventory(console)
+            elif choice.upper() == 'M':
+                self.handle_map_travel(console)
             elif choice.upper() == 'S':
                 self.save_game(console)
             elif choice.upper() == 'Q':
@@ -592,6 +605,189 @@ class GameEngine:
             
             console.print("\n[cyan]Press Enter to continue...[/cyan]")
             input()
+    
+    def handle_map_travel(self, console):
+        """Handle district map view and travel"""
+        ui.clear_screen()
+        ui.display_header(console, "DISTRICT MAP")
+        ui.display_status_bar(console, self.player)
+        
+        # Get current district information
+        current_district = self.district_manager.get_current_district()
+        if not current_district:
+            # Set the starting district if not already set
+            self.district_manager.set_current_district("downtown")
+            current_district = self.district_manager.get_current_district()
+            
+        # Display current district information
+        console.print(f"[bold green]Current Location: {current_district.name}[/bold green]")
+        console.print(f"[cyan]{current_district.description}[/cyan]")
+        console.print(f"[yellow]Danger Level: {current_district.danger_level}/5[/yellow]")
+        
+        # Display current reputation in this district if available
+        district_rep = self.player.reputation.get_district_reputation(current_district.district_id)
+        rep_title = self.player.reputation.get_reputation_title(district_rep)
+        console.print(f"[magenta]Your Reputation: {rep_title} ({district_rep})[/magenta]")
+        
+        # Display district ASCII art if available
+        if current_district.ascii_art:
+            ui.display_ascii_art(console, current_district.ascii_art)
+        
+        # Get connected districts
+        connected_districts = self.district_manager.get_connected_districts()
+        
+        if connected_districts:
+            console.print("\n[bold cyan]Connected Districts:[/bold cyan]")
+            
+            for i, district in enumerate(connected_districts, 1):
+                # Check if player has access to this district based on reputation
+                has_access = self.player.reputation.has_access(district.district_id)
+                color = "green" if has_access else "red"
+                access_text = "" if has_access else " [red](Access Denied)[/red]"
+                
+                console.print(f"[{color}]{i}. {district.name} - Danger Level: {district.danger_level}/5{access_text}[/{color}]")
+                console.print(f"   {district.description}")
+                
+            console.print("\n[yellow]Enter a number to travel to that district, or 0 to return[/yellow]")
+            
+            choices = ["0"] + [str(i) for i in range(1, len(connected_districts)+1)]
+            choice = Prompt.ask("[bold green]Where would you like to go?[/bold green]", choices=choices)
+            
+            if choice != "0":
+                district_idx = int(choice) - 1
+                target_district = connected_districts[district_idx]
+                
+                # Check if player has access to this district
+                if not self.player.reputation.has_access(target_district.district_id):
+                    console.print(f"[bold red]You don't have access to {target_district.name}![/bold red]")
+                    console.print("[red]You need to improve your reputation in this area first.[/red]")
+                    time.sleep(2)
+                    return
+                
+                # Handle travel cost/consequences based on danger level
+                travel_risk = target_district.danger_level - current_district.danger_level
+                if travel_risk > 0:
+                    console.print(f"[yellow]Warning: You're traveling to a more dangerous area (risk +{travel_risk}).[/yellow]")
+                    
+                    # Random chance of an encounter based on risk level
+                    if random.random() < (travel_risk * 0.15):  # 15% chance per risk level
+                        console.print("[bold red]You've encountered trouble while traveling![/bold red]")
+                        time.sleep(1)
+                        
+                        # Create an appropriate encounter based on district danger level
+                        self.handle_travel_encounter(console, target_district.danger_level)
+                
+                # Complete the travel
+                success = self.district_manager.set_current_district(target_district.district_id)
+                
+                if success:
+                    console.print(f"[green]Successfully traveled to {target_district.name}.[/green]")
+                    
+                    # Play sound effect if available
+                    if self.audio_enabled and self.audio_system:
+                        self.audio_system.play_sound("door_open")
+                        
+                    time.sleep(1)
+                else:
+                    console.print("[red]Failed to travel to the selected district.[/red]")
+                    time.sleep(1)
+        else:
+            console.print("\n[bold red]No connected districts available![/bold red]")
+            console.print("\n[cyan]Press Enter to return...[/cyan]")
+            input()
+    
+    def handle_travel_encounter(self, console, danger_level):
+        """Handle random encounters that can occur during district travel"""
+        encounter_types = ["combat", "skill_check", "find"]
+        weights = [0.6, 0.3, 0.1]  # 60% combat, 30% skill check, 10% find something
+        
+        encounter_type = random.choices(encounter_types, weights=weights, k=1)[0]
+        
+        if encounter_type == "combat":
+            # Create an appropriate enemy based on danger level
+            enemy_types = [
+                {"name": "Street Thug", "health": 8, "damage": 2, "defense": 1},  # Level 1
+                {"name": "Gang Member", "health": 12, "damage": 3, "defense": 2},  # Level 2
+                {"name": "Cyborg Enforcer", "health": 18, "damage": 4, "defense": 3},  # Level 3
+                {"name": "Rogue Security Bot", "health": 25, "damage": 5, "defense": 4},  # Level 4
+                {"name": "Corporate Assassin", "health": 35, "damage": 7, "defense": 5}   # Level 5
+            ]
+            
+            # Adjust index to valid range (0-4)
+            enemy_idx = min(max(danger_level - 1, 0), 4)
+            enemy_data = enemy_types[enemy_idx]
+            
+            # Create a combat node
+            combat_node = {
+                "type": "combat",
+                "text": f"As you travel through the district, a {enemy_data['name']} ambushes you from the shadows!",
+                "enemy": enemy_data,
+                "rewards": {
+                    "experience": 50 * danger_level,
+                    "credits": 20 * danger_level,
+                    "items": {"Stimpack": 1} if random.random() < 0.3 else {}
+                },
+                "victory_node": self.current_node,
+                "escape_node": self.current_node,
+                "escape_consequences": {
+                    "health_loss": danger_level * 2,
+                    "items_lost": {"Credits": danger_level * 5} if self.player.credits > danger_level * 5 else {}
+                }
+            }
+            
+            # Run the combat encounter
+            self.handle_combat(console, combat_node)
+        
+        elif encounter_type == "skill_check":
+            # Create a skill check based on danger level
+            skills = ["strength", "intelligence", "charisma", "reflex"]
+            skill = random.choice(skills)
+            difficulty = 3 + danger_level  # Base difficulty (3) plus danger level
+            
+            # Create skill check node
+            skill_node = {
+                "type": "skill_check",
+                "text": f"You encounter an obstacle that requires {skill}. You need to test your abilities to proceed safely.",
+                "skill": skill,
+                "difficulty": difficulty,
+                "success_text": "You successfully navigate the situation and continue your journey.",
+                "failure_text": "You fail to handle the situation properly, and suffer the consequences.",
+                "success_consequences": {
+                    "experience": 30 * danger_level
+                },
+                "failure_consequences": {
+                    "health_change": -danger_level * 2
+                }
+            }
+            
+            # Run the skill check
+            self.handle_skill_check(console, skill_node)
+        
+        elif encounter_type == "find":
+            # Find something valuable
+            item_options = [
+                {"name": "Credits", "count": danger_level * 10},
+                {"name": "Stimpack", "count": 1},
+                {"name": "Scrap Electronics", "count": danger_level}
+            ]
+            
+            found_item = random.choice(item_options)
+            
+            console.print(f"[green]While traveling, you found {found_item['count']} {found_item['name']}![/green]")
+            
+            if found_item['name'] == "Credits":
+                self.player.credits += found_item['count']
+            else:
+                self.player.inventory.add_item(found_item['name'], found_item['count'])
+            
+            # Play appropriate sound if available
+            if self.audio_enabled and self.audio_system:
+                if found_item['name'] == "Credits":
+                    self.audio_system.play_sound("credits_pickup")
+                else:
+                    self.audio_system.play_sound("item_pickup")
+            
+            time.sleep(2)
     
     def handle_shop(self, console, node):
         """Handle shop interaction"""
