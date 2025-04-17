@@ -1,0 +1,201 @@
+{
+    "melee_master": {
+        "skill_id": "melee_master",
+        "name": "Melee Master",
+        "description": "Improves your ability with melee weapons",
+        "max_level": 5,
+        "prerequisites": [],
+        "effects": {
+            "1": {
+                "damage_bonus": 1
+            },
+            "2": {
+                "damage_bonus": 1
+            },
+            "3": {
+                "damage_bonus": 2,
+                "critical_chance": 5
+            },
+            "4": {
+                "damage_bonus": 2
+            },
+            "5": {
+                "damage_bonus": 3,
+                "critical_chance": 10,
+                "ability": "Blade Fury"
+            }
+        },
+        "category": "combat"
+    },
+    "cyber_reflexes": {
+        "skill_id": "cyber_reflexes",
+        "name": "Cyber Reflexes",
+        "description": "Enhanced neural reflexes improve your combat mobility",
+        "max_level": 5,
+        "prerequisites": [],
+        "effects": {
+            "1": {
+                "dodge_chance": 5
+            },
+            "2": {
+                "stat_bonus": {
+                    "reflex": 1
+                }
+            },
+            "3": {
+                "dodge_chance": 5,
+                "defense_bonus": 1
+            },
+            "4": {
+                "stat_bonus": {
+                    "reflex": 1
+                }
+            },
+            "5": {
+                "dodge_chance": 10,
+                "ability": "Matrix Dodge"
+            }
+        },
+        "category": "combat"
+    },
+    "network_infiltrator": {
+        "skill_id": "network_infiltrator",
+        "name": "Network Infiltrator",
+        "description": "Improves your ability to hack into secure systems",
+        "max_level": 5,
+        "prerequisites": [],
+        "effects": {
+            "1": {
+                "hacking_bonus": 10
+            },
+            "2": {
+                "stat_bonus": {
+                    "intelligence": 1
+                }
+            },
+            "3": {
+                "hacking_bonus": 15,
+                "ability": "Backdoor Access"
+            },
+            "4": {
+                "electronics_bonus": 10
+            },
+            "5": {
+                "hacking_bonus": 25,
+                "ability": "System Overload"
+            }
+        },
+        "category": "hacking"
+    },
+    "drone_master": {
+        "skill_id": "drone_master",
+        "name": "Drone Master",
+        "description": "Improves your ability to control and deploy drones",
+        "max_level": 4,
+        "prerequisites": [
+            {
+                "type": "skill",
+                "id": "network_infiltrator",
+                "level": 2
+            }
+        ],
+        "effects": {
+            "1": {
+                "drone_damage": 2
+            },
+            "2": {
+                "drone_duration": 1
+            },
+            "3": {
+                "drone_damage": 3
+            },
+            "4": {
+                "drone_count": 1,
+                "ability": "Swarm Protocol"
+            }
+        },
+        "category": "hacking"
+    },
+    "street_cred": {
+        "skill_id": "street_cred",
+        "name": "Street Cred",
+        "description": "Increases your reputation on the streets",
+        "max_level": 5,
+        "prerequisites": [],
+        "effects": {
+            "1": {
+                "reputation_gain": 5
+            },
+            "2": {
+                "stat_bonus": {
+                    "charisma": 1
+                }
+            },
+            "3": {
+                "vendor_discount": 5
+            },
+            "4": {
+                "reputation_gain": 10
+            },
+            "5": {
+                "stat_bonus": {
+                    "charisma": 1
+                },
+                "ability": "Call In A Favor"
+            }
+        },
+        "category": "social"
+    },
+    "shadow_walker": {
+        "skill_id": "shadow_walker",
+        "name": "Shadow Walker",
+        "description": "Improves your ability to move unseen",
+        "max_level": 5,
+        "prerequisites": [],
+        "effects": {
+            "1": {
+                "stealth_bonus": 10
+            },
+            "2": {
+                "noise_reduction": 15
+            },
+            "3": {
+                "stealth_bonus": 15
+            },
+            "4": {
+                "stat_bonus": {
+                    "reflex": 1
+                }
+            },
+            "5": {
+                "stealth_bonus": 25,
+                "ability": "Ghost Protocol"
+            }
+        },
+        "category": "stealth"
+    },
+    "cyber_surgeon": {
+        "skill_id": "cyber_surgeon",
+        "name": "Cyber Surgeon",
+        "description": "Improves your ability to heal and repair",
+        "max_level": 4,
+        "prerequisites": [],
+        "effects": {
+            "1": {
+                "healing_bonus": 10
+            },
+            "2": {
+                "stat_bonus": {
+                    "intelligence": 1
+                }
+            },
+            "3": {
+                "self_heal": 2
+            },
+            "4": {
+                "ability": "Emergency Protocol"
+            }
+        },
+        "category": "tech"
+    }
+}

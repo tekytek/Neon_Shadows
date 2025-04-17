@@ -1,0 +1,113 @@
+{
+    "adrenaline_junkie": {
+        "perk_id": "adrenaline_junkie",
+        "name": "Adrenaline Junkie",
+        "description": "Gain increased damage when low on health",
+        "effects": {
+            "damage_mult_low_health": 1.5,
+            "health_threshold": 30
+        },
+        "prerequisites": [
+            {
+                "type": "stat",
+                "id": "strength",
+                "level": 5
+            }
+        ],
+        "category": "combat",
+        "one_time_use": false
+    },
+    "cyber_berserk": {
+        "perk_id": "cyber_berserk",
+        "name": "Cyber Berserk",
+        "description": "Unlock a berserk mode ability that increases damage but disables defense",
+        "effects": {
+            "ability": "Cyber Berserk",
+            "damage_mult": 2.0,
+            "defense_mult": 0.0,
+            "duration": 3
+        },
+        "prerequisites": [
+            {
+                "type": "skill",
+                "id": "melee_master",
+                "level": 3
+            }
+        ],
+        "category": "combat",
+        "one_time_use": false
+    },
+    "ice_breaker": {
+        "perk_id": "ice_breaker",
+        "name": "ICE Breaker",
+        "description": "Allows you to bypass security on electronic devices",
+        "effects": {
+            "bypass_security_level": 2,
+            "hacking_time_reduction": 0.5
+        },
+        "prerequisites": [
+            {
+                "type": "skill",
+                "id": "network_infiltrator",
+                "level": 3
+            }
+        ],
+        "category": "hacking",
+        "one_time_use": false
+    },
+    "silver_tongue": {
+        "perk_id": "silver_tongue",
+        "name": "Silver Tongue",
+        "description": "Your smooth talking gets you better deals and information",
+        "effects": {
+            "vendor_bonus": 15,
+            "dialogue_options": "silver_tongue"
+        },
+        "prerequisites": [
+            {
+                "type": "stat",
+                "id": "charisma",
+                "level": 6
+            }
+        ],
+        "category": "social",
+        "one_time_use": false
+    },
+    "ghost": {
+        "perk_id": "ghost",
+        "name": "Ghost",
+        "description": "You leave no trace and make no sound",
+        "effects": {
+            "detection_chance_reduction": 0.7,
+            "noise_level": 0.3
+        },
+        "prerequisites": [
+            {
+                "type": "skill",
+                "id": "shadow_walker",
+                "level": 4
+            }
+        ],
+        "category": "stealth",
+        "one_time_use": false
+    },
+    "field_medic": {
+        "perk_id": "field_medic",
+        "name": "Field Medic",
+        "description": "Allows you to heal in combat without using an item",
+        "effects": {
+            "ability": "Field Medic",
+            "healing": 15,
+            "cooldown": 4
+        },
+        "prerequisites": [
+            {
+                "type": "skill",
+                "id": "cyber_surgeon",
+                "level": 3
+            }
+        ],
+        "category": "tech",
+        "one_time_use": false
+    }
+}

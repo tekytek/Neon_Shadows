@@ -1515,19 +1515,7 @@ def run_combat(console, player, enemy, player_damage_multiplier=1.0, use_animati
                 continue
             
             selected_ability = ability_options[ability_choice]
-            
-            # Update combat state with current tactical information
-            combat_state.update({
-                "player_position": getattr(player, "position", "center"),
-                "enemy_position": getattr(enemy, "position", "center"),
-                "player_cover": player.current_cover,
-                "enemy_cover": enemy.current_cover
-            })
-            
-            # Use tactical_abilities module for handling abilities
-            combat_state, ability_result = tactical_abilities.handle_tactical_ability(
-                player, selected_ability, enemy, combat_state, console, audio_system
-            )
+            ability_result = player.use_ability(selected_ability, enemy, console, audio_system)
             
             # Process the ability results
             if ability_result["success"]:
@@ -1780,10 +1768,8 @@ def run_combat(console, player, enemy, player_damage_multiplier=1.0, use_animati
             available_abilities = player.get_available_abilities()
             for ability_id, ability_data in available_abilities.items():
                 if "smooth_talk" in ability_id:  # Check for the Fixer's Smooth Talk ability
-                    # Use the ability with combat state
-                    updated_combat_state, ability_result = tactical_abilities.handle_tactical_ability(
-                        player, ability_id, enemy, combat_state, console, audio_system
-                    )
+                    # Use the ability
+                    ability_result = player.use_ability(ability_id, enemy, console, audio_system)
                     if ability_result["success"] and "escape_boost" in ability_result.get("effects", {}):
                         escape_boost = ability_result["effects"]["escape_boost"]
                         escape_chance += escape_boost

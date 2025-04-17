@@ -433,7 +433,7 @@ class Character:
         
         return available_abilities
     
-    def use_ability(self, ability_id, target=None, console=None, audio_system=None):
+    def use_ability(self, ability_id, target=None, console=None, audio_system=None, combat_state=None):
         """Use a special ability and put it on cooldown
         
         Args:
@@ -441,6 +441,7 @@ class Character:
             target (Enemy, optional): Target of the ability
             console (Console, optional): Console for output
             audio_system (AudioSystem, optional): Audio system for sound effects
+            combat_state (dict, optional): Dictionary containing current combat state (positions, cover, etc.)
             
         Returns:
             dict: Results of the ability use
@@ -471,6 +472,79 @@ class Character:
         # Play sound effect if available
         if audio_system:
             audio_system.play_sound("skill_success")
+            
+        # Check for tactical ability handling
+        if ability.get("tactical", False) and combat_state:
+            # Process special tactical requirements and effects
+            if "required_position" in ability and ability["required_position"] != "any":
+                current_position = combat_state.get("player_position", "center")
+                if current_position != ability["required_position"]:
+                    if console:
+                        console.print(f"[red]This ability requires {ability['required_position']} position (current: {current_position})[/red]")
+                    return {"success": False, "message": "Position requirement not met"}
+            
+            # Process target zone
+            if "target_zone" in ability and ability["target_zone"] != "any":
+                result["effects"]["target_zone"] = ability["target_zone"]
+                if console:
+                    console.print(f"[cyan]Targeting {ability['target_zone']} specifically[/cyan]")
+                    
+            # Process position effects
+            if "position_effect" in ability and ability["position_effect"]:
+                position_effect = ability["position_effect"]
+                result["effects"]["position_effect"] = position_effect
+                
+                if position_effect == "random":
+                    if console:
+                        console.print(f"[cyan]Scrambling enemy position[/cyan]")
+                elif position_effect == "force_center":
+                    if console:
+                        console.print(f"[cyan]Forcing enemy to center position[/cyan]")
+                elif position_effect == "close_distance":
+                    if console:
+                        console.print(f"[cyan]Closing distance with enemy[/cyan]")
+                elif position_effect == "improve_position":
+                    if console:
+                        console.print(f"[cyan]Maneuvering to advantageous position[/cyan]")
+            
+            # Process cover effects
+            if "cover_damage" in ability:
+                cover_damage = ability["cover_damage"]
+                result["effects"]["cover_damage"] = cover_damage
+                if console:
+                    console.print(f"[cyan]Attacking enemy cover for {cover_damage} damage[/cyan]")
+                    
+            if "create_cover" in ability:
+                cover_type = ability["create_cover"]
+                cover_health = ability.get("cover_health", 5)
+                result["effects"]["create_cover"] = cover_type
+                result["effects"]["cover_health"] = cover_health
+                if console:
+                    console.print(f"[cyan]Deploying {cover_type} cover with {cover_health} health[/cyan]")
+                    
+            if "cover_boost" in ability:
+                cover_boost = ability["cover_boost"]
+                result["effects"]["cover_boost"] = cover_boost
+                if console:
+                    console.print(f"[cyan]Reinforcing cover (defense +{cover_boost})[/cyan]")
+                    
+            # Handle enemy type bonuses
+            if "enemy_type_bonus" in ability and target:
+                enemy_type = getattr(target, "enemy_type", "standard") 
+                bonus_type = ability["enemy_type_bonus"]
+                
+                if enemy_type == bonus_type:
+                    result["effects"]["type_bonus"] = True
+                    if "damage_multiplier" in ability:
+                        ability["damage_multiplier"] *= 1.5
+                    if console:
+                        console.print(f"[cyan]Extra effective against {enemy_type} enemies![/cyan]")
+                        
+            # Handle area effects
+            if ability.get("area_effect", False):
+                result["effects"]["area_effect"] = True
+                if console:
+                    console.print(f"[cyan]Attack affects entire area[/cyan]")
         
         # Process ability effects
         if "damage_multiplier" in ability:
