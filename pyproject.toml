@@ -4,6 +4,9 @@ version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.11"
 dependencies = [
+    "numpy>=2.2.4",
+    "pygame>=2.6.1",
     "requests>=2.32.3",
     "rich>=14.0.0",
+    "scipy>=1.15.2",
 ]

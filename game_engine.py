@@ -33,6 +33,16 @@ class GameEngine:
         import choice_history
         self.choice_history = choice_history.ChoiceHistory()
         
+        # Initialize audio system if available
+        try:
+            import audio
+            audio.initialize()
+            self.audio_system = audio
+            self.audio_enabled = True
+        except ImportError:
+            self.audio_system = None
+            self.audio_enabled = False
+        
         # Ensure save directory exists
         if not os.path.exists(SAVE_DIR):
             os.makedirs(SAVE_DIR)
@@ -464,7 +474,8 @@ class GameEngine:
             self.player, 
             enemy, 
             player_damage_multiplier=player_damage_mult,
-            use_animations=combat_animations
+            use_animations=combat_animations,
+            audio_system=self.audio_system if self.audio_enabled else None
         )
         
         # Process combat outcome
@@ -474,12 +485,16 @@ class GameEngine:
             
             # Process rewards
             if 'experience' in rewards:
-                self.player.add_experience(rewards['experience'])
+                self.player.add_experience(rewards['experience'], audio_system=self.audio_system if self.audio_enabled else None)
                 console.print(f"[green]Gained {rewards['experience']} experience[/green]")
             
             if 'credits' in rewards:
                 self.player.credits += rewards['credits']
                 console.print(f"[green]Gained {rewards['credits']} credits[/green]")
+                
+                # Play credits pickup sound if audio system is available
+                if self.audio_enabled and self.audio_system:
+                    self.audio_system.play_sound("credits_pickup")
             
             if 'items' in rewards:
                 for item, count in rewards['items'].items():
@@ -545,7 +560,7 @@ class GameEngine:
                                     choices=[str(i) for i in range(1, len(items)+1)])
             
             item_name = list(items.keys())[item_idx-1]
-            self.player.use_item(item_name, console)
+            self.player.use_item(item_name, console, audio_system=self.audio_system if self.audio_enabled else None)
         elif action == "2" and items:
             # Examine an item
             item_idx = IntPrompt.ask("[bold cyan]Enter the number of the item to examine[/bold cyan]", 
@@ -630,6 +645,10 @@ class GameEngine:
                     self.player.credits -= total_price
                     self.player.inventory.add_item(item_name, count)
                     console.print(f"[green]Bought {count} {item_name} for {total_price} credits[/green]")
+                    
+                    # Play transaction sound if audio system is available
+                    if self.audio_enabled and self.audio_system:
+                        self.audio_system.play_sound("shop_transaction")
                 else:
                     console.print(f"[red]You can't afford {count} {item_name}[/red]")
             else:
@@ -681,8 +700,16 @@ class GameEngine:
                 if self.player.inventory.remove_item(item_name, count):
                     self.player.credits += total_price
                     console.print(f"[green]Sold {count} {item_name} for {total_price} credits[/green]")
+                    
+                    # Play transaction sound if audio system is available
+                    if self.audio_enabled and self.audio_system:
+                        self.audio_system.play_sound("shop_transaction")
                 else:
                     console.print(f"[red]Failed to sell {item_name}[/red]")
+                    
+                    # Play error sound if audio system is available
+                    if self.audio_enabled and self.audio_system:
+                        self.audio_system.play_sound("skill_failure")
                 
                 time.sleep(1)
         
@@ -726,27 +753,44 @@ class GameEngine:
         if success:
             console.print(f"\n[bold green]SUCCESS![/bold green]")
             
+            # Play success sound if audio system is available
+            if self.audio_enabled and self.audio_system:
+                self.audio_system.play_sound("skill_success")
+            
             # Process success rewards
             rewards = node.get('success_rewards', {})
             
             # Process rewards
             if 'experience' in rewards:
-                self.player.add_experience(rewards['experience'])
+                self.player.add_experience(rewards['experience'], 
+                                           audio_system=self.audio_system if self.audio_enabled else None)
                 console.print(f"[green]Gained {rewards['experience']} experience[/green]")
             
             if 'credits' in rewards:
                 self.player.credits += rewards['credits']
                 console.print(f"[green]Gained {rewards['credits']} credits[/green]")
+                
+                # Play credits pickup sound if audio system is available
+                if self.audio_enabled and self.audio_system:
+                    self.audio_system.play_sound("credits_pickup")
             
             if 'items' in rewards:
                 for item, count in rewards['items'].items():
                     self.player.inventory.add_item(item, count)
                     console.print(f"[green]Gained {count} {item}[/green]")
+                    
+                    # Play item pickup sound if audio system is available
+                    if self.audio_enabled and self.audio_system:
+                        self.audio_system.play_sound("item_pickup")
             
             # Move to success node
             self.current_node = node.get('success_node', self.current_node)
         else:
             console.print(f"\n[bold red]FAILURE![/bold red]")
+            
+            # Play failure sound if audio system is available
+            if self.audio_enabled and self.audio_system:
+                self.audio_system.play_sound("skill_failure")
             
             # Process failure consequences
             consequences = node.get('failure_consequences', {})
@@ -775,6 +819,13 @@ class GameEngine:
     def handle_death(self, console):
         """Handle player death"""
         ui.clear_screen()
+        
+        # Play death sound if audio system is available
+        if self.audio_enabled and self.audio_system:
+            # Stop any current music
+            self.audio_system.stop_music()
+            # Play player damage sound
+            self.audio_system.play_sound("player_damage")
         
         # Display death screen
         ui.display_ascii_art(console, "death")

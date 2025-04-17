@@ -10,12 +10,25 @@ from rich.prompt import Prompt
 
 import game_engine
 import ui
-from config import DEBUG_MODE
+from config import DEBUG_MODE, GAME_SETTINGS
+
+# Try to import audio module
+try:
+    import audio
+    AUDIO_AVAILABLE = True
+except ImportError:
+    AUDIO_AVAILABLE = False
 
 def main():
     """Main entry point for the game"""
     # Initialize the console
     console = Console()
+    
+    # Initialize audio if available
+    if AUDIO_AVAILABLE and GAME_SETTINGS["music_enabled"]:
+        audio.initialize()
+        # Play menu theme music
+        audio.play_music("menu_theme")
     
     # Display intro and splash screen
     ui.clear_screen()
@@ -26,18 +39,66 @@ def main():
         choice = ui.main_menu(console)
         
         if choice == "new_game":
+            # Play menu selection sound if available
+            if AUDIO_AVAILABLE and GAME_SETTINGS["effects_enabled"]:
+                audio.play_sound("menu_select")
+                # Stop menu music and switch to ambient music
+                if GAME_SETTINGS["music_enabled"]:
+                    audio.stop_music()
+                    # Wait a moment before starting new music
+                    time.sleep(0.5)
+                    audio.play_music("cyberpunk_ambient")
+            
             game = game_engine.GameEngine()
             game.new_game(console)
             game.game_loop(console)
+            
+            # Return to menu music after game ends
+            if AUDIO_AVAILABLE and GAME_SETTINGS["music_enabled"]:
+                audio.stop_music()
+                time.sleep(0.5)
+                audio.play_music("menu_theme")
+                
         elif choice == "load_game":
+            # Play menu selection sound if available
+            if AUDIO_AVAILABLE and GAME_SETTINGS["effects_enabled"]:
+                audio.play_sound("menu_select")
+            
             game = game_engine.GameEngine()
             if game.load_game(console):
+                # Stop menu music and switch to ambient music
+                if AUDIO_AVAILABLE and GAME_SETTINGS["music_enabled"]:
+                    audio.stop_music()
+                    time.sleep(0.5)
+                    audio.play_music("cyberpunk_ambient")
+                
                 game.game_loop(console)
+                
+                # Return to menu music after game ends
+                if AUDIO_AVAILABLE and GAME_SETTINGS["music_enabled"]:
+                    audio.stop_music()
+                    time.sleep(0.5)
+                    audio.play_music("menu_theme")
+                    
         elif choice == "options":
+            # Play menu selection sound if available
+            if AUDIO_AVAILABLE and GAME_SETTINGS["effects_enabled"]:
+                audio.play_sound("menu_select")
+                
             ui.options_menu(console)
+            
         elif choice == "credits":
+            # Play menu selection sound if available
+            if AUDIO_AVAILABLE and GAME_SETTINGS["effects_enabled"]:
+                audio.play_sound("menu_select")
+                
             ui.display_credits(console)
+            
         elif choice == "quit":
+            # Play menu selection sound if available
+            if AUDIO_AVAILABLE and GAME_SETTINGS["effects_enabled"]:
+                audio.play_sound("menu_back")
+                
             ui.display_exit_message(console)
             sys.exit(0)
 

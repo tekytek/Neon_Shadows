@@ -38,7 +38,13 @@ GAME_SETTINGS = {
     "difficulty": "normal",  # easy, normal, hard
     "text_speed": "medium",  # slow, medium, fast
     "combat_animations": True,
-    "sound_effects": False,
+    
+    # Audio settings
+    "music_enabled": True,
+    "effects_enabled": True,
+    "music_volume": 0.5,    # 0.0 to 1.0
+    "effects_volume": 0.7,  # 0.0 to 1.0
+    
     "auto_save": False,
     "show_hints": True,
     "enable_ollama": USE_OLLAMA

@@ -76,12 +76,17 @@ def display_combat_status(console, player, enemy):
     console.print(table)
     console.print("-" * 60, style=f"{COLORS['primary']}")
 
-def run_combat(console, player, enemy, player_damage_multiplier=1.0, use_animations=True):
+def run_combat(console, player, enemy, player_damage_multiplier=1.0, use_animations=True, audio_system=None):
     """Run a complete combat encounter"""
     # Initialize combat
     turn = 1
     combat_active = True
     result = None
+    
+    # Play combat music if audio system is available
+    if audio_system:
+        audio_system.stop_music()
+        audio_system.play_music("cyberpunk_combat")
     
     while combat_active:
         # Clear screen and show status
@@ -130,6 +135,10 @@ def run_combat(console, player, enemy, player_damage_multiplier=1.0, use_animati
             # Apply damage to enemy
             actual_damage = enemy.take_damage(attack_damage)
             
+            # Play combat hit sound if audio system is available
+            if audio_system:
+                audio_system.play_sound("combat_hit")
+                
             console.print(f"[{COLORS['text']}]You attack {enemy.name} for [{COLORS['accent']}]{actual_damage}[/{COLORS['accent']}] damage![/{COLORS['text']}]")
             
             # Check if enemy is defeated
@@ -212,6 +221,10 @@ def run_combat(console, player, enemy, player_damage_multiplier=1.0, use_animati
             # Apply damage to player
             player.health = max(0, player.health - actual_damage)
             
+            # Play player damage sound if audio system is available
+            if audio_system:
+                audio_system.play_sound("player_damage")
+                
             console.print(f"[{COLORS['accent']}]{enemy.name} attacks you for {actual_damage} damage![/{COLORS['accent']}]")
             
             # Check if player is defeated
@@ -228,10 +241,32 @@ def run_combat(console, player, enemy, player_damage_multiplier=1.0, use_animati
     
     # Combat is over, show result message
     if result == "victory":
+        # Play victory sound
+        if audio_system:
+            audio_system.play_sound("combat_hit")  # Play hit sound again on final hit
+            time.sleep(0.3)
+            audio_system.play_sound("level_up")    # Use level up as victory fanfare
+            # Resume ambient music
+            audio_system.stop_music()
+            time.sleep(0.5)
+            audio_system.play_music("cyberpunk_ambient")
+            
         console.print(f"[{COLORS['primary']}]Victory! You defeated {enemy.name}.[/{COLORS['primary']}]")
     elif result == "defeat":
+        # Play defeat sound
+        if audio_system:
+            audio_system.play_sound("player_damage")  # Play damage sound on defeat
+            
         console.print(f"[{COLORS['accent']}]Defeat! {enemy.name} has defeated you.[/{COLORS['accent']}]")
     elif result == "escape":
+        # Sound for escape
+        if audio_system:
+            audio_system.play_sound("door_open")  # Use door sound for escape
+            # Resume ambient music
+            audio_system.stop_music()
+            time.sleep(0.5)
+            audio_system.play_music("cyberpunk_ambient")
+            
         console.print(f"[{COLORS['secondary']}]You escaped from {enemy.name}.[/{COLORS['secondary']}]")
     
     time.sleep(2)

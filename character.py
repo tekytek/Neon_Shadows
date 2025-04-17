@@ -7,6 +7,7 @@ from rich.console import Console
 
 import inventory
 from config import LEVEL_UP_BASE_XP
+from districts import ReputationSystem
 
 class Character:
     """Player character class with stats and inventory"""
@@ -76,7 +77,7 @@ class Character:
             'status_effects': self.status_effects
         }
     
-    def add_experience(self, amount):
+    def add_experience(self, amount, audio_system=None):
         """Add experience and handle level ups"""
         if amount <= 0:
             return
@@ -87,7 +88,13 @@ class Character:
         xp_for_next_level = LEVEL_UP_BASE_XP * (self.level * 1.5)
         
         if self.experience >= xp_for_next_level:
-            self.level_up()
+            level_up_info = self.level_up()
+            
+            # Play level up sound if audio system is available
+            if audio_system:
+                audio_system.play_sound("level_up")
+                
+            return level_up_info
     
     def level_up(self):
         """Handle character level up"""
@@ -107,10 +114,13 @@ class Character:
             'health_increase': health_increase
         }
     
-    def use_item(self, item_name, console):
+    def use_item(self, item_name, console, audio_system=None):
         """Use an item from inventory"""
         if not self.inventory.has_item(item_name):
             console.print(f"[red]You don't have {item_name}[/red]")
+            # Play error sound if available
+            if audio_system:
+                audio_system.play_sound("skill_failure")
             return False
         
         # Get item information
@@ -118,11 +128,17 @@ class Character:
         
         if not item_info:
             console.print(f"[red]Unknown item: {item_name}[/red]")
+            # Play error sound if available
+            if audio_system:
+                audio_system.play_sound("skill_failure")
             return False
         
         # Check if item is usable
         if not item_info.get('usable', False):
             console.print(f"[red]You can't use {item_name}[/red]")
+            # Play error sound if available
+            if audio_system:
+                audio_system.play_sound("skill_failure")
             return False
         
         # Process item effects
@@ -181,6 +197,20 @@ class Character:
         
         # Remove the item from inventory
         self.inventory.remove_item(item_name, 1)
+        
+        # Play appropriate sound effect if audio system is available
+        if audio_system:
+            # Select sound based on item type
+            if 'health' in effects:
+                audio_system.play_sound("item_pickup")  # Use pickup sound for healing items
+            elif 'special' in effects and effects['special'] == 'reveal_map':
+                audio_system.play_sound("skill_success")
+            elif 'special' in effects and effects['special'] == 'remove_status':
+                audio_system.play_sound("skill_success")
+            else:
+                # Default item use sound
+                audio_system.play_sound("item_pickup")
+                
         return True
     
     def apply_status_effects(self):

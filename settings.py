@@ -70,7 +70,13 @@ def reset_to_defaults():
     GAME_SETTINGS["difficulty"] = "normal"
     GAME_SETTINGS["text_speed"] = "medium"
     GAME_SETTINGS["combat_animations"] = True
-    GAME_SETTINGS["sound_effects"] = False
+    
+    # Audio settings
+    GAME_SETTINGS["music_enabled"] = True
+    GAME_SETTINGS["effects_enabled"] = True
+    GAME_SETTINGS["music_volume"] = 0.5
+    GAME_SETTINGS["effects_volume"] = 0.7
+    
     GAME_SETTINGS["auto_save"] = False
     GAME_SETTINGS["show_hints"] = True
     GAME_SETTINGS["enable_ollama"] = original_ollama_setting

@@ -168,11 +168,17 @@ def options_menu(console):
         table.add_row("1. Difficulty", GAME_SETTINGS["difficulty"].capitalize())
         table.add_row("2. Text Speed", GAME_SETTINGS["text_speed"].capitalize())
         table.add_row("3. Combat Animations", "Enabled" if GAME_SETTINGS["combat_animations"] else "Disabled")
-        table.add_row("4. Sound Effects", "Enabled" if GAME_SETTINGS["sound_effects"] else "Disabled")
-        table.add_row("5. Auto Save", "Enabled" if GAME_SETTINGS["auto_save"] else "Disabled")
-        table.add_row("6. Show Hints", "Enabled" if GAME_SETTINGS["show_hints"] else "Disabled")
-        table.add_row("7. Enable Ollama", "Enabled" if GAME_SETTINGS["enable_ollama"] else "Disabled")
-        table.add_row("8. Reset to Defaults", "")
+        
+        # Audio settings
+        table.add_row("4. Music", "Enabled" if GAME_SETTINGS["music_enabled"] else "Disabled")
+        table.add_row("5. Sound Effects", "Enabled" if GAME_SETTINGS["effects_enabled"] else "Disabled")
+        table.add_row("6. Music Volume", f"{int(GAME_SETTINGS['music_volume'] * 100)}%")
+        table.add_row("7. Sound Effects Volume", f"{int(GAME_SETTINGS['effects_volume'] * 100)}%")
+        
+        table.add_row("8. Auto Save", "Enabled" if GAME_SETTINGS["auto_save"] else "Disabled")
+        table.add_row("9. Show Hints", "Enabled" if GAME_SETTINGS["show_hints"] else "Disabled")
+        table.add_row("10. Enable Ollama", "Enabled" if GAME_SETTINGS["enable_ollama"] else "Disabled")
+        table.add_row("11. Reset to Defaults", "")
         table.add_row("0. Back to Main Menu", "")
         
         # Display the table
@@ -186,7 +192,7 @@ def options_menu(console):
         
         # Get user choice
         choice = Prompt.ask("[bold cyan]Select an option to change[/bold cyan]", 
-                          choices=["1", "2", "3", "4", "5", "6", "7", "8", "0"])
+                          choices=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "0"])
         
         if choice == "0":
             # Save settings before returning to menu
@@ -236,28 +242,126 @@ def options_menu(console):
             settings.update_setting("combat_animations", not GAME_SETTINGS["combat_animations"])
             
         elif choice == "4":
-            # Toggle sound effects
-            settings.update_setting("sound_effects", not GAME_SETTINGS["sound_effects"])
+            # Toggle music
+            settings.update_setting("music_enabled", not GAME_SETTINGS["music_enabled"])
+            # Call audio module function if available
+            try:
+                import audio
+                audio.toggle_music()
+            except (ImportError, AttributeError):
+                pass
             
         elif choice == "5":
+            # Toggle sound effects
+            settings.update_setting("effects_enabled", not GAME_SETTINGS["effects_enabled"])
+            # Call audio module function if available
+            try:
+                import audio
+                audio.toggle_effects()
+            except (ImportError, AttributeError):
+                pass
+                
+        elif choice == "6":
+            # Change music volume
+            clear_screen()
+            display_header(console, "MUSIC VOLUME")
+            
+            current_volume = int(GAME_SETTINGS["music_volume"] * 100)
+            console.print(f"[{COLORS['text']}]Current music volume: {current_volume}%[/{COLORS['text']}]")
+            
+            console.print(f"[{COLORS['secondary']}]Select new volume:[/{COLORS['secondary']}]")
+            console.print(f"[{COLORS['text']}]1. Mute (0%)[/{COLORS['text']}]")
+            console.print(f"[{COLORS['text']}]2. Low (25%)[/{COLORS['text']}]")
+            console.print(f"[{COLORS['text']}]3. Medium (50%)[/{COLORS['text']}]")
+            console.print(f"[{COLORS['text']}]4. High (75%)[/{COLORS['text']}]")
+            console.print(f"[{COLORS['text']}]5. Maximum (100%)[/{COLORS['text']}]")
+            
+            vol_choice = Prompt.ask("[bold cyan]Select volume level[/bold cyan]", choices=["1", "2", "3", "4", "5"])
+            
+            volume_levels = {
+                "1": 0.0,
+                "2": 0.25,
+                "3": 0.5,
+                "4": 0.75,
+                "5": 1.0
+            }
+            
+            settings.update_setting("music_volume", volume_levels[vol_choice])
+            
+            # Apply volume change if audio module is available
+            try:
+                import audio
+                audio.set_music_volume(volume_levels[vol_choice])
+            except (ImportError, AttributeError):
+                pass
+                
+        elif choice == "7":
+            # Change sound effects volume
+            clear_screen()
+            display_header(console, "SOUND EFFECTS VOLUME")
+            
+            current_volume = int(GAME_SETTINGS["effects_volume"] * 100)
+            console.print(f"[{COLORS['text']}]Current sound effects volume: {current_volume}%[/{COLORS['text']}]")
+            
+            console.print(f"[{COLORS['secondary']}]Select new volume:[/{COLORS['secondary']}]")
+            console.print(f"[{COLORS['text']}]1. Mute (0%)[/{COLORS['text']}]")
+            console.print(f"[{COLORS['text']}]2. Low (25%)[/{COLORS['text']}]")
+            console.print(f"[{COLORS['text']}]3. Medium (50%)[/{COLORS['text']}]")
+            console.print(f"[{COLORS['text']}]4. High (75%)[/{COLORS['text']}]")
+            console.print(f"[{COLORS['text']}]5. Maximum (100%)[/{COLORS['text']}]")
+            
+            vol_choice = Prompt.ask("[bold cyan]Select volume level[/bold cyan]", choices=["1", "2", "3", "4", "5"])
+            
+            volume_levels = {
+                "1": 0.0,
+                "2": 0.25,
+                "3": 0.5,
+                "4": 0.75,
+                "5": 1.0
+            }
+            
+            settings.update_setting("effects_volume", volume_levels[vol_choice])
+            
+            # Apply volume change if audio module is available
+            try:
+                import audio
+                audio.set_effects_volume(volume_levels[vol_choice])
+            except (ImportError, AttributeError):
+                pass
+            
+        elif choice == "8":
             # Toggle auto save
             settings.update_setting("auto_save", not GAME_SETTINGS["auto_save"])
             
-        elif choice == "6":
+        elif choice == "9":
             # Toggle hints
             settings.update_setting("show_hints", not GAME_SETTINGS["show_hints"])
             
-        elif choice == "7":
+        elif choice == "10":
             # Toggle Ollama integration
             new_value = not GAME_SETTINGS["enable_ollama"]
             settings.update_setting("enable_ollama", new_value)
             
             # The update_setting function will handle updating USE_OLLAMA in config.py
             
-        elif choice == "8":
+        elif choice == "11":
             # Reset to defaults
             if Prompt.ask("[bold red]Reset all settings to defaults?[/bold red]", choices=["y", "n"]) == "y":
                 settings.reset_to_defaults()
+                
+                # Apply audio settings if audio module is available
+                try:
+                    import audio
+                    audio.set_music_volume(GAME_SETTINGS["music_volume"])
+                    audio.set_effects_volume(GAME_SETTINGS["effects_volume"])
+                    
+                    if GAME_SETTINGS["music_enabled"]:
+                        audio.toggle_music()
+                    if GAME_SETTINGS["effects_enabled"]:
+                        audio.toggle_effects()
+                except (ImportError, AttributeError):
+                    pass
+                    
                 console.print(f"[{COLORS['text']}]Settings reset to defaults.[/{COLORS['text']}]")
                 time.sleep(1)
 
@@ -275,6 +379,7 @@ def display_credits(console):
     [{COLORS['secondary']}]Developed with:[/{COLORS['secondary']}]
     [{COLORS['text']}]- Python 3[/{COLORS['text']}]
     [{COLORS['text']}]- Rich library for terminal formatting[/{COLORS['text']}]
+    [{COLORS['text']}]- Pygame for audio playback[/{COLORS['text']}]
     [{COLORS['text']}]- Ollama for dynamic storytelling[/{COLORS['text']}]
     
     [{COLORS['primary']}]Thanks for playing![/{COLORS['primary']}]
