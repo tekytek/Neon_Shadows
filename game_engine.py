@@ -444,23 +444,46 @@ class GameEngine:
     def handle_combat(self, console, node):
         """Process a combat encounter"""
         from config import GAME_SETTINGS, DIFFICULTY_SETTINGS
+        import json
         
         enemy_data = node.get('enemy', {})
+        enemy_name = enemy_data.get('name', 'Unknown Enemy')
         
         # Get difficulty settings
         difficulty = GAME_SETTINGS.get("difficulty", "normal")
         difficulty_mods = DIFFICULTY_SETTINGS.get(difficulty, {})
-        
-        # Apply difficulty modifiers to enemy stats
         enemy_damage_mult = difficulty_mods.get("enemy_damage_multiplier", 1.0)
         
-        # Initialize the enemy with difficulty modifications
-        enemy = combat.Enemy(
-            name=enemy_data.get('name', 'Unknown Enemy'),
-            health=enemy_data.get('health', 10),
-            damage=int(enemy_data.get('damage', 2) * enemy_damage_mult),
-            defense=enemy_data.get('defense', 1)
-        )
+        # Load enemies data from JSON file
+        enemies_data = {}
+        try:
+            with open("data/enemies.json", "r") as f:
+                enemies_data = json.load(f)
+        except (json.JSONDecodeError, FileNotFoundError) as e:
+            console.print(f"[red]Warning: Could not load enemies data: {e}[/red]")
+        
+        # Check if enemy exists in the JSON data
+        if enemy_name in enemies_data:
+            # Create enemy from JSON data
+            enemy_json_data = enemies_data[enemy_name]
+            
+            # Apply difficulty modifiers to stats from JSON
+            modified_data = enemy_json_data.copy()
+            modified_data["damage"] = int(modified_data.get("damage", 2) * enemy_damage_mult)
+            
+            # Create the enemy instance using the from_enemy_data method
+            enemy = combat.Enemy.from_enemy_data(enemy_name, modified_data)
+            console.print(f"[green]Loaded enemy data for {enemy_name} from enemies.json[/green]")
+        else:
+            # Fallback to node data if enemy not found in JSON
+            console.print(f"[yellow]Warning: Enemy {enemy_name} not found in enemies.json, using node data[/yellow]")
+            enemy = combat.Enemy(
+                name=enemy_name,
+                health=enemy_data.get('health', 10),
+                damage=int(enemy_data.get('damage', 2) * enemy_damage_mult),
+                defense=enemy_data.get('defense', 1),
+                enemy_type=enemy_data.get('type', 'standard')
+            )
         
         # Display combat intro
         ui.clear_screen()
@@ -698,24 +721,68 @@ class GameEngine:
     
     def handle_travel_encounter(self, console, danger_level):
         """Handle random encounters that can occur during district travel"""
+        import json
+        
         encounter_types = ["combat", "skill_check", "find"]
         weights = [0.6, 0.3, 0.1]  # 60% combat, 30% skill check, 10% find something
         
         encounter_type = random.choices(encounter_types, weights=weights, k=1)[0]
         
         if encounter_type == "combat":
-            # Create an appropriate enemy based on danger level
-            enemy_types = [
-                {"name": "Street Thug", "health": 8, "damage": 2, "defense": 1},  # Level 1
-                {"name": "Gang Member", "health": 12, "damage": 3, "defense": 2},  # Level 2
-                {"name": "Cyborg Enforcer", "health": 18, "damage": 4, "defense": 3},  # Level 3
-                {"name": "Rogue Security Bot", "health": 25, "damage": 5, "defense": 4},  # Level 4
-                {"name": "Corporate Assassin", "health": 35, "damage": 7, "defense": 5}   # Level 5
-            ]
-            
-            # Adjust index to valid range (0-4)
-            enemy_idx = min(max(danger_level - 1, 0), 4)
-            enemy_data = enemy_types[enemy_idx]
+            # Load enemies from JSON file
+            enemies_data = {}
+            try:
+                with open("data/enemies.json", "r") as f:
+                    enemies_data = json.load(f)
+            except (json.JSONDecodeError, FileNotFoundError) as e:
+                console.print(f"[red]Warning: Could not load enemies data: {e}[/red]")
+                # Fallback enemy types if JSON fails
+                enemy_types = [
+                    {"name": "Street Thug", "health": 8, "damage": 2, "defense": 1},  # Level 1
+                    {"name": "Gang Member", "health": 12, "damage": 3, "defense": 2},  # Level 2
+                    {"name": "Cyborg Enforcer", "health": 18, "damage": 4, "defense": 3},  # Level 3
+                    {"name": "Rogue Security Bot", "health": 25, "damage": 5, "defense": 4},  # Level 4
+                    {"name": "Corporate Assassin", "health": 35, "damage": 7, "defense": 5}   # Level 5
+                ]
+                enemy_idx = min(max(danger_level - 1, 0), 4)
+                enemy_data = enemy_types[enemy_idx]
+            else:
+                # Group enemies by danger level (approximated by health and damage)
+                danger_level_enemies = {
+                    1: [],  # Low danger
+                    2: [],  # Medium-low danger
+                    3: [],  # Medium danger
+                    4: [],  # Medium-high danger
+                    5: []   # High danger
+                }
+                
+                # Categorize enemies by their stats
+                for enemy_name, enemy_info in enemies_data.items():
+                    # Calculate approximate danger level
+                    health = enemy_info.get("health", 10)
+                    damage = enemy_info.get("damage", 3)
+                    defense = enemy_info.get("defense", 1)
+                    
+                    # Simple formula to determine danger level (1-5)
+                    estimated_danger = min(5, max(1, int((health / 10) + (damage / 2) + (defense / 2))))
+                    
+                    # Add to appropriate category
+                    danger_level_enemies[estimated_danger].append(enemy_name)
+                
+                # Select enemy from appropriate danger level or fall back to lower levels if needed
+                for level in range(danger_level, 0, -1):
+                    if danger_level_enemies[level]:
+                        # Randomly select an enemy from this danger level
+                        enemy_name = random.choice(danger_level_enemies[level])
+                        enemy_data = {"name": enemy_name}
+                        console.print(f"[green]Using enemy '{enemy_name}' from enemies.json.[/green]")
+                        break
+                else:
+                    # Fallback if no enemies found
+                    enemy_fallback_types = ["Street Thug", "Mercenary", "Corporate Security Guard", "Cyber-Dog"]
+                    enemy_name = random.choice(enemy_fallback_types)
+                    enemy_data = {"name": enemy_name}
+                    console.print(f"[yellow]No suitable enemies found for danger level {danger_level}, using fallback.[/yellow]")
             
             # Create a combat node
             combat_node = {

@@ -135,7 +135,17 @@ def main_menu(console):
     console.print(Panel(menu_text, title=f"[{COLORS['secondary']}]MAIN MENU[/{COLORS['secondary']}]"))
     
     # Get user choice
-    choice = Prompt.ask("[bold green]Select an option[/bold green]", choices=["1", "2", "3", "4", "5"])
+    choice = Prompt.ask("[bold green]Select an option[/bold green]")
+    
+    # Check for dev mode activation
+    if choice.lower() == "dev":
+        return "dev_mode"
+    
+    # Validate numeric choices
+    if choice not in ["1", "2", "3", "4", "5"]:
+        console.print("[bold red]Invalid option. Please try again.[/bold red]")
+        time.sleep(1)
+        return main_menu(console)
     
     # Convert numeric choice to action
     actions = {

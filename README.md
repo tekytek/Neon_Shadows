@@ -463,6 +463,63 @@ The game integrates with Ollama, a local large language model, to dynamically ge
 ### Fallback Mechanism
 If Ollama is unavailable or disabled, the game falls back to predefined story content from the JSON files.
 
+## Developer Mode
+
+The game includes a hidden developer mode that allows for quick testing and game state manipulation. This is useful for testing different parts of the game without having to play through the entire game.
+
+### Accessing Developer Mode
+
+To access the developer mode:
+1. Start the game and wait for the main menu to appear
+2. Type `dev` at the menu prompt (instead of selecting a menu option by number)
+3. This will open the Developer Tools menu
+
+### Developer Tools Features
+
+The Developer Tools menu provides the following options:
+
+1. **Quick Character Creator**
+   - Create test characters quickly with predefined templates
+   - Options include:
+     - NetRunner (High Intelligence)
+     - Solo (High Strength)
+     - Fixer (High Charisma)
+     - Custom Character (set your own stats)
+
+2. **Test Map Navigation**
+   - Jump directly to the map screen to test district travel
+   - Explore different districts without progressing through the story
+
+3. **Test Combat**
+   - Start combat encounters with enemies of varying difficulty
+   - Test combat mechanics, item usage, and rewards
+
+4. **Test Inventory**
+   - Access the inventory management screen
+   - Test item usage and management
+
+5. **Add Credits**
+   - Add currency to your character for testing shop interactions
+
+6. **Add Items**
+   - Add specific items to your inventory
+   - Choose from a predefined list of common items
+
+7. **Level Up**
+   - Add experience points to level up your character
+   - Test stat point allocation and level-up mechanics
+
+8. **Set Reputation**
+   - Modify your character's reputation in different districts
+   - Test how reputation affects interactions and prices
+
+### Developer Mode Usage Notes
+
+- Developer mode is intended for testing only and may affect game balance
+- Saves created while using developer mode are compatible with normal gameplay
+- Changes made in developer mode are persistent
+- To exit developer mode, select "Return to Main Menu"
+
 ## Future Enhancements
 
 Potential future enhancements to the game:
@@ -473,6 +530,7 @@ Potential future enhancements to the game:
 5. More sophisticated dynamic content generation
 6. Options menu with gameplay customization
 7. Visual enhancements and sound effects
+8. Expanded developer tools with more testing options
 
 ## License
 

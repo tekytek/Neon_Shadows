@@ -253,5 +253,107 @@
     "effects": {
       "stats": {"strength": 2}
     }
+  },
+  "Combat Stims": {
+    "description": "Tactical combat stimulant that enhances focus and critical hit chance.",
+    "type": "consumable",
+    "usable": true,
+    "usable_in_combat": true,
+    "effects": {
+      "special": "focused",
+      "duration": 3
+    }
+  },
+  "Ballistic Shield": {
+    "description": "Portable energy shield that provides significant protection. Enhances defensive stance.",
+    "type": "equipment",
+    "usable": true,
+    "usable_in_combat": true,
+    "effects": {
+      "special": "protected",
+      "duration": 3
+    }
+  },
+  "Tactical Scanner": {
+    "description": "Combat analysis device that reveals enemy weaknesses and resistances.",
+    "type": "equipment",
+    "usable": true,
+    "usable_in_combat": true,
+    "effects": {
+      "special": "analyze_enemy",
+      "duration": 1
+    }
+  },
+  "Smoke Grenade": {
+    "description": "Dense smoke cloud that provides temporary cover in combat.",
+    "type": "consumable",
+    "usable": true,
+    "usable_in_combat": true,
+    "effects": {
+      "special": "create_cover",
+      "duration": 2
+    }
+  },
+  "Mono-filament Blade": {
+    "description": "Molecularly-sharpened blade that can cut through most armor. Causes bleeding damage.",
+    "type": "weapon",
+    "usable": true,
+    "usable_in_combat": true,
+    "effects": {
+      "special": "cause_bleeding",
+      "duration": 3
+    }
+  },
+  "Portable Cover": {
+    "description": "Deployable barrier that provides medium cover in combat situations.",
+    "type": "equipment",
+    "usable": true,
+    "usable_in_combat": true,
+    "effects": {
+      "special": "deploy_cover",
+      "cover_type": "medium",
+      "duration": 5
+    }
+  },
+  "Combat Drone": {
+    "description": "Small combat drone that attacks enemies automatically each turn.",
+    "type": "equipment",
+    "usable": true,
+    "usable_in_combat": true,
+    "effects": {
+      "special": "deploy_drone",
+      "drone_damage": 3,
+      "duration": 3
+    }
+  },
+  "Cybernetic Implant": {
+    "description": "Advanced combat implant that enhances physical capabilities.",
+    "type": "augmentation",
+    "usable": false,
+    "permanent": true,
+    "effects": {
+      "stats": {"strength": 1, "reflex": 1}
+    }
+  },
+  "Weakness Analyzer": {
+    "description": "Specialized scanner that analyzes and exploits enemy vulnerabilities.",
+    "type": "equipment",
+    "usable": true,
+    "usable_in_combat": true,
+    "effects": {
+      "special": "vulnerability",
+      "duration": 3
+    }
+  },
+  "Reinforcement Patch": {
+    "description": "Emergency reinforcement for armor and defensive systems.",
+    "type": "consumable",
+    "usable": true,
+    "usable_in_combat": true,
+    "effects": {
+      "special": "reinforced",
+      "defense_boost": 3,
+      "duration": 3
+    }
   }
 }

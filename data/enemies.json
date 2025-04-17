@@ -4,6 +4,9 @@
     "health": 15,
     "damage": 3,
     "defense": 2,
+    "enemy_type": "standard",
+    "weaknesses": ["hacking", "stealth"],
+    "resistances": [],
     "experience_reward": 75,
     "credit_reward": 30,
     "loot_table": {
@@ -17,6 +20,9 @@
     "health": 12,
     "damage": 4,
     "defense": 1,
+    "enemy_type": "berserker",
+    "weaknesses": ["tactics", "tech"],
+    "resistances": [],
     "experience_reward": 50,
     "credit_reward": 20,
     "loot_table": {
@@ -29,6 +35,9 @@
     "health": 30,
     "damage": 6,
     "defense": 3,
+    "enemy_type": "berserker",
+    "weaknesses": ["hacking", "emp"],
+    "resistances": ["physical"],
     "experience_reward": 150,
     "credit_reward": 50,
     "loot_table": {
@@ -42,6 +51,9 @@
     "health": 25,
     "damage": 5,
     "defense": 4,
+    "enemy_type": "tank",
+    "weaknesses": ["hacking", "emp"],
+    "resistances": ["physical"],
     "experience_reward": 120,
     "credit_reward": 45,
     "loot_table": {
@@ -56,6 +68,9 @@
     "health": 18,
     "damage": 4,
     "defense": 5,
+    "enemy_type": "tactician",
+    "weaknesses": ["hacking", "emp"],
+    "resistances": ["poison", "bleeding"],
     "experience_reward": 90,
     "credit_reward": 10,
     "loot_table": {
@@ -68,6 +83,9 @@
     "health": 15,
     "damage": 3,
     "defense": 2,
+    "enemy_type": "standard",
+    "weaknesses": ["physical"],
+    "resistances": ["poison"],
     "experience_reward": 80,
     "credit_reward": 60,
     "loot_table": {
@@ -81,6 +99,9 @@
     "health": 14,
     "damage": 5,
     "defense": 2,
+    "enemy_type": "tactician",
+    "weaknesses": ["physical", "stealth"],
+    "resistances": ["hacking"],
     "experience_reward": 100,
     "credit_reward": 40,
     "loot_table": {
@@ -94,6 +115,9 @@
     "health": 35,
     "damage": 7,
     "defense": 6,
+    "enemy_type": "tank",
+    "weaknesses": ["emp", "hacking"],
+    "resistances": ["poison", "bleeding", "physical"],
     "experience_reward": 200,
     "credit_reward": 25,
     "loot_table": {
@@ -106,6 +130,9 @@
     "health": 20,
     "damage": 8,
     "defense": 3,
+    "enemy_type": "rogue",
+    "weaknesses": ["tech", "tactics"],
+    "resistances": ["stealth"],
     "experience_reward": 180,
     "credit_reward": 75,
     "loot_table": {
@@ -119,6 +146,9 @@
     "health": 28,
     "damage": 6,
     "defense": 3,
+    "enemy_type": "berserker",
+    "weaknesses": ["stealth", "hacking"],
+    "resistances": ["physical"],
     "experience_reward": 160,
     "credit_reward": 65,
     "loot_table": {
@@ -132,6 +162,9 @@
     "health": 12,
     "damage": 2,
     "defense": 1,
+    "enemy_type": "standard",
+    "weaknesses": ["physical"],
+    "resistances": ["poison"],
     "experience_reward": 70,
     "credit_reward": 55,
     "loot_table": {
@@ -145,6 +178,9 @@
     "health": 22,
     "damage": 5,
     "defense": 3,
+    "enemy_type": "tactician",
+    "weaknesses": ["stealth", "hacking"],
+    "resistances": ["tactics"],
     "experience_reward": 110,
     "credit_reward": 50,
     "loot_table": {
@@ -158,6 +194,9 @@
     "health": 10,
     "damage": 2,
     "defense": 1,
+    "enemy_type": "standard",
+    "weaknesses": ["physical", "stealth"],
+    "resistances": ["hacking"],
     "experience_reward": 60,
     "credit_reward": 40,
     "loot_table": {
@@ -171,6 +210,9 @@
     "health": 16,
     "damage": 4,
     "defense": 2,
+    "enemy_type": "berserker",
+    "weaknesses": ["emp", "hacking"],
+    "resistances": ["poison"],
     "experience_reward": 70,
     "credit_reward": 0,
     "loot_table": {}
@@ -180,10 +222,61 @@
     "health": 25,
     "damage": 6,
     "defense": 8,
+    "enemy_type": "tactician",
+    "weaknesses": ["hacking", "emp"],
+    "resistances": ["stealth", "physical", "poison", "bleeding"],
     "experience_reward": 90,
     "credit_reward": 0,
     "loot_table": {
       "Memory Shard": 0.2
+    }
+  },
+  "Street Samurai": {
+    "description": "Heavily augmented mercenary with integrated combat systems and cybernetic reflexes.",
+    "health": 32,
+    "damage": 7,
+    "defense": 4,
+    "enemy_type": "rogue",
+    "weaknesses": ["emp", "hacking"],
+    "resistances": ["physical", "tactics"],
+    "experience_reward": 190,
+    "credit_reward": 80,
+    "loot_table": {
+      "Heavy Pistol": 0.5,
+      "Cybernetic Implant": 0.3,
+      "Synth-Adrenaline": 0.6
+    }
+  },
+  "Corporate Executive": {
+    "description": "High-ranking corporate official with expensive augmentations and personal security systems.",
+    "health": 15,
+    "damage": 3,
+    "defense": 3,
+    "enemy_type": "standard",
+    "weaknesses": ["physical", "stealth"],
+    "resistances": ["hacking"],
+    "experience_reward": 100,
+    "credit_reward": 150,
+    "loot_table": {
+      "Encrypted Datapad": 0.7,
+      "Credchip": 0.9,
+      "Security Keycard": 0.8
+    }
+  },
+  "Ripperdoc Gone Mad": {
+    "description": "Cybernetic surgeon who's lost their mind and grafted combat augmentations to their own body.",
+    "health": 26,
+    "damage": 5,
+    "defense": 3,
+    "enemy_type": "berserker",
+    "weaknesses": ["emp", "hacking"],
+    "resistances": ["physical", "poison", "bleeding"],
+    "experience_reward": 150,
+    "credit_reward": 70,
+    "loot_table": {
+      "Cybernetic Implant": 0.7,
+      "Med Nanites": 0.8,
+      "Neural Booster": 0.5
     }
   }
 }

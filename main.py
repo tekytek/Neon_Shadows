@@ -94,6 +94,20 @@ def main():
                 
             ui.display_credits(console)
             
+        elif choice == "dev_mode":
+            # Play special sound if available
+            if AUDIO_AVAILABLE and GAME_SETTINGS["effects_enabled"]:
+                audio.play_sound("menu_select")
+                
+            # Show developer tools
+            import dev_tools
+            
+            # Create game engine for developer tools
+            game = game_engine.GameEngine()
+            
+            # Show developer tools menu
+            dev_tools.dev_menu(console, game)
+            
         elif choice == "quit":
             # Play menu selection sound if available
             if AUDIO_AVAILABLE and GAME_SETTINGS["effects_enabled"]:

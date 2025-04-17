@@ -40,6 +40,29 @@ class Character:
         
         # Reputation system
         self.reputation = ReputationSystem()
+        
+        # Combat related attributes
+        self.combat_stance = "offensive"  # Default stance: offensive, defensive, tactical, stealth
+        self.current_cover = "none"       # Current cover level: none, light, medium, heavy
+        
+        # Special abilities cooldowns (turns remaining)
+        self.ability_cooldowns = {}
+        
+        # Active effects (drones, temporary buffs, etc.)
+        self.active_effects = {
+            "drone_damage": 0,      # Extra damage from deployed drone
+            "drone_turns": 0,       # Turns remaining for drone
+            "analyzed_enemy": None, # Enemy that has been analyzed
+            "focus_bonus": 0,       # Critical hit chance bonus
+            "defense_bonus": 0      # Bonus to defense value
+        }
+        
+        # Weaknesses and resistances (for advanced combat)
+        self.weaknesses = []
+        self.resistances = []
+        
+        # Initialize special abilities based on character class
+        self._init_class_abilities()
     
     @classmethod
     def from_dict(cls, data):
@@ -66,6 +89,19 @@ class Character:
         # Load reputation
         if 'reputation' in data:
             character.reputation = ReputationSystem.from_dict(data.get('reputation', {}))
+            
+        # Load combat related attributes
+        character.combat_stance = data.get('combat_stance', 'offensive')
+        character.current_cover = data.get('current_cover', 'none')
+        character.ability_cooldowns = data.get('ability_cooldowns', {})
+        character.active_effects = data.get('active_effects', {
+            'drone_damage': 0,
+            'drone_turns': 0,
+            'analyzed_enemy': None
+        })
+        
+        # Re-initialize abilities in case the character class has new ones
+        character._init_class_abilities()
         
         return character
     
@@ -82,7 +118,11 @@ class Character:
             'credits': self.credits,
             'inventory': self.inventory.to_dict(),
             'status_effects': self.status_effects,
-            'reputation': self.reputation.to_dict()
+            'reputation': self.reputation.to_dict(),
+            'combat_stance': self.combat_stance,
+            'current_cover': self.current_cover,
+            'ability_cooldowns': self.ability_cooldowns,
+            'active_effects': self.active_effects
         }
     
     def add_experience(self, amount, audio_system=None):
@@ -270,3 +310,222 @@ class Character:
             'modified_stats': stats_modified,
             'expired_effects': expired_effects
         }
+        
+    def _init_class_abilities(self):
+        """Initialize class-specific abilities based on character class"""
+        # Import the abilities configuration
+        from combat import CLASS_ABILITIES
+        
+        # Check if the character class has defined abilities
+        if self.char_class in CLASS_ABILITIES:
+            # Get abilities for this class
+            class_abilities = CLASS_ABILITIES[self.char_class]
+            
+            # Initialize cooldowns to 0 (ready to use)
+            for ability_id in class_abilities:
+                self.ability_cooldowns[ability_id] = 0
+                
+    def get_available_abilities(self):
+        """Get list of abilities available to the character that are not on cooldown"""
+        # Import the abilities configuration
+        from combat import CLASS_ABILITIES
+        
+        available_abilities = {}
+        
+        # Check if the character class has defined abilities
+        if self.char_class in CLASS_ABILITIES:
+            # Get abilities for this class
+            class_abilities = CLASS_ABILITIES[self.char_class]
+            
+            # Add abilities that are not on cooldown
+            for ability_id, ability_data in class_abilities.items():
+                if self.ability_cooldowns.get(ability_id, 0) <= 0:
+                    available_abilities[ability_id] = ability_data
+        
+        return available_abilities
+    
+    def use_ability(self, ability_id, target=None, console=None, audio_system=None):
+        """Use a special ability and put it on cooldown
+        
+        Args:
+            ability_id (str): ID of the ability to use
+            target (Enemy, optional): Target of the ability
+            console (Console, optional): Console for output
+            audio_system (AudioSystem, optional): Audio system for sound effects
+            
+        Returns:
+            dict: Results of the ability use
+        """
+        # Import the abilities configuration
+        from combat import CLASS_ABILITIES
+        
+        # Check if the character class has this ability
+        if self.char_class not in CLASS_ABILITIES:
+            if console:
+                console.print(f"[red]Your class doesn't have special abilities[/red]")
+            return {"success": False, "message": "No abilities for this class"}
+        
+        class_abilities = CLASS_ABILITIES[self.char_class]
+        
+        # Check if the ability exists
+        if ability_id not in class_abilities:
+            if console:
+                console.print(f"[red]Unknown ability: {ability_id}[/red]")
+            return {"success": False, "message": "Unknown ability"}
+        
+        # Check if the ability is on cooldown
+        if self.ability_cooldowns.get(ability_id, 0) > 0:
+            if console:
+                console.print(f"[red]Ability {class_abilities[ability_id]['name']} is on cooldown for {self.ability_cooldowns[ability_id]} more turns[/red]")
+            return {"success": False, "message": "Ability on cooldown"}
+        
+        # Use the ability
+        ability = class_abilities[ability_id]
+        result = {"success": True, "effects": {}}
+        
+        # Play sound effect if available
+        if audio_system:
+            audio_system.play_sound("skill_success")
+        
+        # Process ability effects
+        if "damage_multiplier" in ability:
+            # Calculate base damage from strength
+            base_damage = self.stats.get("strength", 3)
+            damage = int(base_damage * ability["damage_multiplier"])
+            result["effects"]["damage"] = damage
+            
+            if console:
+                console.print(f"[green]Used {ability['name']} for {damage} damage![/green]")
+        
+        if "attacks" in ability:
+            # Multiple attacks
+            attacks = ability["attacks"]
+            damage_mult = ability.get("damage_multiplier", 0.5)
+            base_damage = self.stats.get("strength", 3)
+            damage_per_hit = int(base_damage * damage_mult)
+            
+            result["effects"]["multi_attack"] = {
+                "hits": attacks,
+                "damage_per_hit": damage_per_hit
+            }
+            
+            if console:
+                console.print(f"[green]Used {ability['name']} for {attacks} attacks of {damage_per_hit} damage each![/green]")
+        
+        if "self_heal" in ability:
+            # Heal the player
+            heal_amount = ability["self_heal"]
+            old_health = self.health
+            self.health = min(self.max_health, self.health + heal_amount)
+            actual_heal = self.health - old_health
+            
+            result["effects"]["heal"] = actual_heal
+            
+            if console:
+                console.print(f"[green]Used {ability['name']} to heal for {actual_heal} health![/green]")
+        
+        if "status_effect" in ability:
+            # Apply status effect to enemy
+            status = ability["status_effect"]
+            result["effects"]["status"] = status
+            
+            if console:
+                console.print(f"[green]Used {ability['name']} to apply {status} status![/green]")
+        
+        if "defense_boost" in ability:
+            # Apply defense boost as a status effect
+            boost = ability["defense_boost"]
+            duration = ability.get("duration", 3)
+            
+            # Add status effect
+            effect_id = f"defense_boost_{time.time()}"
+            self.status_effects[effect_id] = {
+                'type': 'defense_boost',
+                'value': boost,
+                'duration': duration,
+                'applied_at': time.time()
+            }
+            
+            result["effects"]["defense_boost"] = boost
+            
+            if console:
+                console.print(f"[green]Used {ability['name']} to boost defense by {boost} for {duration} turns![/green]")
+        
+        if "reveal_weakness" in ability:
+            # Mark enemy as analyzed
+            if target:
+                self.active_effects["analyzed_enemy"] = target.name
+                target.analyzed = True
+                
+                if console:
+                    console.print(f"[green]Used {ability['name']} to reveal {target.name}'s weaknesses![/green]")
+                
+                result["effects"]["analyzed"] = True
+        
+        if "bonus_damage" in ability and "duration" in ability:
+            # Deploy a drone or similar effect that deals damage each turn
+            damage = ability["bonus_damage"]
+            duration = ability["duration"]
+            
+            self.active_effects["drone_damage"] = damage
+            self.active_effects["drone_turns"] = duration
+            
+            result["effects"]["drone"] = {
+                "damage": damage,
+                "duration": duration
+            }
+            
+            if console:
+                console.print(f"[green]Used {ability['name']} to deploy a drone that will deal {damage} damage for {duration} turns![/green]")
+        
+        if "self_damage" in ability:
+            # Ability that hurts the player
+            damage = ability["self_damage"]
+            self.health = max(0, self.health - damage)
+            
+            result["effects"]["self_damage"] = damage
+            
+            if console:
+                console.print(f"[red]{ability['name']} caused you to take {damage} damage![/red]")
+        
+        if "escape_boost" in ability:
+            # Boost escape chance
+            result["effects"]["escape_boost"] = ability["escape_boost"]
+            
+            if console:
+                console.print(f"[green]Used {ability['name']} to increase escape chance![/green]")
+        
+        # Set cooldown
+        cooldown = ability.get("cooldown", 3)
+        self.ability_cooldowns[ability_id] = cooldown
+        
+        # Return the results
+        return result
+    
+    def process_combat_effects(self):
+        """Process combat-specific effects at the start of the player's turn"""
+        results = {
+            "messages": [],
+            "drone_damage": 0
+        }
+        
+        # Check for drone damage
+        if self.active_effects["drone_turns"] > 0:
+            drone_damage = self.active_effects["drone_damage"]
+            self.active_effects["drone_turns"] -= 1
+            
+            if self.active_effects["drone_turns"] <= 0:
+                self.active_effects["drone_damage"] = 0
+                results["messages"].append("Your combat drone has deactivated")
+            else:
+                results["messages"].append(f"Your combat drone is active for {self.active_effects['drone_turns']} more turns")
+                results["drone_damage"] = drone_damage
+        
+        # Reduce ability cooldowns
+        for ability_id in list(self.ability_cooldowns.keys()):
+            if self.ability_cooldowns[ability_id] > 0:
+                self.ability_cooldowns[ability_id] -= 1
+                if self.ability_cooldowns[ability_id] <= 0:
+                    results["messages"].append(f"Ability {ability_id} is ready to use again")
+        
+        return results
