@@ -4,63 +4,176 @@
     "name": "Downtown",
     "description": "The heart of the city, towering skyscrapers and corporate headquarters. High security, but opportunities for those who know where to look.",
     "danger_level": 3,
-    "available_shops": [],
-    "available_quests": [],
+    "available_shops": ["tech_market", "general_store"],
+    "available_quests": ["corporate_espionage", "data_courier"],
     "connected_districts": [
       "industrial",
-      "residential"
+      "residential",
+      "nightmarket",
+      "corporate"
     ],
-    "ascii_art": "downtown"
+    "location_choices": [
+      {"id": "visit_bar", "text": "Visit the Neon Dragon Bar", "type": "social"},
+      {"id": "hack_public_terminal", "text": "Hack a public terminal", "type": "tech"},
+      {"id": "corporate_job", "text": "Look for corporate contract work", "type": "job"}
+    ],
+    "ascii_art": "downtown",
+    "map_position": {"x": 2, "y": 2}
   },
   {
     "district_id": "industrial",
     "name": "Industrial Zone",
     "description": "Factories and warehouses dominate this polluted district. Home to smugglers and underground operations.",
     "danger_level": 4,
-    "available_shops": [],
-    "available_quests": [],
+    "available_shops": ["black_market", "tech_salvage"],
+    "available_quests": ["factory_heist", "gang_war"],
     "connected_districts": [
       "downtown",
-      "outskirts"
+      "outskirts",
+      "nightmarket"
     ],
-    "ascii_art": "industrial"
+    "location_choices": [
+      {"id": "scavenge_parts", "text": "Scavenge for tech parts", "type": "resource"},
+      {"id": "smuggler_contact", "text": "Meet with smuggler contact", "type": "criminal"},
+      {"id": "gang_territory", "text": "Navigate gang territory", "type": "combat"}
+    ],
+    "ascii_art": "industrial",
+    "map_position": {"x": 3, "y": 1}
   },
   {
     "district_id": "residential",
     "name": "Residential Sector",
     "description": "Dense apartment blocks where most of the city's population lives. Varying levels of safety depending on the block.",
     "danger_level": 2,
-    "available_shops": [],
-    "available_quests": [],
+    "available_shops": ["corner_store", "medical_clinic"],
+    "available_quests": ["missing_person", "tenant_troubles"],
     "connected_districts": [
       "downtown",
-      "outskirts"
+      "outskirts",
+      "entertainment"
     ],
-    "ascii_art": "residential"
+    "location_choices": [
+      {"id": "visit_apartment", "text": "Return to your apartment", "type": "rest"},
+      {"id": "local_gossip", "text": "Gather local gossip", "type": "info"},
+      {"id": "help_neighbor", "text": "Help a neighbor in trouble", "type": "social"}
+    ],
+    "ascii_art": "residential",
+    "map_position": {"x": 1, "y": 3}
   },
   {
     "district_id": "outskirts",
     "name": "City Outskirts",
     "description": "The fringe of the city, lawless and dangerous. Only the desperate or the powerful venture here willingly.",
     "danger_level": 5,
-    "available_shops": [],
-    "available_quests": [],
+    "available_shops": ["illegal_cyberware", "weapons_dealer"],
+    "available_quests": ["wasteland_expedition", "gang_takedown"],
     "connected_districts": [
       "industrial",
-      "residential"
+      "residential",
+      "wasteland"
     ],
-    "ascii_art": "outskirts"
+    "location_choices": [
+      {"id": "scavenger_hunt", "text": "Join a scavenger hunt", "type": "resource"},
+      {"id": "illegal_cyberware", "text": "Purchase illegal cyberware", "type": "upgrade"},
+      {"id": "gang_confrontation", "text": "Confront a dangerous gang", "type": "combat"}
+    ],
+    "ascii_art": "outskirts",
+    "map_position": {"x": 0, "y": 4}
   },
   {
     "district_id": "corporate",
     "name": "Corporate Sector",
     "description": "The pristine and heavily guarded zone where the elite live and work. Access is strictly controlled.",
     "danger_level": 1,
-    "available_shops": [],
-    "available_quests": [],
+    "available_shops": ["high_end_tech", "luxury_goods"],
+    "available_quests": ["corporate_infiltration", "vip_escort"],
     "connected_districts": [
-      "downtown"
+      "downtown",
+      "upscale"
     ],
-    "ascii_art": "corporate"
+    "location_choices": [
+      {"id": "corporate_infiltration", "text": "Infiltrate a corporate building", "type": "stealth"},
+      {"id": "elite_networking", "text": "Network with corporate elites", "type": "social"},
+      {"id": "security_bypass", "text": "Bypass advanced security systems", "type": "tech"}
+    ],
+    "ascii_art": "corporate",
+    "map_position": {"x": 3, "y": 3}
+  },
+  {
+    "district_id": "nightmarket",
+    "name": "Night Market",
+    "description": "A vibrant, crowded marketplace that comes alive after dark. Every item imaginable can be found here - legal or otherwise.",
+    "danger_level": 3,
+    "available_shops": ["streetfood_vendor", "tech_stall", "black_market_dealer"],
+    "available_quests": ["stolen_goods", "market_protection"],
+    "connected_districts": [
+      "downtown",
+      "industrial",
+      "entertainment"
+    ],
+    "location_choices": [
+      {"id": "haggle_items", "text": "Haggle for unusual items", "type": "shopping"},
+      {"id": "food_stalls", "text": "Sample exotic street food", "type": "social"},
+      {"id": "pickpocket", "text": "Practice your pickpocketing skills", "type": "criminal"}
+    ],
+    "ascii_art": "market",
+    "map_position": {"x": 2, "y": 1}
+  },
+  {
+    "district_id": "entertainment",
+    "name": "Entertainment District",
+    "description": "Neon lights and pulsing music fill this district of clubs, casinos, and virtual reality arcades. Pleasure and vice of all kinds await.",
+    "danger_level": 2,
+    "available_shops": ["club_merch", "vr_arcade", "designer_drugs"],
+    "available_quests": ["celebrity_bodyguard", "club_infiltration"],
+    "connected_districts": [
+      "residential",
+      "nightmarket",
+      "upscale"
+    ],
+    "location_choices": [
+      {"id": "vr_gaming", "text": "Compete in VR championships", "type": "recreation"},
+      {"id": "club_connections", "text": "Make connections at an exclusive club", "type": "social"},
+      {"id": "gambling", "text": "Try your luck at the neon casino", "type": "chance"}
+    ],
+    "ascii_art": "bar_exterior",
+    "map_position": {"x": 1, "y": 2}
+  },
+  {
+    "district_id": "upscale",
+    "name": "Upscale District",
+    "description": "Clean streets and modernist architecture define this affluent area. Home to successful freelancers, corporate managers, and anyone who's made it big enough to afford real safety.",
+    "danger_level": 1,
+    "available_shops": ["boutique_cybernetics", "fine_dining", "art_gallery"],
+    "available_quests": ["art_theft", "socialite_scandal"],
+    "connected_districts": [
+      "corporate",
+      "entertainment"
+    ],
+    "location_choices": [
+      {"id": "high_society", "text": "Infiltrate high society", "type": "social"},
+      {"id": "gallery_exhibition", "text": "Attend a cybernetic art exhibition", "type": "culture"},
+      {"id": "luxury_theft", "text": "Plan a high-end theft", "type": "criminal"}
+    ],
+    "ascii_art": "corporate_office",
+    "map_position": {"x": 2, "y": 3}
+  },
+  {
+    "district_id": "wasteland",
+    "name": "The Wasteland",
+    "description": "The toxic, irradiated zone beyond the city limits. Mutated wildlife, desperate outcasts, and hidden treasures await those brave or foolish enough to venture here.",
+    "danger_level": 5,
+    "available_shops": ["wasteland_trader", "rogue_medic"],
+    "available_quests": ["rare_resource", "wasteland_rescue"],
+    "connected_districts": [
+      "outskirts"
+    ],
+    "location_choices": [
+      {"id": "resource_expedition", "text": "Hunt for rare resources", "type": "exploration"},
+      {"id": "mutant_hunt", "text": "Hunt dangerous mutated creatures", "type": "combat"},
+      {"id": "outcast_camp", "text": "Find an outcast settlement", "type": "discovery"}
+    ],
+    "ascii_art": "alley",
+    "map_position": {"x": 0, "y": 5}
   }
 ]

@@ -17,7 +17,9 @@ import inventory
 import save_system
 import ollama_integration
 import districts
+import location_actions
 from districts import DistrictManager, District
+from location_actions import LocationActionHandler
 from config import GAME_TITLE, SAVE_DIR
 
 class GameEngine:
@@ -37,6 +39,9 @@ class GameEngine:
         
         # Initialize district manager
         self.district_manager = DistrictManager()
+        
+        # Initialize location action handler
+        self.location_handler = LocationActionHandler(self)
         
         # Initialize audio system if available
         try:
@@ -280,6 +285,10 @@ class GameEngine:
                 self.handle_shop(console, node)
             elif node.get('type') == 'skill_check':
                 self.handle_skill_check(console, node)
+            elif node.get('type') == 'map':
+                self.handle_map_travel(console)
+            elif node.get('type') == 'location_action':
+                self.handle_location_action(console, node)
             else:
                 # Regular narrative node
                 self.handle_narrative(console, node)
@@ -335,19 +344,22 @@ class GameEngine:
             
             # Add game options
             console.print("[yellow]I. Inventory[/yellow]")
+            console.print("[yellow]C. Character (Skills & Perks)[/yellow]")
             console.print("[yellow]M. Map (Travel)[/yellow]")
             console.print("[yellow]S. Save Game[/yellow]")
             console.print("[yellow]Q. Quit to Main Menu[/yellow]")
             
             # Get player choice
             valid_choices = [str(i) for i in range(1, len(choices)+1)]
-            valid_choices.extend(['i', 'I', 'm', 'M', 's', 'S', 'q', 'Q'])
+            valid_choices.extend(['i', 'I', 'c', 'C', 'm', 'M', 's', 'S', 'q', 'Q'])
             
             choice = Prompt.ask("[bold green]Enter your choice[/bold green]", choices=valid_choices)
             
             # Process the choice
             if choice.upper() == 'I':
                 self.handle_inventory(console)
+            elif choice.upper() == 'C':
+                self.handle_character_progression(console)
             elif choice.upper() == 'M':
                 self.handle_map_travel(console)
             elif choice.upper() == 'S':
@@ -641,9 +653,29 @@ class GameEngine:
             # Set the starting district if not already set
             self.district_manager.set_current_district("downtown")
             current_district = self.district_manager.get_current_district()
+        
+        # Generate and display the city map
+        console.print("[bold cyan]Neo-Shanghai City Map:[/bold cyan]")
+        map_lines = self.district_manager.generate_map_display()
+        
+        # Display the map with formatting
+        for line in map_lines:
+            if line.strip():  # Only print non-empty lines
+                formatted_line = line
+                # Highlight the current district
+                if current_district:
+                    formatted_line = formatted_line.replace(
+                        current_district.name[:8].center(8),
+                        f"[bold green]{current_district.name[:8].center(8)}[/bold green]"
+                    )
+                console.print(formatted_line)
             
+        console.print("\n[bold blue]Map Legend:[/bold blue]")
+        console.print("■ [cyan]District boxes show: Name, Danger level (█=danger), and [Connection count][/cyan]")
+        console.print("■ [cyan]· lines represent available travel routes between districts[/cyan]")
+        
         # Display current district information
-        console.print(f"[bold green]Current Location: {current_district.name}[/bold green]")
+        console.print(f"\n[bold green]Current Location: {current_district.name}[/bold green]")
         console.print(f"[cyan]{current_district.description}[/cyan]")
         console.print(f"[yellow]Danger Level: {current_district.danger_level}/5[/yellow]")
         
@@ -655,6 +687,15 @@ class GameEngine:
         # Display district ASCII art if available
         if current_district.ascii_art:
             ui.display_ascii_art(console, current_district.ascii_art)
+        
+        # Display location-specific choices in this district
+        location_choices = self.district_manager.get_district_location_choices()
+        if location_choices:
+            console.print("\n[bold purple]District-Specific Activities:[/bold purple]")
+            for choice in location_choices:
+                choice_type = choice.get("type", "general")
+                icon = "🔧" if choice_type == "tech" else "👥" if choice_type == "social" else "⚔️" if choice_type == "combat" else "💼"
+                console.print(f"{icon} [cyan]{choice['text']}[/cyan] ({choice_type})")
         
         # Get connected districts
         connected_districts = self.district_manager.get_connected_districts()
@@ -671,12 +712,19 @@ class GameEngine:
                 console.print(f"[{color}]{i}. {district.name} - Danger Level: {district.danger_level}/5{access_text}[/{color}]")
                 console.print(f"   {district.description}")
                 
-            console.print("\n[yellow]Enter a number to travel to that district, or 0 to return[/yellow]")
+            console.print("\n[yellow]Travel Options:[/yellow]")
+            console.print("[yellow]* Enter a number to travel to that district[/yellow]")
+            console.print("[yellow]* Enter 'E' to explore district actions[/yellow]")
+            console.print("[yellow]* Enter '0' to return[/yellow]")
             
-            choices = ["0"] + [str(i) for i in range(1, len(connected_districts)+1)]
-            choice = Prompt.ask("[bold green]Where would you like to go?[/bold green]", choices=choices)
+            choices = ["0", "e", "E"] + [str(i) for i in range(1, len(connected_districts)+1)]
+            choice = Prompt.ask("[bold green]What would you like to do?[/bold green]", choices=choices)
             
-            if choice != "0":
+            if choice.upper() == "E":
+                # Player wants to explore local district actions
+                self.handle_location_action(console)
+                return
+            elif choice != "0":
                 district_idx = int(choice) - 1
                 target_district = connected_districts[district_idx]
                 
@@ -709,7 +757,15 @@ class GameEngine:
                     # Play sound effect if available
                     if self.audio_enabled and self.audio_system:
                         self.audio_system.play_sound("door_open")
-                        
+                    
+                    # Check for district-specific actions and offer them to the player
+                    location_choices = self.district_manager.get_district_location_choices()
+                    if location_choices:
+                        console.print(f"\n[cyan]This district has {len(location_choices)} unique actions available.[/cyan]")
+                        if Prompt.ask("[bold cyan]Would you like to explore district actions now?[/bold cyan]", choices=["y", "n"]) == "y":
+                            self.handle_location_action(console)
+                            return
+                            
                     time.sleep(1)
                 else:
                     console.print("[red]Failed to travel to the selected district.[/red]")
@@ -1079,6 +1135,339 @@ class GameEngine:
         console.print("\n[cyan]Press Enter to continue...[/cyan]")
         input()
     
+    def handle_character_progression(self, console):
+        """Handle character progression, skills, and perks"""
+        ui.clear_screen()
+        ui.display_header(console, "CHARACTER PROGRESSION")
+        
+        # Display basic character info
+        console.print(f"[cyan]Name:[/cyan] {self.player.name}")
+        console.print(f"[cyan]Class:[/cyan] {self.player.char_class}")
+        console.print(f"[cyan]Level:[/cyan] {self.player.level}")
+        console.print(f"[cyan]Experience:[/cyan] {self.player.experience}")
+        
+        # Get skill and perk points
+        skill_points = self.player.progression.skill_points
+        perk_points = self.player.progression.perk_points
+        
+        console.print(f"\n[green]Available Skill Points: {skill_points}[/green]")
+        console.print(f"[green]Available Perk Points: {perk_points}[/green]")
+        
+        # Display menu options
+        console.print("\n[yellow]1. View/Upgrade Skills[/yellow]")
+        console.print("[yellow]2. View/Acquire Perks[/yellow]")
+        console.print("[yellow]3. View Active Abilities[/yellow]")
+        console.print("[yellow]4. Return to Game[/yellow]")
+        
+        action = Prompt.ask("[bold green]What would you like to do?[/bold green]", choices=["1", "2", "3", "4"])
+        
+        if action == "1":
+            self._handle_skills_menu(console)
+        elif action == "2":
+            self._handle_perks_menu(console)
+        elif action == "3":
+            self._handle_abilities_menu(console)
+        # action 4 returns to game
+        
+    def _handle_skills_menu(self, console):
+        """Handle the skills submenu for upgrading character skills"""
+        while True:
+            ui.clear_screen()
+            ui.display_header(console, "SKILLS")
+            
+            # Get available skills from progression system
+            available_skills = self.player.progression.get_available_skills()
+            skill_categories = {}
+            
+            # Organize skills by category
+            for skill_tuple in available_skills:
+                skill, can_learn, message = skill_tuple
+                category = skill.category
+                if category not in skill_categories:
+                    skill_categories[category] = []
+                skill_categories[category].append((skill, can_learn, message))
+            
+            # Display skill points
+            skill_points = self.player.progression.skill_points
+            console.print(f"[green]Available Skill Points: {skill_points}[/green]\n")
+            
+            # Display skills by category
+            for category, skills in skill_categories.items():
+                console.print(f"[bold cyan]{category.upper()}[/bold cyan]")
+                
+                for i, (skill, can_learn, message) in enumerate(skills, 1):
+                    current_level = self.player.progression.get_skill_level(skill.skill_id)
+                    max_level = skill.max_level
+                    
+                    # Determine display color based on availability
+                    if can_learn:
+                        color = "green"
+                    else:
+                        color = "gray"
+                    
+                    # Display skill with level indicator
+                    console.print(f"[{color}]{i}. {skill.name} ({current_level}/{max_level}) - {skill.description}[/{color}]")
+                    
+                    # If there's a reason why skill can't be learned, show it
+                    if not can_learn and message:
+                        console.print(f"   [red]{message}[/red]")
+                    
+                    # Show skill level effects if they have any levels
+                    if current_level > 0:
+                        effects = skill.get_effects_at_level(current_level)
+                        if effects:
+                            effect_text = ", ".join([f"{k}: {v}" for k, v in effects.items()])
+                            console.print(f"   [cyan]Current Effects: {effect_text}[/cyan]")
+                    
+                    # Show next level effects if not at max
+                    if current_level < max_level:
+                        next_effects = skill.get_effects_at_level(current_level + 1)
+                        if next_effects:
+                            effect_text = ", ".join([f"{k}: {v}" for k, v in next_effects.items()])
+                            console.print(f"   [yellow]Next Level: {effect_text}[/yellow]")
+                
+                console.print("")  # Add spacing between categories
+            
+            # User options
+            console.print("[yellow]U. Upgrade a skill[/yellow]")
+            console.print("[yellow]B. Back to character menu[/yellow]")
+            
+            choice = Prompt.ask("[bold green]What would you like to do?[/bold green]", choices=["u", "U", "b", "B"])
+            
+            if choice.upper() == "U" and skill_points > 0:
+                # Upgrade a skill
+                flat_skills = []
+                for skills in skill_categories.values():
+                    flat_skills.extend(skills)
+                
+                # Check if there are any skills available to upgrade
+                upgradable_skills = [s for s, can_learn, _ in flat_skills if can_learn]
+                
+                if not upgradable_skills:
+                    console.print("[red]No skills available to upgrade at this time.[/red]")
+                    console.print("[cyan]Press Enter to continue...[/cyan]")
+                    input()
+                    continue
+                
+                # Choose skill to upgrade
+                console.print("[bold cyan]Choose a skill to upgrade:[/bold cyan]")
+                for i, (skill, _, _) in enumerate(flat_skills, 1):
+                    console.print(f"{i}. {skill.name}")
+                
+                skill_idx = IntPrompt.ask("[bold cyan]Enter skill number[/bold cyan]", 
+                                         choices=[str(i) for i in range(1, len(flat_skills)+1)])
+                
+                selected_skill, can_learn, message = flat_skills[int(skill_idx)-1]
+                
+                if can_learn:
+                    # Attempt to learn/upgrade the skill
+                    success, result_message = self.player.progression.learn_skill(selected_skill.skill_id)
+                    
+                    if success:
+                        console.print(f"[green]{result_message}[/green]")
+                        
+                        # Play sound if audio system available
+                        if self.audio_enabled and self.audio_system:
+                            self.audio_system.play_sound("skill_success")
+                    else:
+                        console.print(f"[red]{result_message}[/red]")
+                        
+                        # Play sound if audio system available
+                        if self.audio_enabled and self.audio_system:
+                            self.audio_system.play_sound("skill_failure")
+                else:
+                    console.print(f"[red]Cannot upgrade this skill: {message}[/red]")
+                    
+                    # Play sound if audio system available
+                    if self.audio_enabled and self.audio_system:
+                        self.audio_system.play_sound("skill_failure")
+                
+                console.print("[cyan]Press Enter to continue...[/cyan]")
+                input()
+            elif choice.upper() == "B":
+                # Return to character progression menu
+                break
+            
+    def _handle_perks_menu(self, console):
+        """Handle the perks submenu for acquiring character perks"""
+        while True:
+            ui.clear_screen()
+            ui.display_header(console, "PERKS")
+            
+            # Get available perks from progression system
+            available_perks = self.player.progression.get_available_perks()
+            perk_categories = {}
+            
+            # Organize perks by category
+            for perk_tuple in available_perks:
+                perk, can_learn, message = perk_tuple
+                category = perk.category
+                if category not in perk_categories:
+                    perk_categories[category] = []
+                perk_categories[category].append((perk, can_learn, message))
+            
+            # Display perk points
+            perk_points = self.player.progression.perk_points
+            console.print(f"[green]Available Perk Points: {perk_points}[/green]\n")
+            
+            # Display perks by category
+            for category, perks in perk_categories.items():
+                console.print(f"[bold cyan]{category.upper()}[/bold cyan]")
+                
+                for i, (perk, can_learn, message) in enumerate(perks, 1):
+                    has_perk = self.player.progression.has_perk(perk.perk_id)
+                    
+                    # Determine display color based on availability
+                    if has_perk:
+                        color = "green"
+                        status = "[ACQUIRED]"
+                    elif can_learn:
+                        color = "yellow"
+                        status = "[AVAILABLE]"
+                    else:
+                        color = "gray"
+                        status = "[LOCKED]"
+                    
+                    # Display perk information
+                    console.print(f"[{color}]{i}. {perk.name} {status} - {perk.description}[/{color}]")
+                    
+                    # If there's a reason why perk can't be learned, show it
+                    if not can_learn and not has_perk and message:
+                        console.print(f"   [red]{message}[/red]")
+                    
+                    # Show perk effects
+                    if perk.effects:
+                        effect_text = ", ".join([f"{k}: {v}" for k, v in perk.effects.items()])
+                        console.print(f"   [cyan]Effects: {effect_text}[/cyan]")
+                
+                console.print("")  # Add spacing between categories
+            
+            # User options
+            console.print("[yellow]A. Acquire a perk[/yellow]")
+            console.print("[yellow]B. Back to character menu[/yellow]")
+            
+            choice = Prompt.ask("[bold green]What would you like to do?[/bold green]", choices=["a", "A", "b", "B"])
+            
+            if choice.upper() == "A" and perk_points > 0:
+                # Acquire a perk
+                flat_perks = []
+                for perks in perk_categories.values():
+                    flat_perks.extend(perks)
+                
+                # Check if there are any perks available to acquire
+                acquirable_perks = [p for p, can_learn, _ in flat_perks if can_learn]
+                
+                if not acquirable_perks:
+                    console.print("[red]No perks available to acquire at this time.[/red]")
+                    console.print("[cyan]Press Enter to continue...[/cyan]")
+                    input()
+                    continue
+                
+                # Choose perk to acquire
+                console.print("[bold cyan]Choose a perk to acquire:[/bold cyan]")
+                for i, (perk, _, _) in enumerate(flat_perks, 1):
+                    console.print(f"{i}. {perk.name}")
+                
+                perk_idx = IntPrompt.ask("[bold cyan]Enter perk number[/bold cyan]", 
+                                        choices=[str(i) for i in range(1, len(flat_perks)+1)])
+                
+                selected_perk, can_learn, message = flat_perks[int(perk_idx)-1]
+                
+                if can_learn:
+                    # Attempt to learn the perk
+                    success, result_message = self.player.progression.learn_perk(selected_perk.perk_id)
+                    
+                    if success:
+                        console.print(f"[green]{result_message}[/green]")
+                        
+                        # Play sound if audio system available
+                        if self.audio_enabled and self.audio_system:
+                            self.audio_system.play_sound("skill_success")
+                    else:
+                        console.print(f"[red]{result_message}[/red]")
+                        
+                        # Play sound if audio system available
+                        if self.audio_enabled and self.audio_system:
+                            self.audio_system.play_sound("skill_failure")
+                else:
+                    console.print(f"[red]Cannot acquire this perk: {message}[/red]")
+                    
+                    # Play sound if audio system available
+                    if self.audio_enabled and self.audio_system:
+                        self.audio_system.play_sound("skill_failure")
+                
+                console.print("[cyan]Press Enter to continue...[/cyan]")
+                input()
+            elif choice.upper() == "B":
+                # Return to character progression menu
+                break
+                
+    def _handle_abilities_menu(self, console):
+        """Handle the active abilities menu for viewing character abilities"""
+        ui.clear_screen()
+        ui.display_header(console, "ACTIVE ABILITIES")
+        
+        # Get character abilities
+        abilities = self.player.get_available_abilities()
+        
+        if not abilities:
+            console.print("[yellow]You don't have any active abilities.[/yellow]")
+        else:
+            console.print("[green]Your active abilities:[/green]\n")
+            
+            for ability_id, ability_data in abilities.items():
+                name = ability_data.get('name', ability_id)
+                description = ability_data.get('description', 'No description available')
+                cooldown = ability_data.get('cooldown', 0)
+                
+                console.print(f"[cyan]{name}[/cyan]")
+                console.print(f"[green]{description}[/green]")
+                console.print(f"[yellow]Cooldown: {cooldown} turns[/yellow]\n")
+        
+        # Display abilities from skills and perks
+        all_effects = self.player.progression.calculate_all_effects()
+        if all_effects:
+            console.print("\n[bold cyan]Combat Effects from Skills & Perks:[/bold cyan]")
+            
+            # Show combat-related numerical bonuses
+            bonus_effects = {
+                "damage_bonus": "Damage Bonus",
+                "defense_bonus": "Defense Bonus",
+                "critical_chance": "Critical Chance",
+                "dodge_chance": "Dodge Chance",
+                "stealth_bonus": "Stealth Bonus",
+                "hacking_bonus": "Hacking Bonus",
+                "healing_bonus": "Healing Bonus"
+            }
+            
+            for effect_key, display_name in bonus_effects.items():
+                if effect_key in all_effects and all_effects[effect_key] > 0:
+                    console.print(f"[green]{display_name}: +{all_effects[effect_key]}[/green]")
+            
+            # Show stat bonuses
+            if "stat_bonuses" in all_effects:
+                for stat, bonus in all_effects["stat_bonuses"].items():
+                    if bonus > 0:
+                        console.print(f"[green]{stat.capitalize()}: +{bonus}[/green]")
+            
+            # Show abilities granted by skills/perks
+            if "abilities" in all_effects and all_effects["abilities"]:
+                console.print("\n[bold cyan]Abilities Granted by Skills & Perks:[/bold cyan]")
+                for ability_name in all_effects["abilities"]:
+                    # Check if this ability is in the character's available abilities
+                    ability_found = False
+                    for ability_id, ability_data in abilities.items():
+                        if ability_data.get('name') == ability_name:
+                            ability_found = True
+                            break
+                    
+                    if not ability_found:
+                        console.print(f"[cyan]{ability_name}[/cyan]")
+                        console.print(f"[green]Special ability unlocked through character progression[/green]")
+        
+        console.print("\n[cyan]Press Enter to return to the character menu...[/cyan]")
+        input()
+        
     def handle_death(self, console):
         """Handle player death"""
         ui.clear_screen()
@@ -1097,4 +1486,170 @@ class GameEngine:
         console.print("\n[red]Your journey ends here, in the cold neon shadows of the city...[/red]")
         console.print("\n[cyan]Press Enter to return to the main menu...[/cyan]")
         
+        input()
+        
+    def handle_location_action(self, console, node=None):
+        """Handle location-specific actions in the current district"""
+        ui.clear_screen()
+        ui.display_header(console, "DISTRICT ACTIONS")
+        ui.display_status_bar(console, self.player)
+        
+        # Get current district
+        current_district = self.district_manager.get_current_district()
+        if not current_district:
+            console.print("[bold red]Error: No current district found![/bold red]")
+            time.sleep(2)
+            return
+        
+        # Get location-specific choices
+        location_choices = self.district_manager.get_district_location_choices()
+        
+        if not location_choices:
+            console.print(f"[bold yellow]There are no special actions available in {current_district.name}.[/bold yellow]")
+            console.print("\n[cyan]Press Enter to return...[/cyan]")
+            input()
+            return
+        
+        # Display district info and ASCII art
+        console.print(f"[bold green]Location: {current_district.name}[/bold green]")
+        console.print(f"[cyan]{current_district.description}[/cyan]")
+        
+        if current_district.ascii_art:
+            ui.display_ascii_art(console, current_district.ascii_art)
+        
+        # Display available actions
+        console.print("\n[bold purple]Available Actions in this District:[/bold purple]")
+        for i, choice in enumerate(location_choices, 1):
+            choice_type = choice.get("type", "general")
+            icon = "🔧" if choice_type == "tech" else "👥" if choice_type == "social" else "⚔️" if choice_type == "combat" else "💼"
+            console.print(f"[cyan]{i}. {icon} {choice['text']} ({choice_type})[/cyan]")
+        
+        console.print("\n[yellow]0. Return[/yellow]")
+        
+        # Get player choice
+        valid_choices = ["0"] + [str(i) for i in range(1, len(location_choices)+1)]
+        choice = Prompt.ask("[bold green]What would you like to do?[/bold green]", choices=valid_choices)
+        
+        if choice == "0":
+            return
+        
+        # Process the selected location action
+        choice_idx = int(choice) - 1
+        selected_action = location_choices[choice_idx]
+        
+        console.print(f"\n[bold cyan]You decide to {selected_action['text'].lower()}...[/bold cyan]")
+        time.sleep(1)
+        
+        # Process the action using our location handler
+        action_id = selected_action['id']
+        district_id = current_district.district_id
+        
+        # Get results from location handler
+        results = self.location_handler.handle_location_action(
+            console, 
+            action_id, 
+            district_id
+        )
+        
+        # Process action results
+        if 'messages' in results:
+            for message in results['messages']:
+                console.print(message)
+                time.sleep(0.5)  # Small delay between messages
+        
+        # Handle credits change
+        if 'credits_change' in results and results['credits_change'] != 0:
+            credits_change = results['credits_change']
+            if credits_change > 0:
+                self.player.credits += credits_change
+                console.print(f"[green]You gained {credits_change} credits.[/green]")
+                
+                # Play credits pickup sound if available
+                if self.audio_enabled and self.audio_system and credits_change > 0:
+                    self.audio_system.play_sound("credits_pickup")
+            else:
+                self.player.credits = max(0, self.player.credits + credits_change)
+                console.print(f"[red]You lost {abs(credits_change)} credits.[/red]")
+        
+        # Handle items gained
+        for item_name, count in results.get('items_gained', {}).items():
+            self.player.inventory.add_item(item_name, count)
+            console.print(f"[green]You acquired {count} {item_name}.[/green]")
+            
+            # Play item pickup sound if available
+            if self.audio_enabled and self.audio_system:
+                self.audio_system.play_sound("item_pickup")
+        
+        # Handle items lost
+        for item_name, count in results.get('items_lost', {}).items():
+            if self.player.inventory.has_item(item_name):
+                self.player.inventory.remove_item(item_name, count)
+                console.print(f"[red]You lost {count} {item_name}.[/red]")
+        
+        # Handle health change
+        if 'health_change' in results and results['health_change'] != 0:
+            health_change = results['health_change']
+            if health_change > 0:
+                old_health = self.player.health
+                self.player.health = min(self.player.max_health, old_health + health_change)
+                actual_change = self.player.health - old_health
+                console.print(f"[green]You recovered {actual_change} health points.[/green]")
+                
+                # Play heal sound if available
+                if self.audio_enabled and self.audio_system and actual_change > 0:
+                    self.audio_system.play_sound("item_pickup")  # Using as heal sound
+            else:
+                old_health = self.player.health
+                self.player.health = max(0, old_health + health_change)
+                actual_change = self.player.health - old_health
+                console.print(f"[red]You lost {abs(actual_change)} health points.[/red]")
+                
+                # Play damage sound if available
+                if self.audio_enabled and self.audio_system and actual_change < 0:
+                    self.audio_system.play_sound("player_damage")
+        
+        # Handle experience gain
+        if 'experience_gain' in results and results['experience_gain'] > 0:
+            xp_gain = results['experience_gain']
+            self.player.add_experience(xp_gain, audio_system=self.audio_system if self.audio_enabled else None)
+            console.print(f"[green]You gained {xp_gain} experience points.[/green]")
+        
+        # Handle reputation changes
+        for district_id, rep_change in results.get('reputation_change', {}).items():
+            if rep_change != 0:
+                if rep_change > 0:
+                    self.player.reputation.modify_district_reputation(district_id, rep_change)
+                    district_name = self.district_manager.get_district(district_id).name
+                    console.print(f"[green]Your reputation in {district_name} increased by {rep_change}.[/green]")
+                else:
+                    self.player.reputation.modify_district_reputation(district_id, rep_change)
+                    district_name = self.district_manager.get_district(district_id).name
+                    console.print(f"[red]Your reputation in {district_name} decreased by {abs(rep_change)}.[/red]")
+        
+        # Handle combat encounter if one was triggered
+        if 'combat_encounter' in results:
+            combat_data = results['combat_encounter']
+            
+            # Create a combat node from the encounter data
+            combat_node = {
+                "type": "combat",
+                "text": f"You're confronted by a {combat_data['enemy_type']}!",
+                "enemy": {"name": combat_data['enemy_type']},
+                "rewards": combat_data.get('rewards', {
+                    "experience": 20 * combat_data.get('danger_level', 3),
+                    "credits": 10 * combat_data.get('danger_level', 3)
+                }),
+                "victory_node": self.current_node,
+                "escape_node": self.current_node
+            }
+            
+            # Wait for user to acknowledge the encounter
+            console.print("\n[cyan]Press Enter to continue to combat...[/cyan]")
+            input()
+            
+            # Run the combat encounter
+            self.handle_combat(console, combat_node)
+            return
+        
+        console.print("\n[cyan]Press Enter to continue...[/cyan]")
         input()

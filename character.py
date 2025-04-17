@@ -8,6 +8,7 @@ from rich.console import Console
 import inventory
 from config import LEVEL_UP_BASE_XP
 from districts import ReputationSystem
+from skills import CharacterProgression, SkillTree
 
 class Character:
     """Player character class with stats and inventory"""
@@ -40,6 +41,16 @@ class Character:
         
         # Reputation system
         self.reputation = ReputationSystem()
+        
+        # Advanced progression system
+        self.skill_tree = SkillTree()
+        self.progression = CharacterProgression(self, self.skill_tree)
+        
+        # Give initial skill points based on class
+        initial_skill_points = 3
+        initial_perk_points = 1
+        self.progression.add_skill_points(initial_skill_points)
+        self.progression.add_perk_points(initial_perk_points)
         
         # Combat related attributes
         self.combat_stance = "offensive"  # Default stance: offensive, defensive, tactical, stealth
@@ -89,6 +100,14 @@ class Character:
         # Load reputation
         if 'reputation' in data:
             character.reputation = ReputationSystem.from_dict(data.get('reputation', {}))
+        
+        # Load progression data
+        if 'progression' in data:
+            character.progression = CharacterProgression.from_dict(
+                data.get('progression', {}),
+                character=character,
+                skill_tree=character.skill_tree
+            )
             
         # Load combat related attributes
         character.combat_stance = data.get('combat_stance', 'offensive')
@@ -119,6 +138,7 @@ class Character:
             'inventory': self.inventory.to_dict(),
             'status_effects': self.status_effects,
             'reputation': self.reputation.to_dict(),
+            'progression': self.progression.to_dict(),
             'combat_stance': self.combat_stance,
             'current_cover': self.current_cover,
             'ability_cooldowns': self.ability_cooldowns,
@@ -132,6 +152,9 @@ class Character:
         
         self.experience += amount
         
+        # Also award experience to progression system
+        progression_rewards = self.progression.award_experience(amount)
+        
         # Check for level up
         xp_for_next_level = LEVEL_UP_BASE_XP * (self.level * 1.5)
         
@@ -143,6 +166,12 @@ class Character:
                 audio_system.play_sound("level_up")
                 
             return level_up_info
+        elif progression_rewards["skill_points_gained"] > 0 or progression_rewards["perk_points_gained"] > 0:
+            # Even if not a level up, return info about skill/perk points gained
+            return {
+                "skill_points_gained": progression_rewards["skill_points_gained"],
+                "perk_points_gained": progression_rewards["perk_points_gained"]
+            }
     
     def level_up(self):
         """Handle character level up"""
@@ -156,10 +185,15 @@ class Character:
         # Heal to full on level up
         self.health = self.max_health
         
-        # Return level up info for UI
+        # Award skill points and perks through progression system
+        progression_rewards = self.progression.award_experience(0)  # 0 XP because we're just processing the level up
+        
+        # Return level up info for UI with progression rewards
         return {
             'new_level': self.level,
-            'health_increase': health_increase
+            'health_increase': health_increase,
+            'skill_points_gained': progression_rewards.get('skill_points_gained', 0),
+            'perk_points_gained': progression_rewards.get('perk_points_gained', 0)
         }
     
     def use_item(self, item_name, console, audio_system=None):
@@ -342,6 +376,51 @@ class Character:
                 if self.ability_cooldowns.get(ability_id, 0) <= 0:
                     available_abilities[ability_id] = ability_data
         
+        # Check for abilities granted by skills and perks
+        if hasattr(self, 'progression'):
+            # Get all skill and perk effects
+            all_effects = self.progression.calculate_all_effects()
+            
+            # Check for abilities in the effects
+            if 'abilities' in all_effects and all_effects['abilities']:
+                for ability_name in all_effects['abilities']:
+                    # Skip if this ability is already included from class abilities
+                    if ability_name in available_abilities:
+                        continue
+                        
+                    # Create an ability ID for this skill/perk ability
+                    ability_id = f"skill_{ability_name.lower().replace(' ', '_')}"
+                    
+                    # Try to find this ability in any class
+                    ability_data = None
+                    for class_name, abilities in CLASS_ABILITIES.items():
+                        for ab_id, data in abilities.items():
+                            if data.get('name') == ability_name:
+                                ability_data = data.copy()
+                                break
+                        if ability_data:
+                            break
+                    
+                    # If not found in any class, create a basic entry
+                    if not ability_data:
+                        ability_data = {
+                            "name": ability_name,
+                            "description": f"Special ability acquired through skills/perks",
+                            "cooldown": 3  # Default cooldown
+                        }
+                        
+                        # Add some basic effects based on the name
+                        if "damage" in ability_name.lower() or "attack" in ability_name.lower():
+                            ability_data["damage_multiplier"] = 1.5
+                        elif "defense" in ability_name.lower() or "protect" in ability_name.lower():
+                            ability_data["defense_boost"] = 3
+                        elif "heal" in ability_name.lower():
+                            ability_data["self_heal"] = 10
+                    
+                    # Add to available abilities if not on cooldown
+                    if self.ability_cooldowns.get(ability_id, 0) <= 0:
+                        available_abilities[ability_id] = ability_data
+        
         return available_abilities
     
     def use_ability(self, ability_id, target=None, console=None, audio_system=None):
@@ -359,28 +438,24 @@ class Character:
         # Import the abilities configuration
         from combat import CLASS_ABILITIES
         
-        # Check if the character class has this ability
-        if self.char_class not in CLASS_ABILITIES:
-            if console:
-                console.print(f"[red]Your class doesn't have special abilities[/red]")
-            return {"success": False, "message": "No abilities for this class"}
-        
-        class_abilities = CLASS_ABILITIES[self.char_class]
+        # Get all available abilities including those from skills/perks
+        available_abilities = self.get_available_abilities()
         
         # Check if the ability exists
-        if ability_id not in class_abilities:
+        if ability_id not in available_abilities:
             if console:
                 console.print(f"[red]Unknown ability: {ability_id}[/red]")
             return {"success": False, "message": "Unknown ability"}
-        
+            
         # Check if the ability is on cooldown
         if self.ability_cooldowns.get(ability_id, 0) > 0:
+            ability_name = available_abilities[ability_id].get('name', ability_id)
             if console:
-                console.print(f"[red]Ability {class_abilities[ability_id]['name']} is on cooldown for {self.ability_cooldowns[ability_id]} more turns[/red]")
+                console.print(f"[red]Ability {ability_name} is on cooldown for {self.ability_cooldowns[ability_id]} more turns[/red]")
             return {"success": False, "message": "Ability on cooldown"}
         
         # Use the ability
-        ability = class_abilities[ability_id]
+        ability = available_abilities[ability_id]
         result = {"success": True, "effects": {}}
         
         # Play sound effect if available
