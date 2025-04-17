@@ -85,6 +85,62 @@ STATUS_EFFECTS = {
         "crit_mod": 15,
         "duration": 2,
         "description": "Increased critical hit chance"
+    },
+    "off_balance": {
+        "name": "Off Balance",
+        "dodge_penalty": 20,
+        "duration": 1,
+        "description": "Harder to dodge attacks"
+    },
+    "disoriented": {
+        "name": "Disoriented",
+        "accuracy_penalty": 15,
+        "duration": 2,
+        "description": "Reduced accuracy on attacks"
+    },
+    "slowed": {
+        "name": "Slowed",
+        "move_penalty": True,
+        "duration": 2,
+        "description": "Reduced movement and positioning options"
+    },
+    "malfunctioning": {
+        "name": "Malfunctioning",
+        "tech_penalty": 10,
+        "ability_penalty": True,
+        "duration": 2,
+        "description": "Tech abilities and cybernetics less effective"
+    },
+    "hacked": {
+        "name": "Hacked",
+        "random_effect": True,
+        "duration": 2,
+        "description": "Systems compromised, unpredictable effects"
+    },
+    "glitched": {
+        "name": "Glitched",
+        "stat_randomizer": True,
+        "duration": 2,
+        "description": "Random stat fluctuations each turn"
+    },
+    "flanked": {
+        "name": "Flanked",
+        "defense_mod": 0.7,
+        "incoming_crit_mod": 10,
+        "duration": 1,
+        "description": "Exposed to attacks from multiple angles"
+    },
+    "burning": {
+        "name": "Burning",
+        "damage_per_turn": 3,
+        "duration": 2,
+        "description": "Taking fire damage over time"
+    },
+    "marked": {
+        "name": "Marked",
+        "incoming_accuracy_bonus": 15,
+        "duration": 2,
+        "description": "Enemies have improved accuracy against you"
     }
 }
 
@@ -187,22 +243,192 @@ COVER_TYPES = {
     "none": {
         "name": "No Cover",
         "defense_bonus": 0,
+        "health": 0,
         "description": "Fully exposed"
     },
     "light": {
         "name": "Light Cover",
         "defense_bonus": 2,
+        "health": 3,
         "description": "Partially obscured by light barriers"
     },
     "medium": {
         "name": "Medium Cover",
         "defense_bonus": 4,
+        "health": 5,
         "description": "Protected by substantial cover"
     },
     "heavy": {
         "name": "Heavy Cover",
         "defense_bonus": 6,
+        "health": 8,
         "description": "Well fortified position"
+    }
+}
+
+# Define combat environmental elements (with tactical implications)
+COMBAT_ENVIRONMENTS = {
+    "standard": {
+        "name": "Standard Area",
+        "description": "A typical environment with no special features",
+        "cover_options": ["none", "light", "medium"],
+        "hazards": []
+    },
+    "warehouse": {
+        "name": "Warehouse",
+        "description": "A storage facility with plenty of crates and containers",
+        "cover_options": ["none", "light", "medium", "heavy"],
+        "hazards": ["exposed_wiring", "volatile_container"]
+    },
+    "alleyway": {
+        "name": "Alleyway",
+        "description": "A narrow passage between buildings",
+        "cover_options": ["none", "light", "medium"],
+        "hazards": ["slippery_surface", "falling_debris"]
+    },
+    "nightclub": {
+        "name": "Nightclub",
+        "description": "A crowded venue with strobe lighting and loud music",
+        "cover_options": ["none", "light", "medium"],
+        "hazards": ["innocent_bystanders", "strobe_lighting"]
+    },
+    "corporate_office": {
+        "name": "Corporate Office",
+        "description": "A high-tech office space with security systems",
+        "cover_options": ["none", "light", "medium", "heavy"],
+        "hazards": ["security_turret", "alarm_system"]
+    },
+    "cyber_den": {
+        "name": "Cyber Den",
+        "description": "An underground tech space with experimental gear",
+        "cover_options": ["none", "light", "medium"],
+        "hazards": ["rogue_ai", "data_surge"]
+    }
+}
+
+# Define environmental hazards
+HAZARDS = {
+    "exposed_wiring": {
+        "name": "Exposed Wiring",
+        "description": "Sparking electrical wires that can shock on contact",
+        "trigger_chance": 15,
+        "damage": 3,
+        "status_effect": "stunned"
+    },
+    "volatile_container": {
+        "name": "Volatile Container",
+        "description": "An unstable container that may explode when damaged",
+        "trigger_chance": 10,
+        "damage": 5,
+        "damage_radius": 2,  # Affects both player and enemy if in same position
+        "status_effect": None
+    },
+    "slippery_surface": {
+        "name": "Slippery Surface",
+        "description": "A wet or oily surface that may cause you to slip",
+        "trigger_chance": 20,
+        "damage": 0,
+        "status_effect": "off_balance"
+    },
+    "falling_debris": {
+        "name": "Falling Debris",
+        "description": "Unstable structures overhead that may collapse",
+        "trigger_chance": 15,
+        "damage": 2,
+        "status_effect": None
+    },
+    "innocent_bystanders": {
+        "name": "Innocent Bystanders",
+        "description": "Civilians caught in the crossfire",
+        "trigger_chance": 25,
+        "reputation_penalty": 2,
+        "status_effect": None
+    },
+    "strobe_lighting": {
+        "name": "Strobe Lighting",
+        "description": "Disorienting flashing lights",
+        "trigger_chance": 20,
+        "accuracy_penalty": 15,
+        "status_effect": "disoriented"
+    },
+    "security_turret": {
+        "name": "Security Turret",
+        "description": "Automated defense system that may activate",
+        "trigger_chance": 15,
+        "damage": 4,
+        "status_effect": None
+    },
+    "alarm_system": {
+        "name": "Alarm System",
+        "description": "Security alarm that may summon reinforcements",
+        "trigger_chance": 20,
+        "reinforcement_chance": 50,
+        "status_effect": None
+    },
+    "rogue_ai": {
+        "name": "Rogue AI",
+        "description": "Unpredictable AI that interferes with tech-based attacks",
+        "trigger_chance": 20,
+        "tech_penalty": 3,
+        "status_effect": "hacked"
+    },
+    "data_surge": {
+        "name": "Data Surge",
+        "description": "Dangerous data spike that can damage cybernetics",
+        "trigger_chance": 15,
+        "damage": 2,
+        "status_effect": "glitched"
+    }
+}
+
+# Target zones for precision attacks
+TARGET_ZONES = {
+    "head": {
+        "name": "Head",
+        "hit_difficulty": 25,  # Percentage penalty to hit chance
+        "damage_multiplier": 2.0,
+        "critical_bonus": 20,
+        "status_effect": {
+            "effect": "stunned",
+            "chance": 30
+        }
+    },
+    "torso": {
+        "name": "Torso",
+        "hit_difficulty": 0,  # No penalty (default target)
+        "damage_multiplier": 1.0,
+        "critical_bonus": 0,
+        "status_effect": None
+    },
+    "arms": {
+        "name": "Arms",
+        "hit_difficulty": 15,
+        "damage_multiplier": 0.7,
+        "critical_bonus": 5,
+        "status_effect": {
+            "effect": "weakened",
+            "chance": 35
+        }
+    },
+    "legs": {
+        "name": "Legs",
+        "hit_difficulty": 10,
+        "damage_multiplier": 0.8,
+        "critical_bonus": 5,
+        "status_effect": {
+            "effect": "slowed",
+            "chance": 40
+        }
+    },
+    "cybernetics": {
+        "name": "Cybernetics",
+        "hit_difficulty": 30,
+        "damage_multiplier": 1.5,
+        "critical_bonus": 15,
+        "status_effect": {
+            "effect": "malfunctioning",
+            "chance": 40
+        }
     }
 }
 
@@ -500,13 +726,197 @@ def display_stance_info(console, stance):
     if mods:
         console.print(f"[{COLORS['text']}]Effects: {', '.join(mods)}[/{COLORS['text']}]")
 
-def display_cover_info(console, cover):
+# Combat maneuvers - special tactical moves that require positioning and timing
+COMBAT_MANEUVERS = {
+    "flanking_strike": {
+        "name": "Flanking Strike",
+        "description": "Attack from a flanking position for increased damage and critical chance",
+        "requirements": {
+            "position": ["flank_left", "flank_right"],
+            "enemy_status": None,
+            "player_status": None
+        },
+        "effects": {
+            "damage_multiplier": 1.4,
+            "critical_bonus": 15,
+            "status_effect": "flanked",
+            "status_chance": 75
+        },
+        "cost": {
+            "stamina": 2,
+            "combo_points": 1
+        }
+    },
+    "suppressing_fire": {
+        "name": "Suppressing Fire",
+        "description": "Lay down covering fire to force the enemy into cover or take damage",
+        "requirements": {
+            "position": ["center", "left", "right"],
+            "ammo_cost": 3
+        },
+        "effects": {
+            "damage_multiplier": 0.7,
+            "area_effect": True,
+            "enemy_positioning": "force_cover",
+            "status_effect": "suppressed"
+        },
+        "cost": {
+            "stamina": 3,
+            "ammo": 3
+        }
+    },
+    "precision_shot": {
+        "name": "Precision Shot",
+        "description": "Carefully aimed shot at a specific body part",
+        "requirements": {
+            "position": ["any"],
+            "stance": "tactical",
+            "min_accuracy": 70
+        },
+        "effects": {
+            "target_zone": True,
+            "damage_multiplier": 1.2,
+            "ignore_cover": True
+        },
+        "cost": {
+            "stamina": 2,
+            "time": 1  # Takes an extra turn to aim
+        }
+    },
+    "tactical_retreat": {
+        "name": "Tactical Retreat",
+        "description": "Move to safer position and gain defensive bonus",
+        "requirements": {
+            "position": ["any"],
+            "cover_available": True
+        },
+        "effects": {
+            "move_to_cover": True,
+            "defense_bonus": 2,
+            "next_turn_bonus": "defensive_stance"
+        },
+        "cost": {
+            "stamina": 1
+        }
+    },
+    "rush_attack": {
+        "name": "Rush Attack",
+        "description": "Charge enemy position with a powerful close-range attack",
+        "requirements": {
+            "position": ["left", "right", "center"],
+            "enemy_position": ["any"],
+            "min_strength": 4
+        },
+        "effects": {
+            "damage_multiplier": 1.5,
+            "disrupt_cover": True,
+            "knockback": True,
+            "status_effect": "off_balance",
+            "status_chance": 60
+        },
+        "cost": {
+            "stamina": 4,
+            "health": 1  # Minor self-damage from the exertion
+        }
+    },
+    "combat_analysis": {
+        "name": "Combat Analysis",
+        "description": "Analyze the battlefield for tactical advantages",
+        "requirements": {
+            "position": ["any"],
+            "stance": "tactical",
+            "min_intelligence": 4
+        },
+        "effects": {
+            "reveal_weaknesses": True,
+            "reveal_hazards": True,
+            "tactical_advantage": 2,
+            "next_turn_crit_bonus": 10
+        },
+        "cost": {
+            "turns": 1  # Uses up a turn to analyze
+        }
+    },
+    "tech_overload": {
+        "name": "Tech Overload",
+        "description": "Overload nearby electronics to create a distraction or damage",
+        "requirements": {
+            "position": ["any"],
+            "min_tech": 5,
+            "environment_types": ["corporate_office", "cyber_den"]
+        },
+        "effects": {
+            "environment_damage": True,
+            "trigger_hazard": "exposed_wiring",
+            "enemy_status_effect": "disoriented",
+            "status_chance": 80
+        },
+        "cost": {
+            "stamina": 3,
+            "tech_resource": 2
+        }
+    },
+    "combo_strike": {
+        "name": "Combo Strike",
+        "description": "Series of attacks that build up combo points for a finishing move",
+        "requirements": {
+            "position": ["center", "left", "right"],
+            "combo_points": 0,  # Can start a combo
+            "min_agility": 3
+        },
+        "effects": {
+            "attacks": 3,
+            "damage_multiplier": 0.6,  # Per attack
+            "combo_point_gain": 3,
+            "next_turn_bonus": "finisher_available"
+        },
+        "cost": {
+            "stamina": 3
+        }
+    },
+    "finishing_move": {
+        "name": "Finishing Move",
+        "description": "Powerful attack that consumes all combo points for massive damage",
+        "requirements": {
+            "position": ["any"],
+            "min_combo_points": 3
+        },
+        "effects": {
+            "damage_multiplier": 1.0,  # Base multiplier
+            "damage_per_combo": 0.5,   # Additional multiplier per combo point
+            "ignore_defense": True,
+            "status_effect": "vulnerable",
+            "status_chance": 50
+        },
+        "cost": {
+            "stamina": 2,
+            "combo_points": "all"  # Consumes all combo points
+        }
+    }
+}
+
+def display_cover_info(console, cover, cover_health=None):
     """Display information about cover level"""
     cover_data = COVER_TYPES[cover]
     console.print(f"[{COLORS['secondary']}]Cover: {cover_data['name']}[/{COLORS['secondary']}] - {cover_data['description']}")
     
     if cover_data['defense_bonus'] > 0:
         console.print(f"[{COLORS['text']}]Defense bonus: +{cover_data['defense_bonus']}[/{COLORS['text']}]")
+    
+    # Display cover health if available and cover has health
+    if cover != "none" and cover_health is not None:
+        max_health = cover_data.get("health", 0)
+        health_percent = (cover_health / max_health) * 100 if max_health > 0 else 0
+        
+        # Choose color based on health percentage
+        if health_percent > 70:
+            health_color = "green"
+        elif health_percent > 30:
+            health_color = "yellow"
+        else:
+            health_color = "red"
+            
+        console.print(f"[{health_color}]Cover integrity: {cover_health}/{max_health}[/{health_color}]")
 
 def run_combat(console, player, enemy, player_damage_multiplier=1.0, use_animations=True, audio_system=None):
     """Run a complete combat encounter"""
@@ -581,10 +991,13 @@ def run_combat(console, player, enemy, player_damage_multiplier=1.0, use_animati
         console.print(f"[{COLORS['text']}]2. Use Item[/{COLORS['text']}]")
         console.print(f"[{COLORS['text']}]3. Change Stance[/{COLORS['text']}]")
         console.print(f"[{COLORS['text']}]4. Take Cover[/{COLORS['text']}]")
-        console.print(f"[{COLORS['text']}]5. Special Ability[/{COLORS['text']}]")
-        console.print(f"[{COLORS['text']}]6. Attempt to Escape[/{COLORS['text']}]")
+        console.print(f"[{COLORS['text']}]5. Change Position[/{COLORS['text']}]")
+        console.print(f"[{COLORS['text']}]6. Special Ability[/{COLORS['text']}]")
+        console.print(f"[{COLORS['text']}]7. Combat Maneuver[/{COLORS['text']}]")
+        console.print(f"[{COLORS['text']}]8. Target Specific Zone[/{COLORS['text']}]")
+        console.print(f"[{COLORS['text']}]9. Attempt to Escape[/{COLORS['text']}]")
         
-        choice = Prompt.ask("[bold green]Choose your action[/bold green]", choices=["1", "2", "3", "4", "5", "6"])
+        choice = Prompt.ask("[bold green]Choose your action[/bold green]", choices=["1", "2", "3", "4", "5", "6", "7", "8", "9"])
         
         # Check for stunned status
         if "stunned" in player.status_effects:
@@ -923,6 +1336,280 @@ def run_combat(console, player, enemy, player_damage_multiplier=1.0, use_animati
                     audio_system.play_sound("skill_failure")
         
         elif choice == "6":
+            # Use special ability
+            available_abilities = player.get_available_abilities()
+            
+            if not available_abilities:
+                console.print(f"[{COLORS['accent']}]You have no abilities available![/{COLORS['accent']}]")
+                time.sleep(1)
+                continue
+            
+            # Display available abilities
+            console.print(f"[{COLORS['secondary']}]Available abilities:[/{COLORS['secondary']}]")
+            
+            ability_options = {}
+            ability_idx = 1
+            
+            for ability_id, ability_data in available_abilities.items():
+                ability_options[str(ability_idx)] = ability_id
+                console.print(f"[{COLORS['text']}]{ability_idx}. {ability_data['name']}[/{COLORS['text']}]")
+                console.print(f"[{COLORS['text']}]   {ability_data['description']}[/{COLORS['text']}]")
+                ability_idx += 1
+            
+            console.print(f"[{COLORS['text']}]0. Back to combat options[/{COLORS['text']}]")
+            
+            ability_choice = Prompt.ask("[bold green]Choose an ability to use[/bold green]", 
+                                    choices=list(ability_options.keys()) + ["0"])
+            
+            if ability_choice == "0":
+                continue
+            
+            selected_ability = ability_options[ability_choice]
+            ability_result = player.use_ability(selected_ability, enemy, console, audio_system)
+            
+            # Process the ability results
+            if ability_result["success"]:
+                # Handle ability effects
+                effects = ability_result.get("effects", {})
+                
+                # Apply damage effects
+                if "damage" in effects:
+                    damage = effects["damage"]
+                    # For abilities, we can determine a relevant damage type based on ability class
+                    ability_data = available_abilities[selected_ability]
+                    damage_type = ability_data.get("damage_type", None)
+                    
+                    damage_result = enemy.take_damage(damage, damage_type=damage_type)
+                    actual_damage = damage_result["damage"]
+                    
+                    # Show weakness/resistance messages
+                    if damage_result["weakness_applied"]:
+                        console.print(f"[{COLORS['primary']}]The ability exploits {enemy.name}'s weakness to {damage_type}![/{COLORS['primary']}]")
+                    
+                    if damage_result["resistance_applied"]:
+                        console.print(f"[{COLORS['accent']}]{enemy.name} resists {damage_type} damage from your ability![/{COLORS['accent']}]")
+                        
+                    console.print(f"[{COLORS['text']}]The ability deals {actual_damage} damage to {enemy.name}![/{COLORS['text']}]")
+                    
+                    # Check if enemy is defeated
+                    if enemy.is_defeated():
+                        console.print(f"[{COLORS['primary']}]Your ability defeats {enemy.name}![/{COLORS['primary']}]")
+                        combat_active = False
+                        result = "victory"
+        
+        elif choice == "7":
+            # Combat Maneuver
+            # Get available maneuvers based on player's position, stance, and stats
+            available_maneuvers = {}
+            for maneuver_id, maneuver_data in COMBAT_MANEUVERS.items():
+                # Skip maneuvers that clearly don't meet requirements
+                requirements = maneuver_data["requirements"]
+                
+                # Check position requirement
+                if "position" in requirements:
+                    if "any" not in requirements["position"] and hasattr(player, 'position') and player.position not in requirements["position"]:
+                        continue
+                
+                # Check stance requirement
+                if "stance" in requirements and player.combat_stance != requirements["stance"]:
+                    continue
+                
+                # Check combo points requirement
+                if "min_combo_points" in requirements and hasattr(player, 'combo_points') and player.combo_points < requirements["min_combo_points"]:
+                    continue
+                
+                # Basic checks passed, add to options
+                available_maneuvers[maneuver_id] = maneuver_data
+            
+            if not available_maneuvers:
+                console.print(f"[{COLORS['accent']}]You have no available maneuvers in your current position![/{COLORS['accent']}]")
+                time.sleep(1)
+                continue
+            
+            # Display available combat maneuvers
+            console.print(f"[{COLORS['secondary']}]Available Combat Maneuvers:[/{COLORS['secondary']}]")
+            
+            maneuver_options = {}
+            maneuver_idx = 1
+            
+            for maneuver_id, maneuver_data in available_maneuvers.items():
+                maneuver_options[str(maneuver_idx)] = maneuver_id
+                console.print(f"[{COLORS['text']}]{maneuver_idx}. {maneuver_data['name']}[/{COLORS['text']}]")
+                console.print(f"[{COLORS['text']}]   {maneuver_data['description']}[/{COLORS['text']}]")
+                
+                # Display costs
+                costs = maneuver_data.get("cost", {})
+                cost_text = []
+                
+                if "health" in costs:
+                    cost_text.append(f"Health: {costs['health']}")
+                if "stamina" in costs:
+                    cost_text.append(f"Stamina: {costs['stamina']}")
+                if "combo_points" in costs:
+                    if costs["combo_points"] == "all":
+                        cost_text.append(f"Combo Points: All")
+                    else:
+                        cost_text.append(f"Combo Points: {costs['combo_points']}")
+                
+                if cost_text:
+                    console.print(f"[{COLORS['text']}]   Cost: {', '.join(cost_text)}[/{COLORS['text']}]")
+                
+                console.print("")  # Spacing
+                maneuver_idx += 1
+            
+            console.print(f"[{COLORS['text']}]0. Back to combat options[/{COLORS['text']}]")
+            
+            maneuver_choice = Prompt.ask("[bold green]Choose a maneuver[/bold green]", 
+                                    choices=list(maneuver_options.keys()) + ["0"])
+            
+            if maneuver_choice == "0":
+                continue
+            
+            selected_maneuver = maneuver_options[maneuver_choice]
+            
+            # Get current combat environment
+            environment = "city_street"  # Default 
+            # In a full implementation, this would be set based on the current location
+            
+            # Perform the maneuver
+            maneuver_result = perform_combat_maneuver(console, player, enemy, selected_maneuver, environment, audio_system)
+            
+            # Check if enemy is defeated after maneuver
+            if enemy.is_defeated():
+                console.print(f"[{COLORS['primary']}]Your {COMBAT_MANEUVERS[selected_maneuver]['name']} defeats {enemy.name}![/{COLORS['primary']}]")
+                combat_active = False
+                result = "victory"
+        
+        elif choice == "8":
+            # Target Specific Zone (precision targeting)
+            # This allows the player to target specific body parts for tactical advantages
+            
+            console.print(f"[{COLORS['secondary']}]Target a specific zone for precision attack:[/{COLORS['secondary']}]")
+            
+            TARGET_ZONES = {
+                "head": {
+                    "name": "Head",
+                    "description": "High damage but harder to hit",
+                    "damage_multiplier": 1.8,
+                    "hit_chance_penalty": -25,
+                    "effect": "stunned",
+                    "effect_chance": 30
+                },
+                "limbs": {
+                    "name": "Limbs",
+                    "description": "Lower damage but can slow enemy movement",
+                    "damage_multiplier": 0.7,
+                    "hit_chance_penalty": -10,
+                    "effect": "crippled",
+                    "effect_chance": 50
+                },
+                "torso": {
+                    "name": "Torso",
+                    "description": "Balanced damage and accuracy",
+                    "damage_multiplier": 1.0,
+                    "hit_chance_penalty": 0,
+                    "effect": "bleeding",
+                    "effect_chance": 25
+                },
+                "weapon": {
+                    "name": "Weapon/Tech",
+                    "description": "Disable enemy's offensive capabilities",
+                    "damage_multiplier": 0.5,
+                    "hit_chance_penalty": -20,
+                    "effect": "disarmed",
+                    "effect_chance": 40
+                }
+            }
+            
+            # Display available target zones
+            zone_options = {}
+            zone_idx = 1
+            
+            for zone_id, zone_data in TARGET_ZONES.items():
+                zone_options[str(zone_idx)] = zone_id
+                console.print(f"[{COLORS['text']}]{zone_idx}. {zone_data['name']}[/{COLORS['text']}]")
+                console.print(f"[{COLORS['text']}]   {zone_data['description']}[/{COLORS['text']}]")
+                console.print(f"[{COLORS['text']}]   Damage: x{zone_data['damage_multiplier']}, Accuracy: {zone_data['hit_chance_penalty']}%[/{COLORS['text']}]")
+                console.print("")  # Spacing
+                zone_idx += 1
+            
+            console.print(f"[{COLORS['text']}]0. Back to combat options[/{COLORS['text']}]")
+            
+            zone_choice = Prompt.ask("[bold green]Choose a target zone[/bold green]", 
+                                  choices=list(zone_options.keys()) + ["0"])
+            
+            if zone_choice == "0":
+                continue
+            
+            selected_zone = zone_options[zone_choice]
+            zone_data = TARGET_ZONES[selected_zone]
+            
+            # Calculate base hit chance
+            base_hit_chance = 70  # Base 70% chance to hit
+            
+            # Modify based on player stats
+            hit_chance_bonus = player.stats.get("reflex", 0) * 3
+            
+            # Modify based on enemy status (eg. stunned enemies are easier to hit)
+            if "stunned" in enemy.status_effects:
+                hit_chance_bonus += 20
+            
+            if "off_balance" in enemy.status_effects:
+                hit_chance_bonus += 10
+            
+            # Apply zone penalty  
+            final_hit_chance = base_hit_chance + hit_chance_bonus + zone_data["hit_chance_penalty"]
+            final_hit_chance = max(5, min(95, final_hit_chance))  # Clamp between 5% and 95%
+            
+            console.print(f"[{COLORS['text']}]Targeting {zone_data['name']} with {final_hit_chance}% chance to hit[/{COLORS['text']}]")
+            
+            # Roll for hit
+            hit_roll = random.randint(1, 100)
+            if hit_roll <= final_hit_chance:
+                # Hit successful
+                console.print(f"[{COLORS['primary']}]Precision hit on {enemy.name}'s {zone_data['name']}![/{COLORS['primary']}]")
+                
+                # Calculate damage
+                base_damage = player.stats.get("strength", 3)
+                damage_mod = random.uniform(0.8, 1.5)
+                
+                # Apply zone damage multiplier
+                damage = round(base_damage * damage_mod * zone_data["damage_multiplier"])
+                
+                # Apply damage
+                damage_result = enemy.take_damage(damage)
+                actual_damage = damage_result["damage"]
+                
+                console.print(f"[{COLORS['text']}]You deal {actual_damage} damage with your precision attack![/{COLORS['text']}]")
+                
+                # Apply zone-specific status effect
+                effect_chance = zone_data["effect_chance"]
+                if random.randint(1, 100) <= effect_chance:
+                    effect = zone_data["effect"]
+                    if effect in STATUS_EFFECTS:
+                        enemy.status_effects[effect] = {
+                            "turns": STATUS_EFFECTS[effect].get("duration", 2)
+                        }
+                        console.print(f"[{COLORS['primary']}]Your precision attack caused {enemy.name} to become {STATUS_EFFECTS[effect]['name']}![/{COLORS['primary']}]")
+                
+                # Play appropriate sound
+                if audio_system:
+                    audio_system.play_sound("combat_hit")
+                
+                # Check if enemy is defeated
+                if enemy.is_defeated():
+                    console.print(f"[{COLORS['primary']}]Your precision attack defeats {enemy.name}![/{COLORS['primary']}]")
+                    combat_active = False
+                    result = "victory"
+            else:
+                # Miss
+                console.print(f"[{COLORS['accent']}]You miss your precision attack on {enemy.name}'s {zone_data['name']}![/{COLORS['accent']}]")
+                
+                # Play appropriate sound
+                if audio_system:
+                    audio_system.play_sound("skill_failure")
+            
+        elif choice == "9":
             # Attempt to escape
             # Escape chance based on reflex stat
             escape_chance = min(70, 30 + (player.stats.get("reflex", 3) * 5))
@@ -1180,3 +1867,346 @@ def get_item_info(item_name):
     # Import here to avoid circular imports
     from inventory import get_item_info as inventory_get_item_info
     return inventory_get_item_info(item_name)
+
+def process_environmental_hazards(console, player, enemy, environment, audio_system=None):
+    """
+    Process environmental hazards in combat
+    
+    Args:
+        console: Console for output
+        player: Player character
+        enemy: Enemy being fought
+        environment: Current combat environment
+        audio_system: Audio system for sound effects (optional)
+        
+    Returns:
+        dict: Results including triggered hazards and effects
+    """
+    if not environment or environment not in COMBAT_ENVIRONMENTS:
+        return {"hazards_triggered": False}
+    
+    # Get hazards for this environment
+    available_hazards = COMBAT_ENVIRONMENTS[environment].get("hazards", [])
+    if not available_hazards:
+        return {"hazards_triggered": False}
+    
+    results = {"hazards_triggered": False, "effects": []}
+    
+    # Check each hazard for trigger
+    for hazard_id in available_hazards:
+        if hazard_id not in HAZARDS:
+            continue
+            
+        hazard = HAZARDS[hazard_id]
+        trigger_chance = hazard.get("trigger_chance", 10)
+        
+        # Check if hazard is already in player's active hazards (already aware)
+        if hazard_id in player.active_hazards:
+            # Player is aware, reduce trigger chance
+            trigger_chance = int(trigger_chance / 2)
+        
+        # Roll for hazard trigger
+        if random.randint(1, 100) <= trigger_chance:
+            console.print(f"[{COLORS['accent']}]Environmental hazard: {hazard['name']}![/{COLORS['accent']}]")
+            console.print(f"[{COLORS['text']}]{hazard['description']}[/{COLORS['text']}]")
+            
+            # Add to player's active hazards list if not already there
+            if hazard_id not in player.active_hazards:
+                player.active_hazards.append(hazard_id)
+            
+            results["hazards_triggered"] = True
+            
+            # Apply hazard effects
+            hazard_result = {"type": hazard_id}
+            
+            # Damage effects
+            if "damage" in hazard:
+                damage = hazard["damage"]
+                
+                # Check if damage affects area or just player
+                if "damage_radius" in hazard:
+                    # Area damage - affects both player and enemy
+                    player.health -= damage
+                    enemy_damage_result = enemy.take_damage(damage)
+                    actual_enemy_damage = enemy_damage_result["damage"]
+                    
+                    console.print(f"[{COLORS['accent']}]Both you and {enemy.name} take {damage} damage from {hazard['name']}![/{COLORS['accent']}]")
+                    hazard_result["player_damage"] = damage
+                    hazard_result["enemy_damage"] = actual_enemy_damage
+                else:
+                    # Player damage only
+                    player.health -= damage
+                    console.print(f"[{COLORS['accent']}]You take {damage} damage from {hazard['name']}![/{COLORS['accent']}]")
+                    hazard_result["player_damage"] = damage
+                
+                # Play damage sound if available
+                if audio_system:
+                    audio_system.play_sound("player_damage")
+            
+            # Status effect application
+            if "status_effect" in hazard and hazard["status_effect"]:
+                status_effect = hazard["status_effect"]
+                
+                if status_effect in STATUS_EFFECTS:
+                    # Apply to player
+                    player.status_effects[status_effect] = {
+                        "turns": STATUS_EFFECTS[status_effect].get("duration", 2)
+                    }
+                    
+                    console.print(f"[{COLORS['accent']}]You are {STATUS_EFFECTS[status_effect]['name']}![/{COLORS['accent']}]")
+                    hazard_result["status_effect"] = status_effect
+            
+            # Accuracy penalty
+            if "accuracy_penalty" in hazard:
+                penalty = hazard["accuracy_penalty"]
+                console.print(f"[{COLORS['text']}]Your accuracy is reduced by {penalty}%[/{COLORS['text']}]")
+                hazard_result["accuracy_penalty"] = penalty
+            
+            # Tech penalty
+            if "tech_penalty" in hazard:
+                penalty = hazard["tech_penalty"]
+                console.print(f"[{COLORS['text']}]Your tech abilities are hampered (-{penalty})[/{COLORS['text']}]")
+                hazard_result["tech_penalty"] = penalty
+            
+            # Reputation penalty (for harming bystanders)
+            if "reputation_penalty" in hazard:
+                penalty = hazard["reputation_penalty"]
+                console.print(f"[{COLORS['text']}]Your actions may harm your reputation (-{penalty})[/{COLORS['text']}]")
+                hazard_result["reputation_penalty"] = penalty
+            
+            # Reinforcement chance
+            if "reinforcement_chance" in hazard:
+                chance = hazard["reinforcement_chance"]
+                console.print(f"[{COLORS['accent']}]The alarm might attract reinforcements! ({chance}% chance)[/{COLORS['accent']}]")
+                
+                # Roll for reinforcements
+                if random.randint(1, 100) <= chance:
+                    hazard_result["reinforcements"] = True
+                    console.print(f"[{COLORS['primary']}]Reinforcements are on their way![/{COLORS['primary']}]")
+                else:
+                    console.print(f"[{COLORS['text']}]Fortunately, no one seems to have heard the alarm.[/{COLORS['text']}]")
+            
+            results["effects"].append(hazard_result)
+    
+    return results
+
+def perform_combat_maneuver(console, player, enemy, maneuver_id, environment=None, audio_system=None):
+    """
+    Perform a tactical combat maneuver
+    
+    Args:
+        console: Console for output
+        player: Player character
+        enemy: Enemy being fought
+        maneuver_id: ID of the maneuver to perform
+        environment: Current combat environment (optional)
+        audio_system: Audio system for sound effects (optional)
+        
+    Returns:
+        dict: Results of the maneuver including success/failure, damage, and effects
+    """
+    if maneuver_id not in COMBAT_MANEUVERS:
+        console.print(f"[{COLORS['accent']}]Unknown maneuver: {maneuver_id}[/{COLORS['accent']}]")
+        return {"success": False, "message": "Unknown maneuver"}
+    
+    # Get maneuver data
+    maneuver = COMBAT_MANEUVERS[maneuver_id]
+    console.print(f"[{COLORS['primary']}]Attempting {maneuver['name']}...[/{COLORS['primary']}]")
+    
+    # Check requirements
+    requirements_met = True
+    failure_reason = ""
+    
+    # Position requirement
+    if "position" in maneuver["requirements"]:
+        required_positions = maneuver["requirements"]["position"]
+        if "any" not in required_positions and player.position not in required_positions:
+            requirements_met = False
+            failure_reason = f"Wrong position. Need to be in one of: {', '.join(required_positions)}"
+    
+    # Combat stance requirement
+    if "stance" in maneuver["requirements"]:
+        required_stance = maneuver["requirements"]["stance"]
+        if player.combat_stance != required_stance:
+            requirements_met = False
+            failure_reason = f"Wrong stance. Need to be in {required_stance} stance"
+    
+    # Stat requirements
+    if "min_strength" in maneuver["requirements"] and player.stats.get("strength", 0) < maneuver["requirements"]["min_strength"]:
+        requirements_met = False
+        failure_reason = f"Not enough strength. Need {maneuver['requirements']['min_strength']}"
+        
+    if "min_agility" in maneuver["requirements"] and player.stats.get("reflex", 0) < maneuver["requirements"]["min_agility"]:
+        requirements_met = False
+        failure_reason = f"Not enough agility. Need {maneuver['requirements']['min_agility']}"
+        
+    if "min_intelligence" in maneuver["requirements"] and player.stats.get("intelligence", 0) < maneuver["requirements"]["min_intelligence"]:
+        requirements_met = False
+        failure_reason = f"Not enough intelligence. Need {maneuver['requirements']['min_intelligence']}"
+        
+    if "min_tech" in maneuver["requirements"] and player.stats.get("tech", 0) < maneuver["requirements"]["min_tech"]:
+        requirements_met = False
+        failure_reason = f"Not enough tech skill. Need {maneuver['requirements']['min_tech']}"
+    
+    # Combo points requirement
+    if "min_combo_points" in maneuver["requirements"] and player.combo_points < maneuver["requirements"]["min_combo_points"]:
+        requirements_met = False
+        failure_reason = f"Not enough combo points. Need {maneuver['requirements']['min_combo_points']}"
+    
+    # Environment requirements
+    if "environment_types" in maneuver["requirements"] and environment:
+        if environment not in maneuver["requirements"]["environment_types"]:
+            requirements_met = False
+            failure_reason = f"Wrong environment. Need one of: {', '.join(maneuver['requirements']['environment_types'])}"
+    
+    # Cover available requirement
+    if "cover_available" in maneuver["requirements"] and maneuver["requirements"]["cover_available"]:
+        available_cover = False
+        # Check if there's cover available in the environment
+        if environment and environment in COMBAT_ENVIRONMENTS:
+            available_cover = len(COMBAT_ENVIRONMENTS[environment]["cover_options"]) > 1  # More than just "none"
+        
+        if not available_cover:
+            requirements_met = False
+            failure_reason = "No cover available in this environment"
+    
+    # If requirements aren't met, return failure
+    if not requirements_met:
+        console.print(f"[{COLORS['accent']}]Cannot perform {maneuver['name']}: {failure_reason}[/{COLORS['accent']}]")
+        
+        # Play failure sound if audio system is available
+        if audio_system:
+            audio_system.play_sound("skill_failure")
+            
+        return {"success": False, "message": failure_reason}
+    
+    # Apply costs
+    costs = maneuver.get("cost", {})
+    spent_points = 0
+    
+    # Health cost
+    if "health" in costs:
+        player.health -= costs["health"]
+        console.print(f"[{COLORS['accent']}]You take {costs['health']} damage from exertion[/{COLORS['accent']}]")
+    
+    # Stamina cost (not implemented yet, reserved for future)
+    if "stamina" in costs:
+        # Future: player.stamina -= costs["stamina"]
+        pass
+    
+    # Combo points cost
+    if "combo_points" in costs:
+        if costs["combo_points"] == "all":
+            # Use all combo points
+            spent_points = player.combo_points
+            player.combo_points = 0
+        else:
+            # Use specified number of combo points
+            spent_points = min(player.combo_points, costs["combo_points"])
+            player.combo_points -= spent_points
+            
+        console.print(f"[{COLORS['text']}]Used {spent_points} combo points[/{COLORS['text']}]")
+    
+    # Apply effects
+    effects = maneuver.get("effects", {})
+    result = {"success": True, "effects_applied": []}
+    
+    # Damage calculation
+    if "damage_multiplier" in effects:
+        base_damage = player.stats.get("strength", 3)
+        multiplier = effects["damage_multiplier"]
+        
+        # Add combo point damage if applicable
+        if "damage_per_combo" in effects and spent_points > 0:
+            multiplier += effects["damage_per_combo"] * spent_points
+            
+        damage = int(base_damage * multiplier)
+        
+        # Apply damage to enemy
+        ignore_defense = effects.get("ignore_defense", False)
+        damage_result = enemy.take_damage(damage, ignore_defense=ignore_defense)
+        actual_damage = damage_result["damage"]
+        
+        console.print(f"[{COLORS['primary']}]{maneuver['name']} deals {actual_damage} damage to {enemy.name}[/{COLORS['primary']}]")
+        result["damage"] = actual_damage
+        
+        # Play appropriate sound
+        if audio_system:
+            audio_system.play_sound("combat_hit")
+    
+    # Status effect application
+    if "status_effect" in effects:
+        status_effect = effects["status_effect"]
+        chance = effects.get("status_chance", 100)
+        
+        if random.randint(1, 100) <= chance:
+            # Apply status effect to enemy
+            if status_effect in STATUS_EFFECTS:
+                enemy.status_effects[status_effect] = {
+                    "turns": STATUS_EFFECTS[status_effect].get("duration", 2)
+                }
+                console.print(f"[{COLORS['secondary']}]{enemy.name} is {STATUS_EFFECTS[status_effect]['name']}[/{COLORS['secondary']}]")
+                result["effects_applied"].append(status_effect)
+    
+    # Cover disruption
+    if "disrupt_cover" in effects and effects["disrupt_cover"]:
+        if enemy.current_cover != "none":
+            console.print(f"[{COLORS['secondary']}]You disrupt {enemy.name}'s cover![/{COLORS['secondary']}]")
+            enemy.current_cover = "none"
+            result["cover_disrupted"] = True
+    
+    # Combo point gain
+    if "combo_point_gain" in effects:
+        gain = effects["combo_point_gain"]
+        player.combo_points += gain
+        console.print(f"[{COLORS['text']}]Gained {gain} combo points (Total: {player.combo_points})[/{COLORS['text']}]")
+        result["combo_points_gained"] = gain
+    
+    # Position changes
+    if "move_to_cover" in effects and effects["move_to_cover"] and environment:
+        # Find best available cover
+        available_covers = COMBAT_ENVIRONMENTS[environment]["cover_options"]
+        best_cover = "none"
+        best_defense = 0
+        
+        for cover_id in available_covers:
+            if cover_id != "none":
+                cover_defense = COVER_TYPES[cover_id]["defense_bonus"]
+                if cover_defense > best_defense:
+                    best_cover = cover_id
+                    best_defense = cover_defense
+        
+        if best_cover != "none":
+            player.current_cover = best_cover
+            player.cover_health = COVER_TYPES[best_cover]["health"]
+            console.print(f"[{COLORS['secondary']}]You take cover behind {COVER_TYPES[best_cover]['name']}[/{COLORS['secondary']}]")
+            result["new_cover"] = best_cover
+    
+    # Reveal weaknesses/hazards
+    if "reveal_weaknesses" in effects and effects["reveal_weaknesses"]:
+        enemy.analyzed = True
+        if enemy.weaknesses:
+            console.print(f"[{COLORS['secondary']}]Analysis reveals {enemy.name}'s weaknesses: {', '.join(enemy.weaknesses)}[/{COLORS['secondary']}]")
+        else:
+            console.print(f"[{COLORS['secondary']}]Analysis reveals no specific weaknesses for {enemy.name}[/{COLORS['secondary']}]")
+        
+        result["weaknesses_revealed"] = True
+    
+    if "reveal_hazards" in effects and effects["reveal_hazards"] and environment:
+        hazards = COMBAT_ENVIRONMENTS[environment].get("hazards", [])
+        if hazards:
+            console.print(f"[{COLORS['secondary']}]Analysis reveals environmental hazards: {', '.join(hazards)}[/{COLORS['secondary']}]")
+            result["hazards_revealed"] = hazards
+    
+    # Tactical advantage
+    if "tactical_advantage" in effects:
+        advantage = effects["tactical_advantage"]
+        player.tactical_advantage += advantage
+        console.print(f"[{COLORS['secondary']}]Gained +{advantage} tactical advantage[/{COLORS['secondary']}]")
+        result["tactical_advantage_gained"] = advantage
+    
+    # Play success sound if audio system is available
+    if audio_system:
+        audio_system.play_sound("skill_success")
+    
+    return result

@@ -11,6 +11,20 @@ class LocationActionHandler:
     def __init__(self, game_engine):
         """Initialize with reference to the game engine"""
         self.game_engine = game_engine
+        
+        # Initialize faction_reputation_change in result dictionary if not present
+        self.default_results = {
+            'success': True,  # Default to success
+            'messages': [],  # Messages to display to player
+            'credits_change': 0,  # Credits gained or lost (negative for loss)
+            'items_gained': {},  # Dict of item_name: count
+            'items_lost': {},  # Dict of item_name: count
+            'health_change': 0,  # Health gained or lost
+            'experience_gain': 0,  # XP gained
+            'reputation_change': {},  # Dict of district_id: change_amount
+            'faction_reputation_change': {},  # Dict of faction_id: change_amount
+            'combat_encounter': None  # Combat details if an encounter was triggered
+        }
     
     def handle_location_action(self, console, choice_id: str, district_id: str) -> Dict[str, Any]:
         """
@@ -27,17 +41,10 @@ class LocationActionHandler:
         # Get action type based on choice ID
         action_type = self._get_action_type(choice_id)
         
-        # Base results dictionary
-        results = {
-            "success": True,
-            "messages": [],
-            "credits_change": 0,
-            "items_gained": {},
-            "items_lost": {},
-            "health_change": 0,
-            "experience_gain": 0,
-            "reputation_change": {district_id: 0}
-        }
+        # Base results dictionary - use default values from init
+        results = self.default_results.copy()
+        # Set district ID for reputation changes
+        results["reputation_change"] = {district_id: 0}
         
         # Process action based on its type
         if action_type == "combat":
@@ -218,8 +225,8 @@ class LocationActionHandler:
             
             # Determine specific outcome
             outcome_type = random.choices(
-                ["reputation", "information", "item", "credits"],
-                weights=[0.4, 0.3, 0.2, 0.1],
+                ["reputation", "faction", "information", "item", "credits"],
+                weights=[0.3, 0.2, 0.2, 0.2, 0.1],
                 k=1
             )[0]
             
@@ -228,6 +235,33 @@ class LocationActionHandler:
                 rep_gain = random.randint(1, 3)
                 results["reputation_change"][district_id] = rep_gain
                 results["messages"].append(f"Your reputation in this district increases by {rep_gain}.")
+            
+            elif outcome_type == "faction":
+                # Gain reputation with a faction present in this district
+                district_factions = self.game_engine.district_manager.get_factions_in_district(district_id)
+                
+                if district_factions:
+                    # Choose a random faction
+                    faction = random.choice(district_factions)
+                    
+                    # Determine if this is a positive or negative interaction
+                    if random.random() < 0.8:  # 80% chance of positive outcome
+                        # Positive interaction
+                        rep_gain = random.randint(1, 3)
+                        results["faction_reputation_change"][faction.faction_id] = rep_gain
+                        results["messages"].append(f"You make a connection with {faction.name}.")
+                        results["messages"].append(f"Your reputation with {faction.name} increases by {rep_gain}.")
+                    else:
+                        # Negative interaction but not hostile
+                        rep_loss = -1
+                        results["faction_reputation_change"][faction.faction_id] = rep_loss
+                        results["messages"].append(f"Your interaction with {faction.name} doesn't go as planned.")
+                        results["messages"].append(f"Your reputation with {faction.name} decreases slightly.")
+                else:
+                    # No factions here, default to district reputation
+                    rep_gain = random.randint(1, 2)
+                    results["reputation_change"][district_id] = rep_gain
+                    results["messages"].append(f"You make some local connections, increasing district reputation by {rep_gain}.")
             
             elif outcome_type == "information":
                 # Gain useful information (translate to XP)
@@ -411,7 +445,32 @@ class LocationActionHandler:
                 results["items_gained"][item] = 1
                 results["messages"].append(f"You also manage to grab a {item}.")
             
-            # Small reputation loss even with success - someone might have seen you
+            # Check for factions present in this district
+            district_factions = self.game_engine.district_manager.get_factions_in_district(district_id)
+            
+            # Try to find a criminal faction that might appreciate your actions
+            criminal_faction = None
+            for faction in district_factions:
+                if faction.faction_type == "gang":
+                    criminal_faction = faction
+                    break
+            
+            # Chance for faction reputation impact
+            if random.random() < 0.6:  # 60% chance
+                if criminal_faction:
+                    # Criminal activity might impress local gangs
+                    rep_gain = random.randint(1, 2)
+                    results["faction_reputation_change"][criminal_faction.faction_id] = rep_gain
+                    results["messages"].append(f"Your criminal prowess has impressed the {criminal_faction.name}.")
+                    
+                    # But might upset law-abiding factions
+                    law_factions = [f for f in district_factions if f.faction_type in ["government", "corp"]]
+                    if law_factions and random.random() < 0.4:  # 40% chance
+                        law_faction = random.choice(law_factions)
+                        results["faction_reputation_change"][law_faction.faction_id] = -1
+                        results["messages"].append(f"However, the {law_faction.name} would disapprove if they knew.")
+            
+            # Small district reputation loss even with success - someone might have seen you
             if random.random() < 0.3:  # 30% chance
                 results["reputation_change"][district_id] = -1
                 results["messages"].append("Despite your success, someone may have witnessed your actions.")
@@ -419,6 +478,23 @@ class LocationActionHandler:
             # Failed criminal action
             results["success"] = False
             results["messages"].append("Your criminal attempt fails and you're spotted.")
+            
+            # Identify if any law enforcement or corporate factions are present
+            district_factions = self.game_engine.district_manager.get_factions_in_district(district_id)
+            faction_present = None
+            
+            # Look for law enforcement or corporate factions first
+            for faction in district_factions:
+                if faction.faction_type in ["government", "corp"]:
+                    faction_present = faction
+                    break
+            
+            # If no government/corp factions, check if there's a local gang
+            if not faction_present and district_factions:
+                for faction in district_factions:
+                    if faction.faction_type == "gang":
+                        faction_present = faction
+                        break
             
             # Determine how bad the consequence is
             consequence_severity = random.choices(
@@ -432,6 +508,12 @@ class LocationActionHandler:
                 results["reputation_change"][district_id] = -1
                 results["messages"].append("You narrowly escape, but rumors about your actions spread.")
                 
+                # If a faction was present, lose reputation with them
+                if faction_present:
+                    rep_loss = -1
+                    results["faction_reputation_change"][faction_present.faction_id] = rep_loss
+                    results["messages"].append(f"Your actions have not gone unnoticed by the {faction_present.name}.")
+                
                 # Maybe lose a few credits
                 if self.game_engine.player.credits > 20:
                     credit_loss = random.randint(10, 20)
@@ -440,9 +522,27 @@ class LocationActionHandler:
             
             elif consequence_severity == "moderate":
                 # Moderate consequence - security response
-                results["messages"].append("Local security forces spot you and move to intervene!")
+                
+                # Determine appropriate enemy type based on present faction
+                enemy_type = "Security Officer"  # Default
+                if faction_present:
+                    if faction_present.faction_type == "corp":
+                        enemy_type = "Corporate Security"
+                    elif faction_present.faction_type == "government":
+                        enemy_type = "Law Enforcement"
+                    elif faction_present.faction_type == "gang":
+                        enemy_type = f"{faction_present.name} Enforcer"
+                
+                results["messages"].append(f"You're spotted by {enemy_type}s who move to intervene!")
+                
+                # Set faction reputation change for the moderate encounter
+                if faction_present:
+                    rep_loss = -2
+                    results["faction_reputation_change"][faction_present.faction_id] = rep_loss
+                    results["messages"].append(f"Your actions have angered the {faction_present.name}.")
+                
                 results["combat_encounter"] = {
-                    "enemy_type": "Security Officer",
+                    "enemy_type": enemy_type,
                     "danger_level": danger_level,
                     "rewards": {
                         "experience": 15 * danger_level,
@@ -455,6 +555,20 @@ class LocationActionHandler:
                 rep_loss = random.randint(2, 5)
                 results["reputation_change"][district_id] = -rep_loss
                 results["messages"].append(f"Your botched criminal activity severely damages your reputation (-{rep_loss}).")
+                
+                # If a faction was present, lose significant reputation with them
+                if faction_present:
+                    faction_rep_loss = random.randint(-3, -5)
+                    results["faction_reputation_change"][faction_present.faction_id] = faction_rep_loss
+                    results["messages"].append(f"The {faction_present.name} has put you on their watch list.")
+                    
+                    # If it's a gang, maybe give a small reputation boost to a rival gang
+                    if faction_present.faction_type == "gang" and faction_present.rival_factions:
+                        rival_faction_id = random.choice(faction_present.rival_factions)
+                        rival_faction = self.game_engine.district_manager.get_faction(rival_faction_id)
+                        if rival_faction:
+                            results["faction_reputation_change"][rival_faction_id] = 1
+                            results["messages"].append(f"Word of your conflict with {faction_present.name} reaches the {rival_faction.name}, who appreciate your actions.")
                 
                 # Health loss from escape
                 health_loss = random.randint(3, 8)

@@ -1516,6 +1516,38 @@ class GameEngine:
         
         if current_district.ascii_art:
             ui.display_ascii_art(console, current_district.ascii_art)
+            
+        # Display factions present in this district
+        district_factions = self.district_manager.get_factions_in_district(current_district.district_id)
+        if district_factions:
+            console.print("\n[bold purple]Factions with presence in this district:[/bold purple]")
+            for faction in district_factions:
+                # Check player's reputation with this faction
+                faction_rep = self.player.reputation.get_faction_reputation(faction.faction_id)
+                rep_title = self.player.reputation.get_reputation_title(faction_rep)
+                
+                # Determine color based on relationship
+                if faction_rep >= 40:
+                    color = "green"
+                elif faction_rep >= 0:
+                    color = "blue"
+                elif faction_rep > -40:
+                    color = "yellow"
+                else:
+                    color = "red"
+                
+                # Display influence level (home district vs regular presence)
+                if faction.home_district == current_district.district_id:
+                    influence = "[bold]HEADQUARTERS[/bold]"
+                else:
+                    influence = "Presence"
+                
+                console.print(f"[{color}]► {faction.name} ({faction.faction_type}) - {influence}[/{color}]")
+                console.print(f"   [dim]{faction.description}[/dim]")
+                console.print(f"   Your standing: {rep_title} ({faction_rep})")
+                
+            # Display hint about faction reputation
+            console.print("\n[dim italic]Note: Your reputation with these factions will affect available jobs, prices, and interactions.[/dim italic]")
         
         # Display available actions
         console.print("\n[bold purple]Available Actions in this District:[/bold purple]")
@@ -1614,7 +1646,7 @@ class GameEngine:
             self.player.add_experience(xp_gain, audio_system=self.audio_system if self.audio_enabled else None)
             console.print(f"[green]You gained {xp_gain} experience points.[/green]")
         
-        # Handle reputation changes
+        # Handle district reputation changes
         for district_id, rep_change in results.get('reputation_change', {}).items():
             if rep_change != 0:
                 if rep_change > 0:
@@ -1625,6 +1657,52 @@ class GameEngine:
                     self.player.reputation.modify_district_reputation(district_id, rep_change)
                     district_name = self.district_manager.get_district(district_id).name
                     console.print(f"[red]Your reputation in {district_name} decreased by {abs(rep_change)}.[/red]")
+        
+        # Handle faction reputation changes
+        for faction_id, rep_change in results.get('faction_reputation_change', {}).items():
+            if rep_change != 0:
+                # Use the enhanced modify_faction_reputation method which handles ripple effects
+                faction_results = self.player.reputation.modify_faction_reputation(
+                    faction_id, 
+                    rep_change, 
+                    district_manager=self.district_manager
+                )
+                
+                # Get faction name
+                faction = self.district_manager.get_faction(faction_id)
+                if not faction:
+                    continue
+                    
+                # Display primary change
+                if rep_change > 0:
+                    console.print(f"[green]Your reputation with {faction.name} increased by {rep_change}.[/green]")
+                else:
+                    console.print(f"[red]Your reputation with {faction.name} decreased by {abs(rep_change)}.[/red]")
+                
+                # Display ripple effects (secondary reputation changes)
+                for ripple_id, ripple_amount in faction_results.get('ripple_effects', {}).items():
+                    # Skip small ripple effects to avoid overwhelming the player
+                    if abs(ripple_amount) < 3:
+                        continue
+                        
+                    # Check if this is a district or faction effect
+                    if ripple_id.startswith('district_'):
+                        # This is a district reputation change
+                        district_id = ripple_id.replace('district_', '')
+                        district = self.district_manager.get_district(district_id)
+                        if district:
+                            if ripple_amount > 0:
+                                console.print(f"[dim green]► This also improved your standing in {district.name} slightly.[/dim green]")
+                            else:
+                                console.print(f"[dim red]► This also harmed your standing in {district.name} slightly.[/dim red]")
+                    else:
+                        # This is a faction reputation change
+                        affected_faction = self.district_manager.get_faction(ripple_id)
+                        if affected_faction:
+                            if ripple_amount > 0:
+                                console.print(f"[dim green]► Your standing with {affected_faction.name} also improved slightly.[/dim green]")
+                            else:
+                                console.print(f"[dim red]► Your standing with {affected_faction.name} also decreased slightly.[/dim red]")
         
         # Handle combat encounter if one was triggered
         if 'combat_encounter' in results:

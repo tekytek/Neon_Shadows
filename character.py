@@ -72,6 +72,16 @@ class Character:
         self.weaknesses = []
         self.resistances = []
         
+        # Enhanced tactical combat attributes
+        self.cover_health = 0             # Health/durability of current cover
+        self.position = "center"          # Tactical positioning (left, center, right, flank)
+        self.current_environment = None   # Current combat environment type
+        self.active_hazards = []          # Currently active environmental hazards
+        self.target_zone = "torso"        # Default targeting zone for precision attacks
+        self.tactical_advantage = 0       # Bonus from positioning, flanking, etc.
+        self.ammo_type = "standard"       # Current ammo type being used
+        self.combo_points = 0             # Counter for building combo attacks
+        
         # Initialize special abilities based on character class
         self._init_class_abilities()
     
