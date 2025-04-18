@@ -1,0 +1,125 @@
+tekytek@RPi5:~/Neon_Shadows $ python3 setup.py
+Rich library not found. Attempting to install it...
+error: externally-managed-environment
+
+× This environment is externally managed
+╰─> To install Python packages system-wide, try apt install
+    python3-xyz, where xyz is the package you are trying to
+    install.
+
+    If you wish to install a non-Debian-packaged Python package,
+    create a virtual environment using python3 -m venv path/to/venv.
+    Then use path/to/venv/bin/python and path/to/venv/bin/pip. Make
+    sure you have python3-full installed.
+
+    For more information visit http://rptl.io/venv
+
+note: If you believe this is a mistake, please contact your Python installation or OS distribution provider. You can override this, at the risk of breaking your Python installation or OS, by passing --break-system-packages.
+hint: See PEP 668 for the detailed specification.
+Failed to automatically install Rich. Continuing in text-only mode.
+For best experience, install Rich manually with: pip install rich
+
+NEON SHADOWS - SETUP UTILITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+╭───────────────────────────────────── WELCOME ──────────────────────────────────────╮
+│ This utility will check your system and prepare it for Neon Shadows   │
+│ It will ensure all dependencies are installed and components are working correctly │
+╰────────────────────────────────────────────────────────────────────────────────────╯
+
+Press Enter to begin setup...
+Starting task:
+Progress: 0%
+Progress: 20%
+Progress: 40%
+Progress: 60%
+Progress: 80%
+Progress: 100%
+Python version: 3.11
+✓ Python version check passed
+
+Detected externally managed Python environment (like Raspberry Pi OS)
+Will prioritize system package manager for installations
+Checking dependencies...
+  Checking rich...
+  Checking numpy...
+  Checking pygame...
+  Checking requests...
+  Checking scipy...
+Missing dependencies found:
+  - rich
+
+Attempting to install missing dependencies...
+This system uses an externally managed Python environment.
+Will try system packages first (recommended).
+Checking if apt-get is available...
+Installing packages with apt-get...
+Successfully installed system packages using apt-get
+✓ Dependencies installed successfully with apt-get
+
+Starting task:
+✓ All data files present
+
+Starting task:
+Progress: 0%
+Progress: 20%
+Progress: 40%
+Progress: 60%
+Progress: 80%
+Progress: 100%
+ERROR: Animation test failed - MinimalConsole.print() got an unexpected keyword argument 'end'
+Starting task:
+Progress: 0%
+Progress: 20%
+Progress: 40%
+Progress: 60%
+Progress: 80%
+Progress: 100%
+pygame 2.1.2 (SDL 2.26.5, Python 3.11.2)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+✓ Audio system test passed
+
+Starting task:
+Progress: 0%
+Progress: 20%
+Progress: 40%
+Progress: 60%
+Progress: 80%
+Progress: 100%
+✓ Save system test passed
+
+Starting task:
+Progress: 0%
+Progress: 20%
+Progress: 40%
+Progress: 60%
+Progress: 80%
+Progress: 100%
+ERROR: Codex system test failed
+Starting task:
+Progress: 0%
+Progress: 20%
+Progress: 40%
+Progress: 60%
+Progress: 80%
+Progress: 100%
+✓ Combat system test passed
+
+
+SETUP SUMMARY
+━━━━━━━━━━━━━━━━━
+Python Version: PASSED
+Dependencies: PASSED
+Data Files: PASSED
+Basic Animations: FAILED
+Audio System: PASSED
+Save System: PASSED
+Codex System: FAILED
+Combat System: PASSED
+
+Some tests failed. You may experience issues when running the game.
+Please review the errors above and try to resolve them before playing.
+
+Do you want to proceed to the game anyway? (y/n): n
+
+Setup aborted. Please fix the issues and run setup.py again.
