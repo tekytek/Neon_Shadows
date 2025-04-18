@@ -12,12 +12,54 @@ import sys
 import subprocess
 import time
 import importlib.util
-from rich.console import Console
-from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
 
-# Initialize console
-console = Console()
+# First, check if rich is installed - we need it for the UI
+try:
+    import rich
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
+    
+    # Initialize console with rich
+    console = Console()
+    use_rich = True
+except ImportError:
+    # Rich not installed, use fallback text-only mode
+    use_rich = False
+    
+    # Create a minimal console class that mimics the parts of rich.console.Console we use
+    class MinimalConsole:
+        def print(self, text, style=None):
+            # Strip out rich formatting markup with a very simple approach
+            text = str(text)
+            
+            # Remove color tags like [red], [bold], etc.
+            while "[" in text and "]" in text:
+                start = text.find("[")
+                end = text.find("]", start)
+                if start < end:  # Ensure we found a matching pair
+                    text = text[:start] + text[end+1:]
+                else:
+                    break  # Avoid infinite loop if there's a malformed tag
+            
+            print(text)
+        
+        def clear(self):
+            # Cross-platform clear screen
+            os.system('cls' if os.name == 'nt' else 'clear')
+    
+    # Initialize our minimal console
+    console = MinimalConsole()
+    
+    # Try to install rich automatically
+    print("Rich library not found. Attempting to install it...")
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "rich"])
+        print("Rich installed successfully. Please restart the setup script.")
+        sys.exit(0)
+    except subprocess.CalledProcessError:
+        print("Failed to automatically install Rich. Continuing in text-only mode.")
+        print("For best experience, install Rich manually with: pip install rich")
 
 def header():
     """Display the setup header"""
@@ -50,26 +92,98 @@ def check_python_version():
     console.print("[green]✓[/green] Python version check passed\n")
     return True
 
+def install_packages_with_pip(packages):
+    """Try to install packages using pip"""
+    try:
+        console.print("[blue]Attempting to install using pip...[/blue]")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", *packages])
+        return True
+    except subprocess.CalledProcessError:
+        console.print("[yellow]Pip installation failed, will try alternative methods[/yellow]")
+        return False
+        
+def install_packages_with_pipx(packages):
+    """Try to install packages using pipx if available"""
+    try:
+        console.print("[blue]Checking if pipx is available...[/blue]")
+        # First check if pipx is installed
+        subprocess.check_call(["which", "pipx"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        
+        # Try to install each package with pipx
+        success = True
+        for package in packages:
+            try:
+                console.print(f"[blue]Installing {package} with pipx...[/blue]")
+                subprocess.check_call(["pipx", "install", package])
+            except subprocess.CalledProcessError:
+                success = False
+        
+        return success
+    except subprocess.CalledProcessError:
+        console.print("[yellow]Pipx not available, will try other methods[/yellow]")
+        return False
+
+def install_packages_with_apt(packages):
+    """Try to install packages using apt-get if on Debian/Ubuntu"""
+    try:
+        console.print("[blue]Checking if apt-get is available...[/blue]")
+        # Check if apt-get exists
+        subprocess.check_call(["which", "apt-get"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        
+        # Map Python package names to apt package names
+        apt_packages = {
+            "rich": "python3-rich",
+            "numpy": "python3-numpy",
+            "pygame": "python3-pygame",
+            "requests": "python3-requests",
+            "scipy": "python3-scipy"
+        }
+        
+        # Filter for only the packages in our mapping
+        packages_to_install = [apt_packages[pkg] for pkg in packages if pkg in apt_packages]
+        
+        if packages_to_install:
+            console.print("[blue]Installing packages with apt-get...[/blue]")
+            subprocess.check_call(["sudo", "apt-get", "update"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            subprocess.check_call(["sudo", "apt-get", "install", "-y", *packages_to_install])
+            return True
+        else:
+            console.print("[yellow]No apt packages mapped for the required packages[/yellow]")
+            return False
+    except subprocess.CalledProcessError:
+        console.print("[yellow]Apt-get not available or installation failed[/yellow]")
+        return False
+
 def check_dependencies():
     """Check if required dependencies are installed"""
     required_packages = ["rich", "numpy", "pygame", "requests", "scipy"]
     missing_packages = []
     
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[bold blue]Checking dependencies...[/bold blue]"),
-        BarColumn(),
-        TextColumn("[bold blue]{task.percentage:.0f}%[/bold blue]"),
-        console=console
-    ) as progress:
-        task = progress.add_task("", total=len(required_packages))
-        
+    # Use minimal display if rich is missing
+    if use_rich:
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[bold blue]Checking dependencies...[/bold blue]"),
+            BarColumn(),
+            TextColumn("[bold blue]{task.percentage:.0f}%[/bold blue]"),
+            console=console
+        ) as progress:
+            task = progress.add_task("", total=len(required_packages))
+            
+            for package in required_packages:
+                spec = importlib.util.find_spec(package)
+                if spec is None:
+                    missing_packages.append(package)
+                progress.advance(task)
+                time.sleep(0.2)  # Brief pause for visual effect
+    else:
+        # Simple text-based progress for systems without rich
+        print("Checking dependencies...")
         for package in required_packages:
+            print(f"  Checking {package}...")
             spec = importlib.util.find_spec(package)
             if spec is None:
                 missing_packages.append(package)
-            progress.advance(task)
-            time.sleep(0.2)  # Brief pause for visual effect
     
     if missing_packages:
         console.print("[yellow]Missing dependencies found:[/yellow]")
@@ -77,11 +191,18 @@ def check_dependencies():
             console.print(f"  - [yellow]{package}[/yellow]")
         
         console.print("\nAttempting to install missing dependencies...")
-        try:
-            subprocess.check_call([sys.executable, "-m", "pip", "install", *missing_packages])
-            console.print("[green]✓[/green] Dependencies installed successfully\n")
-        except subprocess.CalledProcessError:
-            console.print("[bold red]ERROR: Failed to install dependencies[/bold red]")
+        
+        # Try multiple installation methods, starting with pip
+        if install_packages_with_pip(missing_packages):
+            console.print("[green]✓[/green] Dependencies installed successfully with pip\n")
+        elif install_packages_with_pipx(missing_packages):
+            console.print("[green]✓[/green] Dependencies installed successfully with pipx\n")
+        elif install_packages_with_apt(missing_packages):
+            console.print("[green]✓[/green] Dependencies installed successfully with apt-get\n")
+        else:
+            console.print("[bold red]ERROR: Failed to install dependencies with any method[/bold red]")
+            console.print("[bold yellow]Please try to install them manually:[/bold yellow]")
+            console.print(f"pip install {' '.join(missing_packages)}")
             return False
     else:
         console.print("[green]✓[/green] All dependencies are installed\n")

@@ -51,13 +51,23 @@ If you need to install Python, download it from [python.org](https://www.python.
 
 The game requires several Python packages to run properly. You can install them using one of the following methods:
 
+#### Install Rich Library First
+
+The setup utility needs the Rich library to run properly. Install it first:
+
+```bash
+pip install rich
+```
+
 #### Using the Setup Utility (Recommended)
 
 ```bash
 python setup.py
 ```
 
-This will automatically check your system, install missing dependencies, and test key components.
+This will automatically check your system, install any remaining dependencies, and test key components.
+
+**Note**: The setup utility now includes a bootstrap mode that will attempt to install Rich automatically if it's missing, but installing it manually first is the most reliable approach.
 
 #### Using pip
 

@@ -4,12 +4,14 @@ Codex Module - In-game encyclopedia of lore and world-building details
 import json
 import os
 import random
+import time
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 from rich.prompt import Prompt
 from rich.markdown import Markdown
 from rich.columns import Columns
+from rich.box import SIMPLE_HEAVY, DOUBLE_EDGE
 
 from config import COLORS
 import assets
@@ -358,46 +360,91 @@ def display_codex_menu(console, codex, player=None):
         codex: Codex instance
         player: Player character (optional)
     """
+    # Play a subtle animation when opening the codex
+    animations.circuit_pattern(console, duration=1.0)
+    
     while True:
         console.clear()
         
-        # Display codex header
-        console.print(Panel("[bold cyan]CODEX: Neo Shanghai Encyclopedia[/bold cyan]"))
+        # Display codex header with more cyberpunk style
+        title_panel = Panel(
+            "[bold cyan]NEURAL CODEX v2.1: Neo Shanghai Encyclopedia[/bold cyan]\n"
+            "[dim cyan]// Neural-link interface active //[/dim cyan]",
+            border_style="cyan",
+            subtitle="[dim]Accessing data archives...[/dim]"
+        )
+        console.print(title_panel)
         
-        # Display discovery statistics
+        # Display discovery statistics with a progress bar
         discovered, total = codex.get_discovery_count()
-        console.print(f"Entries discovered: [cyan]{discovered}[/cyan]/[cyan]{total}[/cyan] ({(discovered/total*100) if total > 0 else 0:.1f}%)")
+        percentage = (discovered/total*100) if total > 0 else 0
+        
+        # Create a visual progress bar
+        bar_width = 40
+        filled = int((bar_width * discovered) / total) if total > 0 else 0
+        progress_bar = "[" + "█" * filled + "░" * (bar_width - filled) + "]"
+        
+        console.print(f"\n[bold]DATABANK STATUS:[/bold]")
+        console.print(f"[dim cyan]Memory blocks discovered:[/dim cyan] [cyan]{discovered}[/cyan]/[cyan]{total}[/cyan]")
+        console.print(f"[{COLORS['neon_pink']}]{progress_bar}[/{COLORS['neon_pink']}] {percentage:.1f}%")
         
         # Get categories with discovered entries
         available_categories = codex.get_categories_with_discovered_entries()
         
         if not available_categories:
-            console.print("[yellow]You haven't discovered any codex entries yet.[/yellow]")
-            console.print("[yellow]Explore the world to unlock more knowledge.[/yellow]")
-            console.print("\nPress Enter to return...")
+            # Use an animation for the "no entries" message
+            console.print("\n[bold yellow]< NO CODEX ENTRIES DETECTED >[/bold yellow]")
+            animations.data_corruption("Neural interface has not recorded any data entries yet.\nExplore Neo Shanghai to expand your knowledge database.", console)
+            console.print("\n[blink]> Press Enter to disconnect neural interface[/blink]")
             Prompt.ask("", default="")
             return
         
-        # Display categories
-        console.print("\n[bold]Available Categories:[/bold]")
+        # Display categories in a more cyberpunk way
+        console.print("\n[bold]AVAILABLE DATA CLUSTERS:[/bold]")
+        
+        # Create a table for better formatting
+        table = Table(show_header=False, box=None, padding=(0, 2, 0, 0))
+        table.add_column("Index", style="dim cyan", width=4)
+        table.add_column("Icon", width=2)
+        table.add_column("Name", style=f"{COLORS['neon_pink']}")
+        table.add_column("Count", style="cyan", width=10)
+        table.add_column("Description", style="dim white")
         
         for i, category_id in enumerate(available_categories, 1):
             category_data = CATEGORIES[category_id]
             entry_count = len(codex.get_entries_by_category(category_id))
             
-            console.print(f"{i}. {category_data['icon']} {category_data['name']} ({entry_count} entries)")
-            console.print(f"   [dim]{category_data['description']}[/dim]")
+            table.add_row(
+                f"[{i}]", 
+                category_data['icon'], 
+                category_data['name'], 
+                f"({entry_count})", 
+                category_data['description']
+            )
         
-        console.print("\n0. Return to Game")
+        console.print(table)
         
-        # Get user choice
+        # Add a decorative divider
+        console.print("\n[dim cyan]" + "═" * 50 + "[/dim cyan]")
+        console.print("[0] [dim cyan]Disconnect neural interface[/dim cyan]")
+        
+        # Add a glitchy effect occasionally for immersion
+        if random.random() < 0.2:  # 20% chance of glitch effect
+            console.print("\n[bold red]< INTERFERENCE DETECTED - SIGNAL DEGRADING >[/bold red]")
+        
+        # Get user choice with enhanced prompt
         choice = Prompt.ask(
-            "Select a category", 
+            "\n[bold cyan]> Select data cluster[/bold cyan]", 
             choices=[str(i) for i in range(len(available_categories) + 1)]
         )
         
         if choice == "0":
+            # Animation for disconnecting from the codex
+            animations.glitch_text("Neural interface disconnecting...", console)
             return
+        
+        # Display loading animation when selecting a category
+        animations.loading_bar(console, length=30, message=f"Loading data cluster {choice}")
         
         # Display category
         category_id = available_categories[int(choice) - 1]
@@ -414,34 +461,98 @@ def display_category(console, codex, category_id):
     """
     entries = codex.get_entries_by_category(category_id)
     
+    # Show transition animation when entering a category
+    if category_id == "technology":
+        animations.digital_rain(console, duration=0.8, density=0.1)
+    elif category_id == "factions":
+        animations.hacker_transition(console, lines=3)
+    else:
+        animations.cyber_flicker(f"Loading {CATEGORIES[category_id]['name']} Database...", console)
+    
     while True:
         console.clear()
         
         category_data = CATEGORIES[category_id]
-        console.print(Panel(f"[bold cyan]CODEX: {category_data['icon']} {category_data['name']}[/bold cyan]"))
-        console.print(f"[dim]{category_data['description']}[/dim]")
+        
+        # Create a more cyberpunk styled header with category specific color
+        category_colors = {
+            "world": f"{COLORS['neon_blue']}",
+            "factions": f"{COLORS['neon_pink']}",
+            "technology": f"{COLORS['matrix_green']}",
+            "locations": f"{COLORS['neon_cyan']}",
+            "characters": f"{COLORS['neon_purple']}",
+            "events": f"{COLORS['neon_orange']}"
+        }
+        color = category_colors.get(category_id, "cyan")
+        
+        header_panel = Panel(
+            f"[bold {color}]NEURAL CODEX: {category_data['icon']} {category_data['name']}[/bold {color}]",
+            border_style=color,
+            subtitle=f"[dim]// {len(entries)} data fragments discovered //[/dim]"
+        )
+        console.print(header_panel)
+        console.print(f"[dim]{category_data['description']}[/dim]\n")
         
         if not entries:
-            console.print("[yellow]No entries discovered in this category yet.[/yellow]")
+            # Show animated message for empty categories
+            console.print("\n[bold yellow]< NO DATA FRAGMENTS AVAILABLE >[/bold yellow]")
+            animations.data_corruption(
+                "No entries have been discovered for this data cluster yet.\nContinue exploring to expand your knowledge base.", 
+                console, 
+                corruption_level=0.15
+            )
         else:
-            # Create a table of entries
-            table = Table(show_header=False, expand=True)
-            table.add_column("Index", style="cyan", width=3)
-            table.add_column("Title", style="white")
+            # Create a cyberpunk-styled table of entries
+            table = Table(show_header=True, expand=True, box=SIMPLE_HEAVY)
+            table.add_column("[dim]ID[/dim]", justify="center", style="dim cyan", width=3)
+            table.add_column(f"[{color}]ENTRY TITLE[/{color}]", style="white")
+            table.add_column("[dim]TYPE[/dim]", justify="right", style="dim", width=12)
             
+            # Add some visual variety to the entries
             for i, entry in enumerate(entries, 1):
-                table.add_row(str(i), entry["title"])
+                # Add some cyberpunk flavor to the display
+                entry_type = ""
+                if "secret" in entry["id"] or "shadow" in entry["id"]:
+                    entry_type = "[red]RESTRICTED[/red]"
+                elif "neural" in entry["id"] or "cyber" in entry["id"]:
+                    entry_type = "[green]TECHNICAL[/green]"
+                elif "corp" in entry["id"]:
+                    entry_type = "[blue]CORPORATE[/blue]"
+                
+                table.add_row(
+                    f"[{i}]", 
+                    entry["title"], 
+                    entry_type
+                )
             
             console.print(table)
         
-        console.print("\n0. Back to Categories")
+        # Add decorative divider
+        console.print(f"\n[dim {color}]" + "═" * 50 + f"[/dim {color}]")
+        console.print(f"[0] [dim {color}]Return to main menu[/dim {color}]")
         
-        # Get user choice
-        choices = [str(i) for i in range(len(entries) + 1)]
-        choice = Prompt.ask("Select an entry", choices=choices)
+        # Occasionally show a "connection unstable" message for immersion
+        if random.random() < 0.15:  # 15% chance
+            console.print("\n[dim red]< WARNING: Connection stability at 78% >[/dim red]")
+        
+        # Get user choice with enhanced styling
+        choice = Prompt.ask(
+            f"\n[bold {color}]> Select data fragment[/bold {color}]", 
+            choices=[str(i) for i in range(len(entries) + 1)]
+        )
         
         if choice == "0":
+            # Animation when exiting
+            animations.glitch_text("Returning to main index...", console, glitch_chars="⌐░▒▓")
             return
+        
+        # Show loading animation when selecting an entry
+        animations.loading_bar(
+            console, 
+            length=25, 
+            message=f"Accessing data fragment {choice}", 
+            style=f"bold {color}"
+        )
         
         # Display entry
         entry_id = entries[int(choice) - 1]["id"]
@@ -461,41 +572,105 @@ def display_entry(console, codex, entry_id):
     if not entry:
         return
     
+    # Import necessary components for styling
+    from rich.style import Style
+    from rich.box import DOUBLE_EDGE
+    
+    # Display a load animation
+    if entry["category"] == "technology":
+        animations.code_decryption("DECODING TECHNICAL SPECIFICATIONS...", console)
+    elif entry["category"] == "factions":
+        animations.neural_interface(console, message="FACTION DATABASE ACCESSED", duration=1.0)
+    elif entry["category"] == "events":
+        animations.heartbeat_monitor(console, heartbeats=3, bpm=120)
+    else:
+        animations.digital_rain(console, duration=0.7, density=0.1)
+    
     while True:
         console.clear()
         
-        # Display entry title
+        # Get category-specific color for consistent theming
         category_data = CATEGORIES[entry["category"]]
-        console.print(Panel(f"[bold cyan]CODEX: {entry['title']}[/bold cyan]"))
-        console.print(f"[dim]Category: {category_data['icon']} {category_data['name']}[/dim]\n")
+        category_colors = {
+            "world": f"{COLORS['neon_blue']}",
+            "factions": f"{COLORS['neon_pink']}",
+            "technology": f"{COLORS['matrix_green']}",
+            "locations": f"{COLORS['neon_cyan']}",
+            "characters": f"{COLORS['neon_purple']}",
+            "events": f"{COLORS['neon_orange']}"
+        }
+        color = category_colors.get(entry["category"], "cyan")
         
-        # Display entry image if available
+        # Create cyberpunk styled header
+        timestamp = time.strftime("%H:%M:%S", time.localtime())
+        header_panel = Panel(
+            f"[bold {color}]DATA ENTRY: {entry['title']}[/bold {color}]\n"
+            f"[dim {color}]Source: {category_data['icon']} {category_data['name']} Archives • Entry #{hash(entry_id) % 10000:04d}[/dim {color}]",
+            border_style=color,
+            subtitle=f"[dim]Neural Link Active • {timestamp} • Connection Stable[/dim]",
+            box=DOUBLE_EDGE
+        )
+        console.print(header_panel)
+        
+        # Display entry image if available with enhanced styling
         if entry.get("image"):
             art = assets.get_ascii_art(entry["image"])
             if art:
-                console.print(Panel(art, border_style="cyan"))
+                art_panel = Panel(
+                    art, 
+                    border_style=color,
+                    title=f"[dim {color}]Visual Reference[/dim {color}]",
+                    subtitle=f"[dim {color}]Data Visualization #{random.randint(1000, 9999)}[/dim {color}]",
+                    box=DOUBLE_EDGE
+                )
+                console.print(art_panel)
+        
+        # Add cyberpunk flair before content
+        console.print(f"[dim {color}]{'═' * 50}[/dim {color}]")
+        console.print(f"[{color}]DATA STREAM BEGINS[/{color}]\n")
         
         # Display entry content with appropriate animation effects
         if animations.get_animation_delay() > 0:
-            # Choose animation effect based on entry category and content
-            from rich.style import Style
+            # Choose animation effect based on entry category and content - more varied now
             
-            # For technology entries, use hologram effect
+            # Technology entries
             if entry["category"] == "technology":
-                animations.hologram_effect(entry["content"], console, style=Style(color="#00FFFF"))
+                if "neural" in entry_id or "brain" in entry_id:
+                    animations.hologram_effect(entry["content"], console, style=Style(color="#00FFFF"))
+                elif "weapon" in entry_id or "combat" in entry_id:
+                    animations.data_corruption(entry["content"], console, corruption_level=0.1)
+                else:
+                    animations.code_decryption(entry["content"], console)
             
-            # For faction entries (especially mysterious ones), use data corruption effect
-            elif entry["category"] == "factions" and any(term in entry_id.lower() for term in ["secret", "shadow", "criminal", "unknown"]):
-                animations.data_corruption(entry["content"], console, corruption_level=0.2)
+            # Faction entries
+            elif entry["category"] == "factions":
+                if any(term in entry_id.lower() for term in ["secret", "shadow", "criminal", "unknown"]):
+                    animations.data_corruption(entry["content"], console, corruption_level=0.2)
+                elif "corp" in entry_id:
+                    animations.typing_effect(entry["content"], console, style=Style(color="#0088FF"))
+                else:
+                    animations.data_stream(entry["content"], console)
             
-            # For cyberspace locations, use digital rain as a prelude
-            elif entry["category"] == "locations" and any(term in entry_id.lower() for term in ["cyber", "net", "virtual", "digital"]):
-                animations.digital_rain(console, duration=1.5, density=0.2, chars="01")
-                animations.typing_effect(entry["content"], console)
+            # Location entries
+            elif entry["category"] == "locations":
+                if any(term in entry_id.lower() for term in ["cyber", "net", "virtual", "digital"]):
+                    animations.digital_rain(console, duration=0.8, density=0.2, chars="01")
+                    animations.typing_effect(entry["content"], console)
+                elif "district" in entry_id:
+                    animations.cyber_scan(entry["content"], console, style=Style(color="#00FFAA"))
+                else:
+                    animations.typing_effect(entry["content"], console)
             
-            # For historical events, use glitch text for dramatic effect
-            elif entry["category"] == "events" and any(term in entry_id.lower() for term in ["war", "incident", "disaster", "conflict"]):
-                animations.glitch_text(entry["content"], console)
+            # Event entries
+            elif entry["category"] == "events":
+                if any(term in entry_id.lower() for term in ["war", "massacre", "disaster", "conflict"]):
+                    animations.glitch_text(entry["content"], console, glitch_chars="!@#$%^*<>?_-+=~")
+                else:
+                    animations.typing_effect(entry["content"], console)
+            
+            # Character entries
+            elif entry["category"] == "characters":
+                animations.code_decryption(entry["content"], console)
             
             # Default to typing effect for standard entries
             else:
@@ -504,41 +679,82 @@ def display_entry(console, codex, entry_id):
             # Use markdown rendering for non-animated text
             console.print(Markdown(entry["content"]))
         
+        # Add closing flair
+        console.print(f"\n[{color}]DATA STREAM ENDS[/{color}]")
+        console.print(f"[dim {color}]{'═' * 50}[/dim {color}]")
+        
         # Display related entries if any are discovered
         related = entry.get("related_entries", [])
         discovered_related = [rel for rel in related if codex.is_discovered(rel) and rel in codex.entries]
         
         if discovered_related:
-            console.print("\n[bold]Related Entries:[/bold]")
+            console.print(f"\n[bold {color}]LINKED DATA NODES:[/bold {color}]")
+            
+            # Create a stylish table for related entries
+            related_table = Table(show_header=False, box=None, padding=(0, 2, 0, 0))
+            related_table.add_column("Index", style="dim cyan", width=3)
+            related_table.add_column("Title", style="white")
+            related_table.add_column("Category", style="dim", width=10)
             
             for i, rel_id in enumerate(discovered_related, 1):
                 rel_entry = codex.entries[rel_id]
-                console.print(f"{i}. {rel_entry['title']}")
+                rel_category = CATEGORIES[rel_entry["category"]]["icon"]
+                related_table.add_row(
+                    f"[{i}]", 
+                    rel_entry["title"],
+                    rel_category
+                )
+            
+            console.print(related_table)
         
-        # Navigation options
-        console.print("\n0. Back to Entry List")
+        # Occasionally display a system message for atmosphere
+        if random.random() < 0.2:  # 20% chance
+            status_messages = [
+                "[dim]System integrity nominal[/dim]",
+                "[dim yellow]Minor data corruption detected[/dim yellow]",
+                "[dim green]Neural connection optimal[/dim green]",
+                "[dim]Memory cache utilization: 64%[/dim]",
+                "[dim blue]Link stability: 96.7%[/dim blue]"
+            ]
+            console.print(f"\n{random.choice(status_messages)}")
+        
+        # Navigation options with better styling
+        console.print(f"\n[dim {color}]{'─' * 50}[/dim {color}]")
+        console.print(f"[0] [dim {color}]Return to data index[/dim {color}]")
         
         if discovered_related:
-            console.print("r. View a Related Entry")
+            console.print(f"[r] [dim {color}]Access linked data node[/dim {color}]")
         
-        # Get user choice
+        # Get user choice with enhanced styling
         choices = ["0"]
         if discovered_related:
             choices.append("r")
             
-        choice = Prompt.ask("Select an option", choices=choices)
+        choice = Prompt.ask(f"\n[bold {color}]> Select action[/bold {color}]", choices=choices)
         
         if choice == "0":
+            # Exit animation
+            animations.glitch_text("Disconnecting from data node...", console, glitch_chars="░▒▓█")
             return
         elif choice == "r":
-            # Display submenu for related entries
+            # Create a more visually styled submenu for related entries
+            console.print(f"\n[bold {color}]SELECT LINKED DATA NODE:[/bold {color}]")
+            for i, rel_id in enumerate(discovered_related, 1):
+                rel_entry = codex.entries[rel_id]
+                console.print(f"[{i}] {rel_entry['title']}")
+            console.print(f"[0] [dim]Cancel[/dim]")
+            
+            # Display loading animation when making selection
             rel_choice = Prompt.ask(
-                "Select a related entry", 
+                f"[bold {color}]> Enter selection[/bold {color}]", 
                 choices=[str(i) for i in range(len(discovered_related) + 1)]
             )
             
             if rel_choice == "0":
                 continue
+            
+            # Show transition effect when navigating to a related entry
+            animations.loading_bar(console, length=20, message="Accessing linked data node", style=f"bold {color}")
                 
             rel_id = discovered_related[int(rel_choice) - 1]
             display_entry(console, codex, rel_id)
@@ -589,6 +805,29 @@ Neo Shanghai became the model for this new world order - the first major city to
 Today, citizenship in Neo Shanghai is tied directly to corporate affiliation. Those without corporate sponsorship exist in a legal gray area, forced to survive in the margins of society.
         """,
         related_entries=["corporate_council", "zheng_dynamics", "arasaka"]
+    )
+    
+    codex.add_entry(
+        "digital_pandemic",
+        "world",
+        "Digital Pandemic of 2064",
+        """
+## Digital Pandemic of 2064
+
+One of the most devastating global events of the mid-21st century, the Digital Pandemic began as a seemingly minor glitch in neural interface systems across major corporate networks. What at first appeared to be isolated incidents of data corruption rapidly spread through interconnected networks, proving resistant to standard quarantine protocols.
+
+Within 72 hours, an estimated 15% of all neural implant users worldwide reported symptoms ranging from sensory hallucinations to complete cognitive dysfunction. The pandemic's unusual vectors—spreading through both network connections and direct neural interface contact—left cybersecurity experts baffled.
+
+Official casualty counts remain disputed, but conservative estimates suggest over 200,000 people suffered permanent neural damage, with at least 30,000 deaths from various causes including suicide, brain hemorrhage, and "autopilot accidents" where afflicted individuals continued functioning without higher cognitive awareness.
+
+In Neo Shanghai, the outbreak hit particularly hard due to the city's high concentration of neural interface users. The Blackout Zone remains a lasting testament to the pandemic's impact—an entire district abandoned when its inhabitants either perished or fled during the three-week crisis.
+
+Though the pandemic was officially declared contained after corporate forces deployed an aggressive countermeasure that severed all network connections to affected regions, conspiracy theories persist regarding its origin, ranging from terrorist cyberattacks to corporate warfare gone wrong.
+
+Certain strains of the code pattern responsible for the pandemic reportedly remain dormant in isolated systems, with black market netrunners occasionally claiming to possess "weaponized samples" of what they call "the Mindkiller virus."
+        """,
+        related_entries=["blackout_zone", "neural_interfaces", "cyber_psychosis", "netrunning"],
+        image="VIRUS_PATTERN"
     )
     
     # Factions entries
@@ -760,7 +999,108 @@ Beneath the glittering surface of entertainment, the district hosts a thriving b
         image="NEON_DISTRICT"
     )
     
+    codex.add_entry(
+        "blackout_zone",
+        "locations",
+        "Blackout Zone",
+        """
+## Blackout Zone
+
+The most notorious district in Neo Shanghai, the Blackout Zone stands as a haunting memorial to the Digital Pandemic of 2064. Once a thriving middle-class residential sector called New Pudong, it was abandoned during the crisis when nearly 70% of its neural interface-equipped residents were affected by the spreading digital contagion.
+
+Corporate emergency protocols implemented a complete network and power isolation of the district, cutting it off from the rest of the city. When the quarantine was finally lifted three weeks later, thousands were dead, and thousands more had fled, leaving behind a ghost town of shuttered apartments and businesses.
+
+Today, the Blackout Zone exists in a perpetual twilight state. Official electricity and data networks were never fully restored, leading to its name. Electricity comes from a patchwork of makeshift generators and illegally tapped power lines, creating an unreliable grid that frequently plunges entire blocks into darkness.
+
+Despite—or perhaps because of—its isolation, the Blackout Zone has become home to those seeking to escape corporate surveillance or authority. Various factions control different territories within the district:
+
+- **The Forgotten**: Original residents who refused to leave, many suffering from lingering neural damage from the pandemic. They've formed tight-knit communities and are generally hostile to outsiders.
+
+- **The Disconnected**: A quasi-religious community that rejects neural interfaces and most modern technology, seeing the Blackout Zone as a punishment for humanity's over-reliance on digital systems.
+
+- **Ghost Market**: The largest black market in Neo Shanghai, operating from the ruins of what was once the New Pudong Commercial Center. Specializes in selling illegal technology, weapons, and stolen corporate data.
+
+The district remains officially abandoned on corporate records, with no law enforcement presence. Rumors persist that the original pandemic code still lurks in isolated networks throughout the zone, with some claiming that certain areas experience "echo events" where equipment spontaneously manifests pandemic-like symptoms.
+        """,
+        related_entries=["digital_pandemic", "neo_shanghai", "steel_dragons"],
+        image="DARK_RUINS"
+    )
+
+    # Events entries
+    codex.add_entry(
+        "neo_shanghai_founding",
+        "events",
+        "Founding of Neo Shanghai",
+        """
+## Founding of Neo Shanghai (2047-2053)
+
+After the Great Coastal Flooding of 2045 devastated the original Shanghai and displaced over 20 million people, a consortium of Asian and Western corporations proposed an ambitious solution: a new city built on massive oceanic platforms and stilts over the submerged ruins.
+
+Construction began in 2047 under the "Phoenix Rising" initiative, with Zheng Dynamics, Arasaka, and five other corporations providing the majority of funding and technological expertise. Using automated construction drones, prefabricated materials, and an army of desperate workers from the refugee camps, the first platforms were completed in record time.
+
+The Corporate District was established first, housing the headquarters of the founding corporations and their elite employees. As construction continued outward in concentric rings, social stratification became physically manifest in the city's architecture - the wealthy at the elevated center, the middle class in the mid-level rings, and the working poor in the outer platforms closer to the water level.
+
+By 2051, as governments worldwide continued to collapse under the weight of climate catastrophes and economic crises, the corporate consortium formalized their control by establishing the Shanghai Compact, effectively declaring Neo Shanghai an independent corporate city-state.
+
+The city was officially inaugurated on April 10, 2053, when the original Shanghai was formally abandoned and all remaining government functions were transferred to the corporate-run Neo Shanghai Administrative Council. This date is now celebrated as "Ascension Day" in official corporate calendars.
+
+What began as an emergency response to disaster quickly became the template for a new world order, as other coastal megacities followed Neo Shanghai's model of corporate-led reconstruction and governance in the following decades.
+        """,
+        related_entries=["neo_shanghai", "corporate_takeover", "zheng_dynamics"],
+        image="CITY_CONSTRUCTION"
+    )
+    
+    codex.add_entry(
+        "liberty_day_massacre",
+        "events",
+        "Liberty Day Massacre",
+        """
+## Liberty Day Massacre (November 12, 2062)
+
+What began as the largest anti-corporate demonstration in Neo Shanghai's history ended in bloodshed and controversy that continues to haunt the city. On November 12, 2062, approximately 50,000 protesters gathered in Unity Plaza in the Commerce District to demand democratic representation, basic income guarantees, and regulation of corporate power.
+
+The protest—organized by the "Free Citizens Movement"—coincided with the old American holiday of Veterans Day, which the organizers rebranded as "Liberty Day" to symbolize their struggle for freedom from corporate control. For six hours, the demonstration remained peaceful, with speeches, music, and organized marches.
+
+The situation deteriorated when a small group of protesters breached the security perimeter around the Corporate Council's Commerce District offices. Within minutes, private security forces from multiple corporations responded with what they termed "crowd control measures" but what witnesses described as "indiscriminate violence."
+
+Official reports acknowledge 76 casualties, though independent investigations suggest the true death toll may exceed 200. Thousands more were injured or arrested, with many disappearing into corporate detention facilities.
+
+The aftermath saw sweeping new security measures implemented throughout the city and the official banning of the Free Citizens Movement as a "terrorist organization." Corporate media portrayed the incident as a necessary response to a violent insurrection, releasing heavily edited footage showing protesters attacking security personnel.
+
+Alternative accounts and unedited footage continue to circulate on the darknet, showing security forces firing into crowds of unarmed protesters. A memorial known as the "Liberty Wall"—an unofficial collection of names and photos of the dead—is maintained in the Blackout Zone, regularly removed by corporate security and just as regularly restored by local residents.
+
+Today, November 12 remains a tense date in Neo Shanghai, with increased security presence and occasional underground memorial gatherings.
+        """,
+        related_entries=["corporate_takeover", "neo_shanghai", "blackout_zone"],
+        image="PROTEST_SCENE"
+    )
+    
     # Characters entries
+    codex.add_entry(
+        "shade",
+        "characters",
+        "Shade",
+        """
+## Shade (Born 2044)
+
+Known only by the handle "Shade," this infamous netrunner has been a ghost in Neo Shanghai's systems for nearly two decades. Neither corporate security nor street gangs claim to know Shade's true identity, gender, or appearance—each encounter with Shade is mediated through different proxies, avatars, or hired intermediaries.
+
+What is known about Shade is their seemingly supernatural ability to bypass any security system in the city. According to underground legend, Shade was one of the early victims of the Digital Pandemic, but instead of dying or suffering neural damage like most victims, they somehow integrated the evolving code into their neural interface, fundamentally changing their relationship with cyberspace.
+
+Shade is credited with several high-profile security breaches, including:
+
+- The 2065 "Truth Bomb" that revealed corruption in Zheng Dynamics' neural interface safety testing
+- The 2067 Arasaka Defense Systems hack that exposed illegal weapons sales to banned conflict zones
+- The 2069 "Liberation Day" when every debt record in the Corporate District's central banking network was scrambled beyond recovery
+
+Corporate authorities classify Shade as a terrorist with a 2 million credit bounty. To those in the Blackout Zone and lower levels, they are a mythic hero. Rumors persist that Shade maintains a physical hideout somewhere deep in the Blackout Zone, surrounded by improvised security systems and an army of reprogrammed combat drones.
+
+Behavioral analysis suggests Shade isn't motivated by financial gain, but rather by an ideological opposition to corporate power—or perhaps more disturbingly, by the sheer challenge of defeating increasingly sophisticated security systems.
+        """,
+        related_entries=["digital_pandemic", "blackout_zone", "zheng_dynamics"],
+        image="CYBERSPACE"
+    )
+    
     codex.add_entry(
         "dr_elizabeth_zheng",
         "characters",

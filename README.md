@@ -32,13 +32,14 @@ The game features:
 git clone https://github.com/yourusername/neon-shadows.git
 cd neon-shadows
 
-# Install required packages
-pip install -r requirements.txt
+# Install Rich library first (required for setup)
+pip install rich
 
 # Run the setup utility to verify your system is ready
 python setup.py
 
-# Or run the game directly
+# Or install all dependencies manually and run the game directly
+pip install -r requirements.txt
 python main.py
 ```
 
