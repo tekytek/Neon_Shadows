@@ -110,12 +110,27 @@ def display_splash_screen(console):
     console.print("\n" + "=" * separator_width, style=Style(color=COLORS['primary']))
     console.print(f"[{COLORS['text']}]Press Enter to continue...[/{COLORS['text']}]")
     try:
-        input()
-    except EOFError:
-        # Handle EOF error in non-interactive terminals
-        console.print("[yellow]Note: Input stream ended unexpectedly. This can happen in non-interactive terminals.[/yellow]")
-        console.print("[yellow]Game will proceed automatically.[/yellow]")
-        # Simulate a short delay instead of waiting for Enter
+        # Set a timeout for input to handle potential blocking
+        import sys
+        import select
+        
+        # First check if stdin is available for reading using select
+        # This helps with non-interactive terminals
+        if sys.stdin.isatty():
+            # Terminal is interactive, wait for normal input
+            try:
+                input()
+            except (EOFError, KeyboardInterrupt):
+                # Handle EOF error in non-interactive terminals
+                console.print("[yellow]Note: Input interrupted. Continuing automatically.[/yellow]")
+                time.sleep(1)
+        else:
+            # Non-interactive terminal or redirected input, don't wait for input
+            console.print("[yellow]Note: Non-interactive terminal detected. Continuing automatically.[/yellow]")
+            time.sleep(2)
+    except Exception as e:
+        # Catch any other input-related issues
+        console.print(f"[yellow]Input handling exception: {str(e)}. Continuing automatically.[/yellow]")
         time.sleep(2)
 
 def display_header(console, title_text):
@@ -287,16 +302,35 @@ def main_menu(console):
     try:
         import animations
         from config import GAME_SETTINGS
+        import sys
         
+        # Display the prompt
         if GAME_SETTINGS.get("ui_animations_enabled", True):
             prompt_text = "[bold green]> Select Option:[/bold green]"
             animations.cyber_flicker(prompt_text, console, flicker_count=2)
-            choice = Prompt.ask("")
         else:
-            choice = Prompt.ask("[bold green]Select an option[/bold green]")
-    except (ImportError, AttributeError):
+            console.print("[bold green]> Select Option:[/bold green]")
+        
+        # Handle input more robustly
+        if sys.stdin.isatty():
+            # Terminal is interactive, wait for normal input
+            try:
+                choice = Prompt.ask("")
+            except (EOFError, KeyboardInterrupt):
+                # Handle EOF error in non-interactive terminals
+                console.print("[yellow]Note: Input interrupted. Using default option (1).[/yellow]")
+                choice = "1"  # Default to "New Game" if input fails
+        else:
+            # Non-interactive terminal, provide default
+            console.print("[yellow]Note: Non-interactive terminal detected. Using default option (1).[/yellow]")
+            choice = "1"  # Default to "New Game" if not interactive
+    except (ImportError, AttributeError) as e:
         # Fall back to standard prompt
-        choice = Prompt.ask("[bold green]Select an option[/bold green]")
+        try:
+            choice = Prompt.ask("[bold green]Select an option[/bold green]")
+        except (EOFError, KeyboardInterrupt):
+            # Last resort fallback
+            choice = "1"  # Default to "New Game"
     
     # Check for dev mode activation
     if choice.lower() == "dev":

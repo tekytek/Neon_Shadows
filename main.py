@@ -21,14 +21,40 @@ except ImportError:
 
 def main():
     """Main entry point for the game"""
+    # Check for input stream issues early
+    try:
+        if not sys.stdin.isatty():
+            print("WARNING: Running in a non-interactive terminal environment.")
+            print("If you experience input issues, try running with: python3 main.py < /dev/tty")
+    except Exception:
+        # This check itself might fail in certain environments, so we just continue
+        pass
+    
     # Initialize the console
     console = Console()
     
+    # Look for Raspberry Pi environment
+    is_raspberry_pi = False
+    try:
+        # Check for Raspberry Pi-specific files
+        if os.path.exists('/proc/device-tree/model'):
+            with open('/proc/device-tree/model', 'r') as f:
+                model = f.read()
+                if 'Raspberry Pi' in model:
+                    is_raspberry_pi = True
+                    console.print("[yellow]Raspberry Pi detected. Using compatible input mode.[/yellow]")
+    except Exception:
+        pass  # Continue without detection
+        
     # Initialize audio if available
-    if AUDIO_AVAILABLE and GAME_SETTINGS["music_enabled"]:
-        audio.initialize()
-        # Play menu theme music
-        audio.play_music("menu_theme")
+    try:
+        if AUDIO_AVAILABLE and GAME_SETTINGS["music_enabled"]:
+            audio.initialize()
+            # Play menu theme music
+            audio.play_music("menu_theme")
+    except Exception as e:
+        console.print(f"[yellow]Audio initialization warning: {str(e)}[/yellow]")
+        console.print("[yellow]Continuing without audio...[/yellow]")
     
     # Display intro and splash screen
     ui.clear_screen()
