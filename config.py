@@ -45,6 +45,10 @@ GAME_SETTINGS = {
     "music_volume": 0.5,    # 0.0 to 1.0
     "effects_volume": 0.7,  # 0.0 to 1.0
     
+    # UI Animation settings
+    "ui_animations_enabled": True,
+    "ui_animation_speed": "medium",  # slow, medium, fast
+    
     "auto_save": False,
     "show_hints": True,
     "enable_ollama": USE_OLLAMA

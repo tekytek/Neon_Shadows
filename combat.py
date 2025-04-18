@@ -1071,6 +1071,13 @@ def run_combat(console, player, enemy, player_damage_multiplier=1.0, use_animati
     player.current_cover = "none"
     enemy.current_cover = "none"
     
+    # Import combat positioning and gadgets modules
+    import combat_positioning
+    import combat_gadgets
+    
+    # Generate terrain based on environment
+    terrain_map = combat_positioning.generate_combat_terrain(environment)
+    
     # Initialize combat state dictionary to track tactical elements
     combat_state = {
         "player_position": "center",
@@ -1079,9 +1086,18 @@ def run_combat(console, player, enemy, player_damage_multiplier=1.0, use_animati
         "enemy_cover": "none",
         "player_cover_health": 0,
         "enemy_cover_health": 0,
-        "environment": "standard",
+        "environment": environment,
         "target_zone": "torso",
-        "active_hazards": []
+        "active_hazards": [],
+        "terrain_map": terrain_map,
+        "current_terrain": terrain_map["center"],
+        "enemy": enemy,
+        "player": player,
+        "player_action_points": 2,
+        "enemy_action_points": 2,
+        "turn_counter": 1,
+        "gadget_cooldowns": {},
+        "active_gadgets": []
     }
     
     # Drone damage from previous turn

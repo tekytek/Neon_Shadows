@@ -77,6 +77,10 @@ def reset_to_defaults():
     GAME_SETTINGS["music_volume"] = 0.5
     GAME_SETTINGS["effects_volume"] = 0.7
     
+    # UI Animation settings
+    GAME_SETTINGS["ui_animations_enabled"] = True
+    GAME_SETTINGS["ui_animation_speed"] = "medium"
+    
     GAME_SETTINGS["auto_save"] = False
     GAME_SETTINGS["show_hints"] = True
     GAME_SETTINGS["enable_ollama"] = original_ollama_setting

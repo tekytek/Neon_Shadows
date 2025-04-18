@@ -5,6 +5,7 @@ import os
 import sys
 import time
 import platform
+import shutil
 from rich.console import Console
 from rich.panel import Panel
 from rich.layout import Layout
@@ -50,15 +51,19 @@ def display_splash_screen(console):
     """Display the game's splash screen"""
     clear_screen()
     
-    # Display ASCII art title
-    console.print(assets.get_ascii_art('title'), style=Style(color=COLORS['primary']))
+    # Display responsive title banner
+    display_responsive_title(console)
+    
+    # Get terminal width for responsive display
+    term_width, term_height = shutil.get_terminal_size()
     
     # Display version and credits
     console.print(f"[{COLORS['secondary']}]Version {VERSION}[/{COLORS['secondary']}]")
     console.print(f"[{COLORS['text']}]A text-based cyberpunk adventure[/{COLORS['text']}]")
     
-    # Bottom line
-    console.print("\n" + "=" * 60, style=Style(color=COLORS['primary']))
+    # Bottom line - adapt to terminal width
+    separator_width = min(60, term_width - 4)  # Leave a small margin
+    console.print("\n" + "=" * separator_width, style=Style(color=COLORS['primary']))
     console.print(f"[{COLORS['text']}]Press Enter to continue...[/{COLORS['text']}]")
     input()
 
@@ -109,8 +114,40 @@ def display_status_bar(console, player):
     console.print(Columns([table, stats_table]), justify="center")
     console.print("\n" + "-" * 60, style=Style(color=COLORS['primary']))
 
+def display_responsive_title(console):
+    """Display the title banner in a way that adapts to terminal width"""
+    # Get terminal width for responsive display
+    term_width, term_height = shutil.get_terminal_size()
+    
+    # Full banner requires at least 100 columns
+    if term_width >= 100:
+        # Display full ASCII art title
+        console.print(assets.get_ascii_art('title'), style=Style(color=COLORS['primary']))
+    else:
+        # Display compact alternative for smaller terminals
+        compact_title = f"""
+    ███╗   ██╗███████╗ ██████╗ ███╗   ██╗
+    ████╗  ██║██╔════╝██╔═══██╗████╗  ██║
+    ██╔██╗ ██║█████╗  ██║   ██║██╔██╗ ██║
+    ██║╚██╗██║██╔══╝  ██║   ██║██║╚██╗██║
+    ██║ ╚████║███████╗╚██████╔╝██║ ╚████║
+    ╚═╝  ╚═══╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝
+    ███████╗██╗  ██╗ █████╗ ██████╗  ██████╗ ██╗    ██╗███████╗
+    ██╔════╝██║  ██║██╔══██╗██╔══██╗██╔═══██╗██║    ██║██╔════╝
+    ███████╗███████║███████║██║  ██║██║   ██║██║ █╗ ██║███████╗
+    ╚════██║██╔══██║██╔══██║██║  ██║██║   ██║██║███╗██║╚════██║
+    ███████║██║  ██║██║  ██║██████╔╝╚██████╔╝╚███╔███╔╝███████║
+    ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝  ╚═════╝  ╚══╝╚══╝ ╚══════╝
+        """
+        console.print(compact_title, style=Style(color=COLORS['primary']))
+
 def display_ascii_art(console, art_name):
     """Display ASCII art"""
+    # Special case for title banner
+    if art_name == 'title':
+        display_responsive_title(console)
+        return
+        
     art = assets.get_ascii_art(art_name)
     if art:
         console.print(art, style=Style(color=COLORS['primary']))
@@ -119,8 +156,16 @@ def main_menu(console):
     """Display main menu and get user choice"""
     clear_screen()
     
-    # Display title ASCII art
-    console.print(assets.get_ascii_art('title'), style=Style(color=COLORS['primary']))
+    # Try to use animation module for transitions if available
+    try:
+        import animations
+        # Use hacker transition for main menu entry
+        animations.hacker_transition(console, lines=3)
+    except (ImportError, AttributeError):
+        pass
+    
+    # Display responsive title banner
+    display_responsive_title(console)
     
     # Create menu panel
     menu_items = [
@@ -132,7 +177,14 @@ def main_menu(console):
     ]
     
     menu_text = "\n".join(menu_items)
-    console.print(Panel(menu_text, title=f"[{COLORS['secondary']}]MAIN MENU[/{COLORS['secondary']}]"))
+    
+    # Try to use animation for menu display if available
+    try:
+        import animations
+        animations.neon_fade_in(Panel(menu_text, title=f"[{COLORS['secondary']}]MAIN MENU[/{COLORS['secondary']}]"), console)
+    except (ImportError, AttributeError):
+        # Fall back to standard display if animations not available
+        console.print(Panel(menu_text, title=f"[{COLORS['secondary']}]MAIN MENU[/{COLORS['secondary']}]"))
     
     # Get user choice
     choice = Prompt.ask("[bold green]Select an option[/bold green]")
@@ -185,10 +237,14 @@ def options_menu(console):
         table.add_row("6. Music Volume", f"{int(GAME_SETTINGS['music_volume'] * 100)}%")
         table.add_row("7. Sound Effects Volume", f"{int(GAME_SETTINGS['effects_volume'] * 100)}%")
         
-        table.add_row("8. Auto Save", "Enabled" if GAME_SETTINGS["auto_save"] else "Disabled")
-        table.add_row("9. Show Hints", "Enabled" if GAME_SETTINGS["show_hints"] else "Disabled")
-        table.add_row("10. Enable Ollama", "Enabled" if GAME_SETTINGS["enable_ollama"] else "Disabled")
-        table.add_row("11. Reset to Defaults", "")
+        # UI Animation settings
+        table.add_row("8. UI Animations", "Enabled" if GAME_SETTINGS["ui_animations_enabled"] else "Disabled")
+        table.add_row("9. UI Animation Speed", GAME_SETTINGS["ui_animation_speed"].capitalize())
+        
+        table.add_row("10. Auto Save", "Enabled" if GAME_SETTINGS["auto_save"] else "Disabled")
+        table.add_row("11. Show Hints", "Enabled" if GAME_SETTINGS["show_hints"] else "Disabled")
+        table.add_row("12. Enable Ollama", "Enabled" if GAME_SETTINGS["enable_ollama"] else "Disabled")
+        table.add_row("13. Reset to Defaults", "")
         table.add_row("0. Back to Main Menu", "")
         
         # Display the table
@@ -202,7 +258,7 @@ def options_menu(console):
         
         # Get user choice
         choice = Prompt.ask("[bold cyan]Select an option to change[/bold cyan]", 
-                          choices=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "0"])
+                          choices=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "0"])
         
         if choice == "0":
             # Save settings before returning to menu
@@ -340,21 +396,68 @@ def options_menu(console):
                 pass
             
         elif choice == "8":
+            # Toggle UI animations
+            settings.update_setting("ui_animations_enabled", not GAME_SETTINGS["ui_animations_enabled"])
+            # Update animations module if available
+            try:
+                import animations
+                animations.toggle_animations()
+            except (ImportError, AttributeError):
+                pass
+                
+        elif choice == "9":
+            # Change UI animation speed
+            clear_screen()
+            display_header(console, "UI ANIMATION SPEED")
+            
+            console.print(f"[{COLORS['text']}]Select UI animation speed:[/{COLORS['text']}]")
+            console.print(f"[{COLORS['secondary']}]1. Slow[/{COLORS['secondary']}] - More dramatic animations")
+            console.print(f"[{COLORS['secondary']}]2. Medium[/{COLORS['secondary']}] - Balanced animation speed")
+            console.print(f"[{COLORS['secondary']}]3. Fast[/{COLORS['secondary']}] - Quick animations")
+            
+            speed_choice = Prompt.ask("[bold cyan]Select animation speed[/bold cyan]", choices=["1", "2", "3"])
+            
+            if speed_choice == "1":
+                settings.update_setting("ui_animation_speed", "slow")
+                # Update animations module if available
+                try:
+                    import animations
+                    animations.set_animation_speed("slow")
+                except (ImportError, AttributeError):
+                    pass
+            elif speed_choice == "2":
+                settings.update_setting("ui_animation_speed", "medium")
+                # Update animations module if available
+                try:
+                    import animations
+                    animations.set_animation_speed("medium")
+                except (ImportError, AttributeError):
+                    pass
+            elif speed_choice == "3":
+                settings.update_setting("ui_animation_speed", "fast")
+                # Update animations module if available
+                try:
+                    import animations
+                    animations.set_animation_speed("fast")
+                except (ImportError, AttributeError):
+                    pass
+                
+        elif choice == "10":
             # Toggle auto save
             settings.update_setting("auto_save", not GAME_SETTINGS["auto_save"])
             
-        elif choice == "9":
+        elif choice == "11":
             # Toggle hints
             settings.update_setting("show_hints", not GAME_SETTINGS["show_hints"])
             
-        elif choice == "10":
+        elif choice == "12":
             # Toggle Ollama integration
             new_value = not GAME_SETTINGS["enable_ollama"]
             settings.update_setting("enable_ollama", new_value)
             
             # The update_setting function will handle updating USE_OLLAMA in config.py
             
-        elif choice == "11":
+        elif choice == "13":
             # Reset to defaults
             if Prompt.ask("[bold red]Reset all settings to defaults?[/bold red]", choices=["y", "n"]) == "y":
                 settings.reset_to_defaults()
@@ -378,6 +481,14 @@ def options_menu(console):
 def display_credits(console):
     """Display game credits"""
     clear_screen()
+    
+    # Try to use animation transition if available
+    try:
+        import animations
+        animations.hacker_transition(console, lines=2)
+    except (ImportError, AttributeError):
+        pass
+        
     display_header(console, "CREDITS")
     
     credits_text = f"""
@@ -395,13 +506,26 @@ def display_credits(console):
     [{COLORS['primary']}]Thanks for playing![/{COLORS['primary']}]
     """
     
-    console.print(Panel(credits_text, title="ABOUT"))
+    # Try to use animation for credits display if available
+    try:
+        import animations
+        animations.cyber_scan(Panel(credits_text, title="ABOUT"), console)
+    except (ImportError, AttributeError):
+        console.print(Panel(credits_text, title="ABOUT"))
+        
     console.print(f"\n[{COLORS['secondary']}]Press Enter to return to main menu...[/{COLORS['secondary']}]")
     input()
 
 def display_exit_message(console):
     """Display exit message when quitting the game"""
     clear_screen()
+    
+    # Try to use animation transition if available
+    try:
+        import animations
+        animations.hacker_transition(console, lines=3)
+    except (ImportError, AttributeError):
+        pass
     
     farewell_text = f"""
     [{COLORS['text']}]Thank you for playing[/{COLORS['text']}]
@@ -410,5 +534,11 @@ def display_exit_message(console):
     [{COLORS['secondary']}]The neon streets will be waiting for your return...[/{COLORS['secondary']}]
     """
     
-    console.print(Panel(farewell_text, title="GOODBYE"))
+    # Try to use animation for exit message if available
+    try:
+        import animations
+        animations.cyber_flicker(Panel(farewell_text, title="GOODBYE"), console, style=Style(color=COLORS["primary"]))
+    except (ImportError, AttributeError):
+        console.print(Panel(farewell_text, title="GOODBYE"))
+        
     time.sleep(2)

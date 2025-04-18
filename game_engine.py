@@ -304,7 +304,22 @@ class GameEngine:
         if node.get('ascii_art'):
             ui.display_ascii_art(console, node['ascii_art'])
         
-        console.print(Panel(f"[green]{node['text']}[/green]", title=node.get('title', '')))
+        # Try to use animation for narrative text if available
+        try:
+            import animations
+            from config import GAME_SETTINGS
+            
+            # Only use animations if enabled in settings
+            if GAME_SETTINGS.get("ui_animations_enabled", True):
+                animations.typing_effect(
+                    Panel(f"[green]{node['text']}[/green]", title=node.get('title', '')),
+                    console
+                )
+            else:
+                console.print(Panel(f"[green]{node['text']}[/green]", title=node.get('title', '')))
+        except (ImportError, AttributeError):
+            # Fall back to standard display if animations not available
+            console.print(Panel(f"[green]{node['text']}[/green]", title=node.get('title', '')))
         
         # Check if this is an ending
         if node.get('is_ending', False):
@@ -504,7 +519,22 @@ class GameEngine:
         if node.get('ascii_art'):
             ui.display_ascii_art(console, node['ascii_art'])
         
-        console.print(Panel(f"[red]{node['text']}[/red]", title=f"COMBAT: {enemy.name}"))
+        # Try to use animation for combat text if available
+        try:
+            import animations
+            from config import GAME_SETTINGS
+            
+            # Only use animations if enabled in settings
+            if GAME_SETTINGS.get("ui_animations_enabled", True):
+                animations.glitch_text(
+                    Panel(f"[red]{node['text']}[/red]", title=f"COMBAT: {enemy.name}"),
+                    console
+                )
+            else:
+                console.print(Panel(f"[red]{node['text']}[/red]", title=f"COMBAT: {enemy.name}"))
+        except (ImportError, AttributeError):
+            # Fall back to standard display if animations not available
+            console.print(Panel(f"[red]{node['text']}[/red]", title=f"COMBAT: {enemy.name}"))
         
         # Display difficulty information if not normal
         if difficulty == "easy":
@@ -923,7 +953,22 @@ class GameEngine:
         if node.get('ascii_art'):
             ui.display_ascii_art(console, node['ascii_art'])
         
-        console.print(Panel(f"[green]{node['text']}[/green]"))
+        # Try to use animation for shop text if available
+        try:
+            import animations
+            from config import GAME_SETTINGS
+            
+            # Only use animations if enabled in settings
+            if GAME_SETTINGS.get("ui_animations_enabled", True):
+                animations.cyber_scan(
+                    Panel(f"[green]{node['text']}[/green]"),
+                    console
+                )
+            else:
+                console.print(Panel(f"[green]{node['text']}[/green]"))
+        except (ImportError, AttributeError):
+            # Fall back to standard display if animations not available
+            console.print(Panel(f"[green]{node['text']}[/green]"))
         
         # Display shop inventory
         shop_inventory = node.get('inventory', {})
@@ -1047,7 +1092,22 @@ class GameEngine:
         if node.get('ascii_art'):
             ui.display_ascii_art(console, node['ascii_art'])
         
-        console.print(Panel(f"[green]{node['text']}[/green]", title=node.get('title', 'Skill Check')))
+        # Try to use animation for skill check text if available
+        try:
+            import animations
+            from config import GAME_SETTINGS
+            
+            # Only use animations if enabled in settings
+            if GAME_SETTINGS.get("ui_animations_enabled", True):
+                animations.matrix_effect(
+                    Panel(f"[green]{node['text']}[/green]", title=node.get('title', 'Skill Check')),
+                    console
+                )
+            else:
+                console.print(Panel(f"[green]{node['text']}[/green]", title=node.get('title', 'Skill Check')))
+        except (ImportError, AttributeError):
+            # Fall back to standard display if animations not available
+            console.print(Panel(f"[green]{node['text']}[/green]", title=node.get('title', 'Skill Check')))
         
         # Get skill check details
         skill = node.get('skill', 'intelligence')

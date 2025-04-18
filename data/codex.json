@@ -1,0 +1,132 @@
+{
+  "entries": {
+    "neo_shanghai": {
+      "category": "world",
+      "title": "Neo Shanghai",
+      "content": "\n## Neo Shanghai\n\nThe sprawling megalopolis of Neo Shanghai arose from the ashes of climate catastrophe and economic collapse in the mid-21st century. As coastal flooding ravaged the original Shanghai, corporations funded the rapid construction of a new city built atop massive stilts and floating platforms.\n\nToday, Neo Shanghai stands as a testament to humanity's resilience and corporate greed. The city stretches across what was once the East China Sea, a glittering expanse of neon and steel that never sleeps. Its iconic profile is dominated by the massive arcology towers of the Corporate District, which rise like monoliths above the sprawling urban landscape below.\n\nThe city operates on multiple levels - from the luxurious upper sectors where the corporate elite reside, to the mid-levels of commerce and entertainment, down to the perpetually dark and rain-soaked streets of the lower districts where most citizens struggle to survive.\n\nDespite its technological wonders, Neo Shanghai is a city of stark contrasts and brutal inequality. Corporate security forces maintain order in the upper and mid-levels, while the lower reaches are largely controlled by various criminal organizations and gangs.\n        ",
+      "related_entries": [
+        "corporate_district",
+        "neon_district",
+        "blackout_zone",
+        "the_float"
+      ],
+      "image": "CITY_SKYLINE"
+    },
+    "corporate_takeover": {
+      "category": "world",
+      "title": "The Corporate Takeover",
+      "content": "\n## The Corporate Takeover\n\nIn the aftermath of the Collapse of 2042, traditional governments found themselves overwhelmed by cascading crises: climate disasters, mass migrations, resource shortages, and economic free-fall. It was in this vacuum of power that the megacorporations made their move.\n\nLed by Zheng Dynamics, Arasaka, and MiliTech, corporations began offering privatized solutions to desperate populations. They promised security, stability, and technological solutions to humanity's most pressing problems. In exchange, they demanded unprecedented freedom from regulation and oversight.\n\nBy 2055, the transition was complete in most urban centers. Former government buildings stood vacant or repurposed as corporate headquarters. Police departments were replaced by private security firms. Public services were fully privatized, available only to those who could afford them.\n\nNeo Shanghai became the model for this new world order - the first major city to formally transition to corporate rule under the so-called \"Shanghai Compact.\" This agreement, signed by the 12 largest corporations operating in the region, established the Corporate Council as the city's governing body.\n\nToday, citizenship in Neo Shanghai is tied directly to corporate affiliation. Those without corporate sponsorship exist in a legal gray area, forced to survive in the margins of society.\n        ",
+      "related_entries": [
+        "corporate_council",
+        "zheng_dynamics",
+        "arasaka"
+      ],
+      "image": null
+    },
+    "zheng_dynamics": {
+      "category": "factions",
+      "title": "Zheng Dynamics",
+      "content": "\n## Zheng Dynamics\n\nFounded in 2031 by Dr. Elizabeth Zheng, Zheng Dynamics began as a pioneering medical cybernetics company before expanding into neural interfaces, AI research, and military applications. Now headquartered in the imposing Diamond Tower of Neo Shanghai's Corporate District, it stands as one of the most powerful corporations in the world.\n\nZheng Dynamics is known for its cutting-edge neural implant technology, particularly the \"NeoLink\" series that revolutionized human-computer interfaces. The corporation maintains a sleek, clean public image focused on \"enhancing human potential,\" though rumors persist about dangerous experimental programs and unethical testing practices.\n\nThe corporation is currently led by CEO Victor Zheng, grandson of the founder, who has pushed aggressive expansion into new markets and technologies. Under his leadership, Zheng Dynamics has developed a particularly strong presence in the fields of consciousness digitization and synthetic intelligence.\n\nEmployees of Zheng Dynamics are easily identified by their distinctive blue and silver corporate uniforms and implants. Most feature the company's logo - a stylized \"ZD\" surrounded by a hexagonal pattern - embedded somewhere on their person, either as a dermal implant or incorporated into their cybernetics.\n\nThe corporation maintains its own private security force, the \"Zheng Guardians,\" who operate with near-impunity throughout Neo Shanghai.\n        ",
+      "related_entries": [
+        "corporate_council",
+        "neo_shanghai",
+        "corporate_district"
+      ],
+      "image": "CORPORATE_LOGO"
+    },
+    "steel_dragons": {
+      "category": "factions",
+      "title": "Steel Dragons",
+      "content": "\n## Steel Dragons\n\nAmong Neo Shanghai's most feared street gangs, the Steel Dragons control significant territory in the Neon District and parts of the Blackout Zone. Founded by former military cybernetic specialist Jin \"Steelclaw\" Lau, the gang is known for its members' extensive cybernetic modifications and ruthless enforcement of territory.\n\nSteel Dragons members undergo mandatory cybernetic enhancement upon joining, with status within the organization often tied to the extent and quality of one's implants. The gang's inner circle, known as the \"Titanium Core,\" have replaced upwards of 80% of their original biological components.\n\nThe gang generates revenue through protection rackets, black market cybernetics, and the sale of the designer combat drug \"ChromeRage\" - a stimulant specifically designed to enhance the performance of cybernetic implants at the cost of severe long-term neural damage.\n\nSteel Dragons territory is marked by graffiti tags showing a stylized dragon with metallic scales, often painted in reflective materials that shimmer under neon lights. Members typically display the gang's symbol as a holographic tattoo visible through transparent cybernetic components.\n\nDespite their fearsome reputation, the Steel Dragons maintain a complex relationship with residents of their territory, sometimes providing protection and services that the Corporate Council fails to offer to lower-income areas.\n        ",
+      "related_entries": [
+        "neon_district",
+        "blackout_zone",
+        "street_samurai"
+      ],
+      "image": "GANG_SYMBOL"
+    },
+    "neural_interfaces": {
+      "category": "technology",
+      "title": "Neural Interfaces",
+      "content": "\n## Neural Interfaces\n\nNeural interface technology represents one of the most significant technological leaps of the 21st century. These devices establish direct communication pathways between the human nervous system and external technology, effectively allowing the mind to control machines and perceive digital information directly.\n\nThe most common consumer-grade neural interfaces are:\n\n- **Neural Ports**: Physical connection points typically installed at the base of the skull or behind the ear. These provide high-bandwidth, secure connections but require physical cables for data transfer.\n\n- **Wireless Neural Links**: Subcutaneous implants that transmit data wirelessly. More convenient but more vulnerable to hacking and interference.\n\n- **Full Neural Integration Systems**: Comprehensive implants that interface with multiple regions of the brain, allowing more complex interactions and enhanced processing. Primarily used by netrunners and specialized professionals.\n\nPremium neural interfaces from companies like Zheng Dynamics include features such as:\n\n- Emotion filtering\n- Memory enhancement\n- Dream recording\n- Subconscious processing for problem-solving during sleep\n- Augmented sensory perception\n\nWhile neural interfaces offer unprecedented capabilities, they come with significant risks, including potential neural damage, hacking vulnerabilities, and the poorly understood condition known as \"Dissociative Neural Syndrome\" that can occur when users spend too much time connected to digital environments.\n        ",
+      "related_entries": [
+        "cybernetic_implants",
+        "netrunning",
+        "brain_dance"
+      ],
+      "image": "NEURAL_IMPLANT"
+    },
+    "cybernetic_implants": {
+      "category": "technology",
+      "title": "Cybernetic Implants",
+      "content": "\n## Cybernetic Implants\n\nCybernetic enhancement technology has progressed dramatically since its military origins in the 2030s. Modern implants range from subtle performance enhancers to radical body modifications that blur the line between human and machine.\n\nCommon categories of cybernetic implants include:\n\n### Sensory Systems\n- **Optical Implants**: Enhanced vision, including zoom capabilities, different visual spectrums, recording functions, and augmented reality overlays.\n- **Auditory Enhancers**: Improved hearing range, audio filtering, recording capabilities, and translation software.\n- **Neural Sensory Package**: Direct sensory feeds to the brain, sometimes including senses beyond the standard human range.\n\n### Physical Enhancements\n- **Subdermal Armor**: Reinforced skin providing protection against physical trauma.\n- **Muscle Grafts**: Synthetic muscle tissue offering enhanced strength and reflexes.\n- **Skeletal Reinforcement**: Carbon-fiber bone lacing or full skeletal replacement for durability and strength.\n- **Internal Air Filters**: Protection against toxins and pollutants.\n\n### Limb Prosthetics\n- **Basic Replacements**: Functional prosthetics with limited enhancement.\n- **Military-Grade**: Combat-optimized limbs with integrated weapons systems.\n- **Specialized Models**: Task-specific designs for industrial work, athletics, or artistic pursuits.\n\nThe quality of cybernetics varies dramatically based on price point, from budget \"chrome\" that requires regular maintenance and can cause chronic pain, to premium implants that often perform better than their biological counterparts and include self-diagnostic and repair systems.\n\nMost cybernetic systems require immunosuppressive drugs to prevent rejection, creating a dependency that manufacturers exploit through subscription-based medication plans.\n        ",
+      "related_entries": [
+        "neural_interfaces",
+        "street_samurai",
+        "cyber_psychosis"
+      ],
+      "image": "CYBORG_ARM"
+    },
+    "corporate_district": {
+      "category": "locations",
+      "title": "Corporate District",
+      "content": "\n## Corporate District\n\nThe gleaming heart of Neo Shanghai, the Corporate District rises above the rest of the city both literally and figuratively. Built primarily on the highest elevation platforms, the district remains above the frequent floods and perpetual smog that plague the lower levels.\n\nDominated by massive arcology towers that serve as self-contained corporate ecosystems, the district features:\n\n- **The Diamond Tower**: Headquarters of Zheng Dynamics, a 200-story structure of crystalline design that reflects and refracts light in mesmerizing patterns.\n\n- **Arasaka Compound**: A heavily fortified complex surrounding the black monolith of Arasaka Tower, featuring traditional Japanese architectural elements contrasted with cutting-edge technology.\n\n- **Emerald Boulevard**: The main thoroughfare lined with luxury boutiques, exclusive restaurants, and high-end service providers catering to executives and the corporate elite.\n\n- **Sky Gardens**: Carefully maintained green spaces on elevated platforms connecting the major towers, providing rare access to plants and open air, strictly reserved for higher-tier corporate employees.\n\n- **Corporate Council Chambers**: The central meeting facility where representatives of the twelve ruling corporations gather to deliberate on city governance.\n\nAccess to the Corporate District is strictly controlled through layered security checkpoints, with different zones requiring progressively higher clearance levels. Most citizens of Neo Shanghai will never set foot in this district, viewing it only from a distance as a glittering symbol of wealth and power high above their everyday struggles.\n\nThe district employs its own private security forces, supplemented by advanced automated defense systems, making it virtually impenetrable without proper authorization.\n        ",
+      "related_entries": [
+        "zheng_dynamics",
+        "arasaka",
+        "corporate_council",
+        "neo_shanghai"
+      ],
+      "image": "CORPORATE_DISTRICT"
+    },
+    "neon_district": {
+      "category": "locations",
+      "title": "Neon District",
+      "content": "\n## Neon District\n\nThe pulsing entertainment heart of Neo Shanghai, the Neon District never truly sleeps. Located primarily on the mid-level platforms, it's a riot of holographic advertisements, vibrant street markets, and endless entertainment venues.\n\nKey features of the district include:\n\n- **Luminous Strip**: The main thoroughfare, stretching five kilometers through the district's center, lined with clubs, bars, restaurants, and shopping arcades. Famous for its overhead canopy of intersecting holographic advertisements creating a perpetual artificial daylight.\n\n- **Memory Palace**: The largest Brain Dance entertainment complex in Asia, offering experiences ranging from legal adventure simulations to black-market sensory recordings of questionable origin.\n\n- **Fortune Market**: A sprawling open-air market where anything can be bought for the right price, from street food to bootleg cybernetics. Known for the distinctive red lanterns that illuminate its maze-like passages.\n\n- **The Circuit**: A cluster of underground clubs centered around the electronic music scene, where DJs with neural-link instruments create immersive sound experiences.\n\n- **Little Tokyo**: A sub-district featuring Japanese-inspired architecture, specializing in imported entertainment and technology from the Japanese Corporate Zone.\n\nThe Neon District serves as a mixing ground where corporate employees, mid-level workers, and even those from the lower districts come to seek entertainment and escape. Security is present but less oppressive than in the Corporate District, with different establishments maintaining their own protection forces.\n\nBeneath the glittering surface of entertainment, the district hosts a thriving black market economy. Many establishments serve as fronts for less legal operations, from cybernetic chop shops to data smuggling operations.\n        ",
+      "related_entries": [
+        "brain_dance",
+        "steel_dragons",
+        "neo_shanghai"
+      ],
+      "image": "NEON_DISTRICT"
+    },
+    "dr_elizabeth_zheng": {
+      "category": "characters",
+      "title": "Dr. Elizabeth Zheng",
+      "content": "\n## Dr. Elizabeth Zheng (2001-2076)\n\nThe founder of Zheng Dynamics and pioneer of modern neural interface technology, Dr. Elizabeth Zheng transformed human-machine interaction and laid the groundwork for today's cybernetic society.\n\nBorn to Chinese-American parents in San Francisco, Zheng displayed extraordinary talent in neuroscience and computer engineering from an early age. After earning dual PhDs from MIT by age 24, she worked briefly for the DARPA neural interface program before striking out on her own.\n\nIn 2031, she founded Zheng Dynamics, initially focusing on medical neural interfaces to help patients with neurological injuries. The company's breakthrough came in 2036 with the first-generation NeoLink system, which allowed direct neural control of prosthetics with unprecedented precision.\n\nAs her company grew, Zheng expanded research into increasingly controversial areas, including consciousness digitization and synthetic intelligence. Critics accused her of ethical violations, particularly regarding test subjects, but corporate protection and legal maneuvering kept her work progressing.\n\nKnown for her brilliant mind and uncompromising vision, Zheng was also notorious for her demanding management style and willingness to push ethical boundaries in the name of progress. Her personal motto, \"Evolution by Design,\" captures her belief that humanity should take active control of its development through technology.\n\nThough officially listed as deceased from natural causes in 2076, persistent rumors suggest her consciousness may have been successfully digitized as part of Project Immortality, her final and most secretive research initiative. Zheng Dynamics has neither confirmed nor denied these speculations.\n        ",
+      "related_entries": [
+        "zheng_dynamics",
+        "neural_interfaces",
+        "victor_zheng"
+      ],
+      "image": "SCIENTIST"
+    },
+    "raven": {
+      "category": "characters",
+      "title": "Raven",
+      "content": "\n## Raven\n\nOne of Neo Shanghai's most notorious and enigmatic netrunners, Raven has achieved an almost mythical status in the digital underground. Their true identity remains unknown despite considerable efforts by corporate security forces to unmask them.\n\nRaven first appeared on the scene approximately seven years ago, when they breached Arasaka's supposedly impenetrable financial servers and redistributed over 300 million credits to random citizens in the lower districts. Since then, they have been responsible for numerous high-profile data leaks, security breaches, and digital sabotage operations targeting primarily corporate entities.\n\nWhat makes Raven unique among netrunners is their distinctive digital signature - a swirling pattern of dark code that resembles wings unfurling. This signature, always left at the scene of their intrusions, has become a symbol of resistance against corporate control.\n\nTech analysts who have studied Raven's code work suggest they must possess extremely advanced, possibly experimental neural interface technology, allowing them to navigate the Net with unprecedented speed and adaptability. Some speculate they may be using technologies stolen from Zheng Dynamics' classified research divisions.\n\nSightings of Raven in the physical world are rare and unconfirmed, though most reports describe a figure in a black coat with glowing blue neural interface lines visible at the temples. Whether Raven is an individual or a collective operating under a single identity remains a matter of speculation.\n\nFor many in the lower districts, Raven represents hope against corporate oppression. For the corporations, they represent a dangerous terrorist and data thief with a 5 million credit bounty on their head.\n        ",
+      "related_entries": [
+        "netrunning",
+        "neural_interfaces",
+        "blackout_zone"
+      ],
+      "image": "NETRUNNER"
+    },
+    "the_collapse": {
+      "category": "events",
+      "title": "The Collapse",
+      "content": "\n## The Collapse (2042-2046)\n\nThe defining catastrophe of the 21st century, the period known simply as \"The Collapse\" represented the convergence of multiple crises that fundamentally reshaped global society and power structures.\n\nThe cascading disasters began with the Financial Crash of 2042, triggered by the destabilization of critical AI-driven market systems. Within weeks, global markets lost over 70% of their value, wiping out savings, pensions, and government funds worldwide.\n\nAs economic systems failed, they exacerbated existing climate crises:\n\n- Rising sea levels accelerated dramatically with the Antarctic Shelf Collapse in 2043\n- Crop failures led to widespread famine across previously fertile regions\n- Water wars erupted in areas already experiencing scarcity\n- Mass migration from uninhabitable regions overwhelmed remaining stable nations\n\nTraditional governments, already weakened by decades of declining public trust and growing corporate influence, proved incapable of mounting effective responses. Over 60% of world governments either collapsed entirely or devolved into authoritarian regimes desperately trying to maintain control.\n\nInto this power vacuum stepped the megacorporations, which had insulated themselves from the worst effects of the crash through private currencies, resources, and security forces. They offered stability and solutions at the price of unprecedented control over society.\n\nBy 2046, when the immediate crises began to stabilize, the world had been fundamentally transformed. Nation-states remained as geographic concepts, but real power had shifted decisively to corporate entities whose wealth and technological advantages gave them effective control over what remained of civilization.\n        ",
+      "related_entries": [
+        "corporate_takeover",
+        "neo_shanghai",
+        "climate_crisis"
+      ],
+      "image": "CITY_RUINS"
+    }
+  },
+  "discovered": [
+    "neo_shanghai",
+    "corporate_district",
+    "neon_district"
+  ]
+}
