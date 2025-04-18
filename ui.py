@@ -28,6 +28,7 @@ def clear_screen():
 def typewriter_print(console, text, speed=None):
     """Print text with a typewriter effect based on settings"""
     from config import GAME_SETTINGS, TEXT_SPEED
+    import sys
     
     # If no speed specified, use the setting from config
     if speed is None:
@@ -39,13 +40,23 @@ def typewriter_print(console, text, speed=None):
         console.print(text)
         return
     
-    # Apply typewriter effect
-    for char in text:
-        console.print(char, end="")
-        time.sleep(speed)
-    
-    # Add newline at the end
-    console.print("")
+    try:
+        # Apply typewriter effect with interrupt handling
+        for char in text:
+            try:
+                console.print(char, end="")
+                time.sleep(speed)
+            except KeyboardInterrupt:
+                # Properly handle Ctrl+C
+                console.print("\nKeyboard interrupt detected. Exiting...", style="yellow")
+                sys.exit(0)
+        
+        # Add newline at the end
+        console.print("")
+    except Exception as e:
+        # In case of any errors, fall back to normal print
+        console.print(f"\nError in typewriter effect: {str(e)}")
+        console.print(text)
 
 def display_splash_screen(console):
     """Display the game's splash screen"""
@@ -109,29 +120,30 @@ def display_splash_screen(console):
     separator_width = min(60, term_width - 4)  # Leave a small margin
     console.print("\n" + "=" * separator_width, style=Style(color=COLORS['primary']))
     console.print("Press Enter to continue...", style=Style(color=COLORS['text']))
+    import sys
     try:
-        # Set a timeout for input to handle potential blocking
-        import sys
-        import select
-        
-        # First check if stdin is available for reading using select
-        # This helps with non-interactive terminals
-        if sys.stdin.isatty():
-            # Terminal is interactive, wait for normal input
+        # Simple approach - wait for input and properly handle interrupts
+        try:
+            # Wait for user input with a clear prompt
+            input()
+        except KeyboardInterrupt:
+            # Properly handle Ctrl+C by stopping the program
+            console.print("Keyboard interrupt detected. Exiting...", style="yellow")
+            sys.exit(0)
+        except EOFError:
+            # Handle EOF error (Ctrl+D) more gracefully
+            console.print("EOF detected. Press Enter to continue or Ctrl+C to exit.", style="yellow")
             try:
                 input()
-            except (EOFError, KeyboardInterrupt):
-                # Handle EOF error in non-interactive terminals
-                console.print("Note: Input interrupted. Continuing automatically.", style="yellow")
-                time.sleep(1)
-        else:
-            # Non-interactive terminal or redirected input, don't wait for input
-            console.print("Note: Non-interactive terminal detected. Continuing automatically.", style="yellow")
-            time.sleep(2)
+            except (KeyboardInterrupt, EOFError):
+                sys.exit(0)
     except Exception as e:
-        # Catch any other input-related issues
-        console.print(f"Input handling exception: {str(e)}. Continuing automatically.", style="yellow")
-        time.sleep(2)
+        # Catch any other input-related issues but don't auto-continue
+        console.print(f"Input handling issue: {str(e)}. Press Enter to continue or Ctrl+C to exit.", style="yellow")
+        try:
+            input()
+        except (KeyboardInterrupt, EOFError):
+            sys.exit(0)
 
 def display_header(console, title_text):
     """Display a header with the given title"""
@@ -314,24 +326,29 @@ def main_menu(console):
             console.print("[bold green]> Select Option:[/bold green]")
         
         # Handle input more robustly
-        if sys.stdin.isatty():
+        try:
             # Terminal is interactive, wait for normal input
-            try:
-                choice = Prompt.ask("")
-            except (EOFError, KeyboardInterrupt):
-                # Handle EOF error in non-interactive terminals
-                console.print("[yellow]Note: Input interrupted. Using default option (1).[/yellow]")
-                choice = "1"  # Default to "New Game" if input fails
-        else:
-            # Non-interactive terminal, provide default
-            console.print("[yellow]Note: Non-interactive terminal detected. Using default option (1).[/yellow]")
-            choice = "1"  # Default to "New Game" if not interactive
+            choice = Prompt.ask("")
+        except KeyboardInterrupt:
+            # Properly handle Ctrl+C to exit the game
+            console.print("Keyboard interrupt detected. Exiting...", style="yellow")
+            sys.exit(0)
+        except EOFError:
+            # Handle EOF error (Ctrl+D) with a clear message
+            console.print("EOF detected. Using default option (1).", style="yellow")
+            choice = "1"  # Default to "New Game" if input fails
     except (ImportError, AttributeError) as e:
         # Fall back to standard prompt
+        import sys
         try:
             choice = Prompt.ask("[bold green]Select an option[/bold green]")
-        except (EOFError, KeyboardInterrupt):
-            # Last resort fallback
+        except KeyboardInterrupt:
+            # Properly handle Ctrl+C by stopping the program
+            console.print("Keyboard interrupt detected. Exiting...", style="yellow")
+            sys.exit(0)
+        except EOFError:
+            # Handle EOF error with a clear message
+            console.print("EOF detected. Using default option (1).", style="yellow")
             choice = "1"  # Default to "New Game"
     
     # Check for dev mode activation
