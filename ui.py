@@ -51,15 +51,54 @@ def display_splash_screen(console):
     """Display the game's splash screen"""
     clear_screen()
     
-    # Display responsive title banner
-    display_responsive_title(console)
+    # Try to use animation for digital rain effect
+    try:
+        import animations
+        from config import GAME_SETTINGS
+        
+        # Only use digital rain if animations are enabled
+        if GAME_SETTINGS.get("ui_animations_enabled", True):
+            animations.digital_rain(console, duration=1.5, density=0.2, chars="01")
+    except (ImportError, AttributeError):
+        pass
+    
+    # Display responsive title banner with animation if available
+    try:
+        import animations
+        from config import GAME_SETTINGS
+        
+        # Get title ASCII art
+        title_art = assets.get_ascii_art('title')
+        
+        # Apply hologram effect to title if animations enabled
+        if GAME_SETTINGS.get("ui_animations_enabled", True):
+            animations.hologram_effect(title_art, console, style=Style(color=COLORS['primary']))
+        else:
+            # Fall back to standard display
+            display_responsive_title(console)
+    except (ImportError, AttributeError):
+        # Fall back to standard display
+        display_responsive_title(console)
     
     # Get terminal width for responsive display
     term_width, term_height = shutil.get_terminal_size()
     
-    # Display version and credits
-    console.print(f"[{COLORS['secondary']}]Version {VERSION}[/{COLORS['secondary']}]")
-    console.print(f"[{COLORS['text']}]A text-based cyberpunk adventure[/{COLORS['text']}]")
+    # Display version and credits with typing effect if available
+    try:
+        import animations
+        from config import GAME_SETTINGS
+        
+        if GAME_SETTINGS.get("ui_animations_enabled", True):
+            version_text = f"[{COLORS['secondary']}]Version {VERSION}[/{COLORS['secondary']}]"
+            subtitle_text = f"[{COLORS['text']}]A text-based cyberpunk adventure[/{COLORS['text']}]"
+            
+            animations.typing_effect(version_text + "\n" + subtitle_text, console)
+        else:
+            console.print(f"[{COLORS['secondary']}]Version {VERSION}[/{COLORS['secondary']}]")
+            console.print(f"[{COLORS['text']}]A text-based cyberpunk adventure[/{COLORS['text']}]")
+    except (ImportError, AttributeError):
+        console.print(f"[{COLORS['secondary']}]Version {VERSION}[/{COLORS['secondary']}]")
+        console.print(f"[{COLORS['text']}]A text-based cyberpunk adventure[/{COLORS['text']}]")
     
     # Bottom line - adapt to terminal width
     separator_width = min(60, term_width - 4)  # Leave a small margin
@@ -156,18 +195,43 @@ def main_menu(console):
     """Display main menu and get user choice"""
     clear_screen()
     
-    # Try to use animation module for transitions if available
+    # Try to use more advanced animation effects if available
     try:
         import animations
-        # Use hacker transition for main menu entry
-        animations.hacker_transition(console, lines=3)
+        from config import GAME_SETTINGS
+        
+        # Only use fancy animations if they're enabled in settings
+        if GAME_SETTINGS.get("ui_animations_enabled", True):
+            # Use digital rain as a prelude for cyberpunk feel
+            animations.digital_rain(console, duration=1.0, density=0.15, chars="01")
+            
+            # Use hacker transition effect
+            animations.hacker_transition(console, lines=3)
+        else:
+            # Still use basic hacker transition even if fancy animations are disabled
+            animations.hacker_transition(console, lines=2)
     except (ImportError, AttributeError):
         pass
     
-    # Display responsive title banner
-    display_responsive_title(console)
+    # Display title with hologram effect if available
+    try:
+        import animations
+        from config import GAME_SETTINGS
+        
+        # Get title ASCII art
+        title_art = assets.get_ascii_art('title')
+        
+        # Apply hologram effect to title if animations enabled
+        if GAME_SETTINGS.get("ui_animations_enabled", True):
+            animations.hologram_effect(title_art, console, style=Style(color=COLORS['primary']))
+        else:
+            # Fall back to standard display
+            display_responsive_title(console)
+    except (ImportError, AttributeError):
+        # Fall back to standard display
+        display_responsive_title(console)
     
-    # Create menu panel
+    # Create menu panel with cyberpunk-themed items
     menu_items = [
         f"[{COLORS['text']}]1. New Game[/{COLORS['text']}]",
         f"[{COLORS['text']}]2. Load Game[/{COLORS['text']}]",
@@ -182,13 +246,35 @@ def main_menu(console):
     # Try to use animation for menu display if available
     try:
         import animations
-        animations.neon_fade_in(Panel(menu_text, title=f"[{COLORS['secondary']}]MAIN MENU[/{COLORS['secondary']}]"), console)
+        from config import GAME_SETTINGS
+        
+        if GAME_SETTINGS.get("ui_animations_enabled", True):
+            # Create a panel with cyberpunk-themed title
+            menu_panel = Panel(menu_text, title=f"[{COLORS['secondary']}]MAIN MENU[/{COLORS['secondary']}]")
+            
+            # Use neon border effect for the menu to make it stand out
+            animations.neon_border(menu_panel, console, style=Style(color=COLORS['secondary']), border_char="█")
+        else:
+            # Use simpler neon fade for basic animation
+            animations.neon_fade_in(Panel(menu_text, title=f"[{COLORS['secondary']}]MAIN MENU[/{COLORS['secondary']}]"), console)
     except (ImportError, AttributeError):
         # Fall back to standard display if animations not available
         console.print(Panel(menu_text, title=f"[{COLORS['secondary']}]MAIN MENU[/{COLORS['secondary']}]"))
     
-    # Get user choice
-    choice = Prompt.ask("[bold green]Select an option[/bold green]")
+    # Display a cyberpunk-themed prompt with flicker effect if animations are enabled
+    try:
+        import animations
+        from config import GAME_SETTINGS
+        
+        if GAME_SETTINGS.get("ui_animations_enabled", True):
+            prompt_text = "[bold green]> Select Option:[/bold green]"
+            animations.cyber_flicker(prompt_text, console, flicker_count=2)
+            choice = Prompt.ask("")
+        else:
+            choice = Prompt.ask("[bold green]Select an option[/bold green]")
+    except (ImportError, AttributeError):
+        # Fall back to standard prompt
+        choice = Prompt.ask("[bold green]Select an option[/bold green]")
     
     # Check for dev mode activation
     if choice.lower() == "dev":
@@ -196,7 +282,21 @@ def main_menu(console):
     
     # Validate numeric choices
     if choice not in ["1", "2", "3", "4", "5", "6"]:
-        console.print("[bold red]Invalid option. Please try again.[/bold red]")
+        try:
+            import animations
+            from config import GAME_SETTINGS
+            
+            if GAME_SETTINGS.get("ui_animations_enabled", True):
+                # Use data corruption effect for error message
+                animations.data_corruption("[bold red]ERROR: Invalid selection. System recalibrating...[/bold red]", 
+                                         console, 
+                                         style=Style(color=COLORS['accent']), 
+                                         corruption_level=0.3)
+            else:
+                console.print("[bold red]Invalid option. Please try again.[/bold red]")
+        except (ImportError, AttributeError):
+            console.print("[bold red]Invalid option. Please try again.[/bold red]")
+            
         time.sleep(1)
         return main_menu(console)
     
@@ -209,6 +309,26 @@ def main_menu(console):
         "5": "credits",
         "6": "quit"
     }
+    
+    # Display selection confirmation with specific effect based on choice
+    try:
+        import animations
+        from config import GAME_SETTINGS
+        
+        if GAME_SETTINGS.get("ui_animations_enabled", True):
+            confirm_texts = {
+                "1": "[bold cyan]INITIALIZING NEW GAME PROTOCOL...[/bold cyan]",
+                "2": "[bold cyan]ACCESSING SAVE DATA...[/bold cyan]",
+                "3": "[bold cyan]LOADING NEURAL CODEX DATABASE...[/bold cyan]",
+                "4": "[bold cyan]OPENING SYSTEM CONFIGURATION...[/bold cyan]",
+                "5": "[bold cyan]ACCESSING CREATOR INFORMATION...[/bold cyan]",
+                "6": "[bold cyan]PREPARING SYSTEM SHUTDOWN...[/bold cyan]"
+            }
+            
+            animations.typing_effect(confirm_texts[choice], console)
+            time.sleep(0.5)
+    except (ImportError, AttributeError):
+        pass
     
     return actions[choice]
 

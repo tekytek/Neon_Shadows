@@ -381,16 +381,38 @@ class GameEngine:
         try:
             import animations
             from config import GAME_SETTINGS
+            from rich.style import Style
+            from rich.panel import Panel
             
             # Only use animations if enabled in settings
             if GAME_SETTINGS.get("ui_animations_enabled", True):
-                animations.typing_effect(
-                    Panel(f"[green]{node['text']}[/green]", title=node.get('title', '')),
-                    console
-                )
+                # For cyberspace or hacking nodes, use digital rain animation as a prelude
+                if node.get('environment') == 'cyberspace' or 'hacking' in node.get('tags', []):
+                    animations.digital_rain(console, duration=1.5, density=0.2, chars="01")
+                
+                # For corrupted or glitching nodes, use data corruption effect
+                if 'corrupted' in node.get('tags', []) or 'glitching' in node.get('tags', []):
+                    animations.data_corruption(
+                        Panel(f"[green]{node['text']}[/green]", title=node.get('title', '')), 
+                        console,
+                        corruption_level=0.4
+                    )
+                # For high-tech or holographic interfaces, use hologram effect
+                elif 'holographic' in node.get('tags', []) or 'high_tech' in node.get('tags', []):
+                    animations.hologram_effect(
+                        Panel(f"[green]{node['text']}[/green]", title=node.get('title', '')),
+                        console,
+                        style=Style(color="#00FFFF")
+                    )
+                # Default to typing effect for standard narrative
+                else:
+                    animations.typing_effect(
+                        Panel(f"[green]{node['text']}[/green]", title=node.get('title', '')),
+                        console
+                    )
             else:
                 console.print(Panel(f"[green]{node['text']}[/green]", title=node.get('title', '')))
-        except (ImportError, AttributeError):
+        except (ImportError, AttributeError) as e:
             # Fall back to standard display if animations not available
             console.print(Panel(f"[green]{node['text']}[/green]", title=node.get('title', '')))
         

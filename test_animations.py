@@ -50,11 +50,32 @@ AUTHORIZATION CONFIRMED"""
     animations.loading_bar(console, length=30, message="Downloading cyberdeck updates", style=Style(color=COLORS["secondary"]))
     time.sleep(1)
     
+    # Test digital rain (NEW)
+    console.print("\n[Testing] Digital Rain Effect:", style=Style(color=COLORS["secondary"], bold=True))
+    console.print("Displaying digital rain matrix in 2 seconds...", style=Style(color=COLORS["text"]))
+    time.sleep(2)
+    animations.digital_rain(console, duration=3, density=0.3, chars="01")
+    console.print("Digital rain complete!", style=Style(color=COLORS["primary"], bold=True))
+    time.sleep(1)
+    
+    # Test hologram effect (NEW)
+    console.print("\n[Testing] Hologram Effect:", style=Style(color=COLORS["secondary"], bold=True))
+    hologram_text = """HOLOGRAPHIC DISPLAY v2.1
+TACTICAL INFORMATION SYSTEM
+CYBERSPACE OVERLAY ACTIVE"""
+    animations.hologram_effect(hologram_text, console, style=Style(color="#00FFFF", bold=True))
+    time.sleep(1)
+    
+    # Test data corruption (NEW)
+    console.print("\n[Testing] Data Corruption Effect:", style=Style(color=COLORS["secondary"], bold=True))
+    animations.data_corruption("CRITICAL DATA CORRUPTION DETECTED", console, style=Style(color=COLORS["accent"], bold=True))
+    time.sleep(1)
+    
     # Test hacker transition
     console.print("\n[Testing] Hacker Transition:", style=Style(color=COLORS["secondary"], bold=True))
     console.print("Executing hacker transition in 2 seconds...", style=Style(color=COLORS["text"]))
     time.sleep(2)
-    animations.hacker_transition(console, lines=10)
+    animations.hacker_transition(console, lines=5)
     console.print("Transition complete!", style=Style(color=COLORS["primary"], bold=True))
     time.sleep(1)
     
@@ -71,12 +92,13 @@ USER LEVEL: NETRUNNER"""
     animations.cyber_flicker("WARNING: UNAUTHORIZED ACCESS", console, style=Style(color=COLORS["accent"], bold=True))
     time.sleep(1)
     
-    # Test combination of effects
-    console.print("\n[Testing] Combined Effects:", style=Style(color=COLORS["secondary"], bold=True))
-    animations.hacker_transition(console, lines=3)
-    animations.typing_effect("[SYSTEM] Initializing connection...", console, style=Style(color=COLORS["text"]))
-    animations.loading_bar(console, length=20, message="Connecting to server", style=Style(color=COLORS["secondary"]))
-    animations.neon_fade_in("CONNECTION ESTABLISHED", console, style=Style(color=COLORS["primary"], bold=True))
+    # Test combination of effects - NEW SEQUENCE
+    console.print("\n[Testing] Advanced Cyberpunk Sequence:", style=Style(color=COLORS["secondary"], bold=True))
+    animations.digital_rain(console, duration=1.5, density=0.2)
+    animations.typing_effect("[SYSTEM] Initializing neural connection...", console, style=Style(color=COLORS["text"]))
+    animations.loading_bar(console, length=15, message="Bypassing ICE protocol", style=Style(color=COLORS["secondary"]))
+    animations.data_corruption("⚠ SECURITY BREACH IMMINENT ⚠", console, style=Style(color=COLORS["accent"], bold=True))
+    animations.hologram_effect("NEURAL LINK ESTABLISHED", console, style=Style(color="#00FFFF", bold=True))
     
     # Final message
     console.print("\nAll animation tests complete!", style=Style(color=COLORS["primary"], bold=True))

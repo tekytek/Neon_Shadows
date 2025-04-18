@@ -140,9 +140,9 @@
   },
   "discovered": [
     "synth_corp",
-    "quantum_tech",
-    "neon_district",
     "neo_shanghai",
-    "corporate_district"
+    "corporate_district",
+    "neon_district",
+    "quantum_tech"
   ]
 }

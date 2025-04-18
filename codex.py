@@ -475,10 +475,31 @@ def display_entry(console, codex, entry_id):
             if art:
                 console.print(Panel(art, border_style="cyan"))
         
-        # Display entry content as markdown
+        # Display entry content with appropriate animation effects
         if animations.get_animation_delay() > 0:
-            # Use typing effect for animated text
-            animations.typing_effect(entry["content"], console)
+            # Choose animation effect based on entry category and content
+            from rich.style import Style
+            
+            # For technology entries, use hologram effect
+            if entry["category"] == "technology":
+                animations.hologram_effect(entry["content"], console, style=Style(color="#00FFFF"))
+            
+            # For faction entries (especially mysterious ones), use data corruption effect
+            elif entry["category"] == "factions" and any(term in entry_id.lower() for term in ["secret", "shadow", "criminal", "unknown"]):
+                animations.data_corruption(entry["content"], console, corruption_level=0.2)
+            
+            # For cyberspace locations, use digital rain as a prelude
+            elif entry["category"] == "locations" and any(term in entry_id.lower() for term in ["cyber", "net", "virtual", "digital"]):
+                animations.digital_rain(console, duration=1.5, density=0.2, chars="01")
+                animations.typing_effect(entry["content"], console)
+            
+            # For historical events, use glitch text for dramatic effect
+            elif entry["category"] == "events" and any(term in entry_id.lower() for term in ["war", "incident", "disaster", "conflict"]):
+                animations.glitch_text(entry["content"], console)
+            
+            # Default to typing effect for standard entries
+            else:
+                animations.typing_effect(entry["content"], console)
         else:
             # Use markdown rendering for non-animated text
             console.print(Markdown(entry["content"]))
