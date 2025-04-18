@@ -80,6 +80,13 @@ def main():
                     time.sleep(0.5)
                     audio.play_music("menu_theme")
                     
+        elif choice == "codex":
+            # Play menu selection sound if available
+            if AUDIO_AVAILABLE and GAME_SETTINGS["effects_enabled"]:
+                audio.play_sound("menu_select")
+                
+            ui.display_codex(console)
+            
         elif choice == "options":
             # Play menu selection sound if available
             if AUDIO_AVAILABLE and GAME_SETTINGS["effects_enabled"]:

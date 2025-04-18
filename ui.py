@@ -171,9 +171,10 @@ def main_menu(console):
     menu_items = [
         f"[{COLORS['text']}]1. New Game[/{COLORS['text']}]",
         f"[{COLORS['text']}]2. Load Game[/{COLORS['text']}]",
-        f"[{COLORS['text']}]3. Options[/{COLORS['text']}]",
-        f"[{COLORS['text']}]4. Credits[/{COLORS['text']}]",
-        f"[{COLORS['text']}]5. Quit[/{COLORS['text']}]"
+        f"[{COLORS['text']}]3. Codex[/{COLORS['text']}]",
+        f"[{COLORS['text']}]4. Options[/{COLORS['text']}]",
+        f"[{COLORS['text']}]5. Credits[/{COLORS['text']}]",
+        f"[{COLORS['text']}]6. Quit[/{COLORS['text']}]"
     ]
     
     menu_text = "\n".join(menu_items)
@@ -194,7 +195,7 @@ def main_menu(console):
         return "dev_mode"
     
     # Validate numeric choices
-    if choice not in ["1", "2", "3", "4", "5"]:
+    if choice not in ["1", "2", "3", "4", "5", "6"]:
         console.print("[bold red]Invalid option. Please try again.[/bold red]")
         time.sleep(1)
         return main_menu(console)
@@ -203,9 +204,10 @@ def main_menu(console):
     actions = {
         "1": "new_game",
         "2": "load_game",
-        "3": "options",
-        "4": "credits",
-        "5": "quit"
+        "3": "codex",
+        "4": "options",
+        "5": "credits",
+        "6": "quit"
     }
     
     return actions[choice]
@@ -542,3 +544,36 @@ def display_exit_message(console):
         console.print(Panel(farewell_text, title="GOODBYE"))
         
     time.sleep(2)
+    
+def display_codex(console, game_engine=None):
+    """Display the in-game codex"""
+    clear_screen()
+    
+    # Try to use animation transition if available
+    try:
+        import animations
+        animations.hacker_transition(console, lines=2)
+    except (ImportError, AttributeError):
+        pass
+    
+    # Import codex module
+    import codex
+    
+    # Initialize codex
+    game_codex = codex.Codex()
+    
+    # If game engine is provided, use its player for codex discovery status
+    if game_engine and hasattr(game_engine, 'player'):
+        player = game_engine.player
+    else:
+        player = None
+    
+    # Display the codex menu
+    codex.display_codex_menu(console, game_codex, player)
+    
+    # Play selection sound if available
+    try:
+        if game_engine and game_engine.audio_system:
+            game_engine.audio_system.play_sound("menu_back")
+    except (AttributeError, Exception):
+        pass
