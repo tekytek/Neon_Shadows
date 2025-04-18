@@ -43,6 +43,10 @@ args = "Dynamic Codex Test"
 task = "workflow.run"
 args = "New Animations Test"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Setup Test"
+
 [[workflows.workflow]]
 name = "Cyberpunk Adventure Game"
 author = "agent"
@@ -155,6 +159,20 @@ task = "packager.installForAll"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python test_new_animations.py"
+
+[[workflows.workflow]]
+name = "Setup Test"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python setup.py"
 
 [deployment]
 run = ["sh", "-c", "python main.py"]
