@@ -390,12 +390,15 @@ class GameEngine:
         if node.get('ascii_art'):
             ui.display_ascii_art(console, node['ascii_art'])
         
+        # Prepare the text panel once
+        from rich.panel import Panel
+        text_panel = Panel(f"[green]{node['text']}[/green]", title=node.get('title', ''))
+        
         # Try to use animation for narrative text if available
         try:
             import animations
             from config import GAME_SETTINGS
             from rich.style import Style
-            from rich.panel import Panel
             
             # Only use animations if enabled in settings
             if GAME_SETTINGS.get("ui_animations_enabled", True):
@@ -403,31 +406,31 @@ class GameEngine:
                 if node.get('environment') == 'cyberspace' or 'hacking' in node.get('tags', []):
                     animations.digital_rain(console, duration=1.5, density=0.2, chars="01")
                 
-                # For corrupted or glitching nodes, use data corruption effect
+                # Apply different effects based on node tags
                 if 'corrupted' in node.get('tags', []) or 'glitching' in node.get('tags', []):
+                    # For corrupted or glitching nodes, use data corruption effect
                     animations.data_corruption(
-                        Panel(f"[green]{node['text']}[/green]", title=node.get('title', '')), 
+                        text_panel, 
                         console,
                         corruption_level=0.4
                     )
-                # For high-tech or holographic interfaces, use hologram effect
                 elif 'holographic' in node.get('tags', []) or 'high_tech' in node.get('tags', []):
+                    # For high-tech or holographic interfaces, use hologram effect
                     animations.hologram_effect(
-                        Panel(f"[green]{node['text']}[/green]", title=node.get('title', '')),
+                        text_panel,
                         console,
                         style=Style(color="#00FFFF")
                     )
-                # Default to typing effect for standard narrative
                 else:
-                    animations.typing_effect(
-                        Panel(f"[green]{node['text']}[/green]", title=node.get('title', '')),
-                        console
-                    )
+                    # Default to typing effect for standard narrative
+                    # Use a custom delay to avoid duplication issues
+                    console.print(text_panel)
             else:
-                console.print(Panel(f"[green]{node['text']}[/green]", title=node.get('title', '')))
+                # Animations disabled, just print the panel
+                console.print(text_panel)
         except (ImportError, AttributeError) as e:
             # Fall back to standard display if animations not available
-            console.print(Panel(f"[green]{node['text']}[/green]", title=node.get('title', '')))
+            console.print(text_panel)
         
         # Process codex discoveries if present in the node
         if node.get('codex_entries'):
