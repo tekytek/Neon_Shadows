@@ -263,7 +263,8 @@ def hacker_transition(console, lines=5):
     console.clear()
     
     # Generate random hacker-style lines
-    hacker_chars = "01!@#$%^&*()_+-={}[]|\\:;'\"<>,.?/~`"
+    # Avoiding characters that might be interpreted as Rich markup
+    hacker_chars = "01234567890!@#$%^&*()_+-=|\\;,.?/~`"
     
     for _ in range(lines):
         line = ""
@@ -275,7 +276,10 @@ def hacker_transition(console, lines=5):
             else:
                 line += " "
         
-        console.print(line, style=Style(color=line_color))
+        # Use a Text object instead of a string to avoid markup interpretation
+        from rich.text import Text
+        text_obj = Text(line)
+        console.print(text_obj, style=Style(color=line_color))
         time.sleep(delay)
     
     time.sleep(delay * 3)  # Slight pause after transition
