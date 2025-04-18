@@ -305,10 +305,17 @@ def digital_rain(console, duration=2.0, density=0.2, chars="01"):
     
     # Full effect for tests and other modes
     delay = get_animation_delay() / 2
-    width = shutil.get_terminal_size().columns
-    height = min(15, shutil.get_terminal_size().lines - 5)
     
-    # Create an empty matrix
+    # Ensure we have valid terminal dimensions to prevent index errors
+    try:
+        width = max(1, shutil.get_terminal_size().columns)
+        height = max(1, min(15, shutil.get_terminal_size().lines - 5))
+    except Exception:
+        # Fallback to safe values if terminal size detection fails
+        width = 80
+        height = 10
+    
+    # Create an empty matrix with proper bounds checking
     matrix = [[" " for _ in range(width)] for _ in range(height)]
     
     # Setup for animation

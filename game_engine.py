@@ -71,7 +71,14 @@ class GameEngine:
         console.print(Panel("[cyan]In the neon-washed streets of Neo-Shanghai, your story begins...[/cyan]"))
         console.print("[green]Create your character:[/green]")
         
-        name = Prompt.ask("[bold cyan]Enter your character's name[/bold cyan]")
+        try:
+            name = Prompt.ask("[bold cyan]Enter your character's name[/bold cyan]")
+        except (EOFError, KeyboardInterrupt):
+            # Fallback to a default name if we can't get input
+            console.print("[yellow]Input error detected. Using default name 'Runner'.[/yellow]")
+            name = "Runner"
+            # Add a short delay to show the message
+            time.sleep(1.5)
         
         # Display character class options
         console.print("\n[bold green]Choose your character class:[/bold green]")
@@ -92,8 +99,14 @@ class GameEngine:
             stats = char_class['stats']
             console.print(f"   STR: {stats['strength']} | INT: {stats['intelligence']} | CHA: {stats['charisma']} | REF: {stats['reflex']}")
         
-        class_choice = IntPrompt.ask("[bold cyan]Select your class[/bold cyan]", choices=[str(i) for i in range(1, len(classes)+1)])
-        selected_class = classes[class_choice-1]
+        try:
+            class_choice = IntPrompt.ask("[bold cyan]Select your class[/bold cyan]", choices=[str(i) for i in range(1, len(classes)+1)])
+            selected_class = classes[class_choice-1]
+        except (EOFError, KeyboardInterrupt, ValueError, IndexError):
+            # Fall back to a default class if we can't get input
+            console.print("[yellow]Input error detected. Using default class 'NetRunner'.[/yellow]")
+            selected_class = classes[0]  # NetRunner is the first class
+            time.sleep(1.5)
         
         # Create the player character
         self.player = character.Character(
@@ -467,7 +480,13 @@ class GameEngine:
             valid_choices = [str(i) for i in range(1, len(choices)+1)]
             valid_choices.extend(['i', 'I', 'c', 'C', 'm', 'M', 's', 'S', 'q', 'Q'])
             
-            choice = Prompt.ask("[bold green]Enter your choice[/bold green]", choices=valid_choices)
+            try:
+                choice = Prompt.ask("[bold green]Enter your choice[/bold green]", choices=valid_choices)
+            except (EOFError, KeyboardInterrupt):
+                # Default to first choice if input fails
+                console.print("[yellow]Input error detected. Defaulting to first choice.[/yellow]")
+                choice = "1" if valid_choices else "q"
+                time.sleep(1.5)
             
             # Process the choice
             if choice.upper() == 'I':
@@ -564,7 +583,12 @@ class GameEngine:
         else:
             # No choices available, just continue to the next node
             console.print("\n[cyan]Press Enter to continue...[/cyan]")
-            input()
+            try:
+                input()
+            except (EOFError, KeyboardInterrupt):
+                # Just continue if input fails
+                console.print("[yellow]Input error detected. Continuing automatically...[/yellow]")
+                time.sleep(1.5)
             self.current_node = node.get('next_node', self.current_node)
     
     def handle_combat(self, console, node):
@@ -682,7 +706,12 @@ class GameEngine:
             self.current_node = node.get('victory_node', self.current_node)
             
             console.print("\n[cyan]Press Enter to continue...[/cyan]")
-            input()
+            try:
+                input()
+            except (EOFError, KeyboardInterrupt):
+                # Just continue if input fails
+                console.print("[yellow]Input error detected. Continuing automatically...[/yellow]")
+                time.sleep(1.5)
         elif combat_result == 'defeat':
             # Player lost
             self.handle_death(console)
@@ -706,7 +735,12 @@ class GameEngine:
             self.current_node = node.get('escape_node', self.current_node)
             
             console.print("\n[cyan]Press Enter to continue...[/cyan]")
-            input()
+            try:
+                input()
+            except (EOFError, KeyboardInterrupt):
+                # Just continue if input fails
+                console.print("[yellow]Input error detected. Continuing automatically...[/yellow]")
+                time.sleep(1.5)
     
     def handle_inventory(self, console):
         """Handle inventory management"""
@@ -752,7 +786,12 @@ class GameEngine:
                 console.print(f"[green]This appears to be {item_name}. No detailed information available.[/green]")
             
             console.print("\n[cyan]Press Enter to continue...[/cyan]")
-            input()
+            try:
+                input()
+            except (EOFError, KeyboardInterrupt):
+                # Just continue if input fails
+                console.print("[yellow]Input error detected. Continuing automatically...[/yellow]")
+                time.sleep(1.5)
         elif action == "3" and items:
             # Drop an item
             item_idx = IntPrompt.ask("[bold cyan]Enter the number of the item to drop[/bold cyan]", 
@@ -768,7 +807,12 @@ class GameEngine:
                 console.print(f"[red]Failed to drop {item_name}[/red]")
             
             console.print("\n[cyan]Press Enter to continue...[/cyan]")
-            input()
+            try:
+                input()
+            except (EOFError, KeyboardInterrupt):
+                # Just continue if input fails
+                console.print("[yellow]Input error detected. Continuing automatically...[/yellow]")
+                time.sleep(1.5)
     
     def handle_map_travel(self, console):
         """Handle district map view and travel"""
@@ -902,7 +946,12 @@ class GameEngine:
         else:
             console.print("\n[bold red]No connected districts available![/bold red]")
             console.print("\n[cyan]Press Enter to return...[/cyan]")
-            input()
+            try:
+                input()
+            except (EOFError, KeyboardInterrupt):
+                # Just continue if input fails
+                console.print("[yellow]Input error detected. Continuing automatically...[/yellow]")
+                time.sleep(1.5)
     
     def handle_travel_encounter(self, console, danger_level):
         """Handle random encounters that can occur during district travel"""

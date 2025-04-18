@@ -132,12 +132,25 @@ if __name__ == "__main__":
         ui.clear_screen()
         console.print("\n[bold cyan]Game terminated by user. Exiting...[/bold cyan]")
         sys.exit(0)
+    except EOFError:
+        # Handle EOF error (which can occur in non-interactive environments)
+        console = Console()
+        ui.clear_screen()
+        console.print("\n[bold yellow]Input stream ended unexpectedly (EOF). This can happen in non-interactive terminals.[/bold yellow]")
+        console.print("[cyan]If you are running this on a Raspberry Pi, try using 'python3 main.py < /dev/tty' to ensure input works correctly.[/cyan]")
+        sys.exit(1)
     except Exception as e:
         # Handle unexpected errors
-        if DEBUG_MODE:
-            raise
         console = Console()
         ui.clear_screen()
         console.print(f"\n[bold red]An error occurred: {str(e)}[/bold red]")
+        
+        # Always print traceback for better debugging
+        import traceback
+        console.print("[yellow]===== Debug Traceback =====[/yellow]")
+        tb_text = traceback.format_exc()
+        console.print(f"[yellow]{tb_text}[/yellow]")
+        console.print("[yellow]=========================[/yellow]")
+        
         console.print("[cyan]Please report this issue to the developers.[/cyan]")
         sys.exit(1)

@@ -629,7 +629,11 @@ def main():
         border_style="cyan"
     ))
     
-    input("\nPress Enter to begin setup...")
+    try:
+        input("\nPress Enter to begin setup...")
+    except (EOFError, KeyboardInterrupt):
+        console.print("[yellow]Input error detected. Continuing automatically...[/yellow]")
+        time.sleep(1.5)
     
     # Run all checks
     checks = [
@@ -670,7 +674,12 @@ def main():
         console.print("\n[yellow bold]Some tests failed. You may experience issues when running the game.[/yellow bold]")
         console.print("[yellow]Please review the errors above and try to resolve them before playing.[/yellow]")
         
-        proceed = input("\nDo you want to proceed to the game anyway? (y/n): ").lower().strip()
+        try:
+            proceed = input("\nDo you want to proceed to the game anyway? (y/n): ").lower().strip()
+        except (EOFError, KeyboardInterrupt):
+            console.print("[yellow]Input error detected. Assuming 'y' to continue...[/yellow]")
+            time.sleep(1.5)
+            proceed = 'y'
         if proceed == 'y':
             console.print("\nStarting game...")
             subprocess.Popen([sys.executable, "main.py"])

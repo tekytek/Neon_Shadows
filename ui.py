@@ -58,7 +58,12 @@ def display_splash_screen(console):
         
         # Only use digital rain if animations are enabled
         if GAME_SETTINGS.get("ui_animations_enabled", True):
-            animations.digital_rain(console, duration=1.5, density=0.2, chars="01")
+            try:
+                animations.digital_rain(console, duration=1.5, density=0.2, chars="01")
+            except Exception as e:
+                # Catch any animation errors but still continue with splash screen
+                print(f"Animation error caught: {e}")
+                time.sleep(0.5)
     except (ImportError, AttributeError):
         pass
     
@@ -104,7 +109,14 @@ def display_splash_screen(console):
     separator_width = min(60, term_width - 4)  # Leave a small margin
     console.print("\n" + "=" * separator_width, style=Style(color=COLORS['primary']))
     console.print(f"[{COLORS['text']}]Press Enter to continue...[/{COLORS['text']}]")
-    input()
+    try:
+        input()
+    except EOFError:
+        # Handle EOF error in non-interactive terminals
+        console.print("[yellow]Note: Input stream ended unexpectedly. This can happen in non-interactive terminals.[/yellow]")
+        console.print("[yellow]Game will proceed automatically.[/yellow]")
+        # Simulate a short delay instead of waiting for Enter
+        time.sleep(2)
 
 def display_header(console, title_text):
     """Display a header with the given title"""
@@ -203,10 +215,20 @@ def main_menu(console):
         # Only use fancy animations if they're enabled in settings
         if GAME_SETTINGS.get("ui_animations_enabled", True):
             # Use digital rain as a prelude for cyberpunk feel
-            animations.digital_rain(console, duration=1.0, density=0.15, chars="01")
+            try:
+                animations.digital_rain(console, duration=1.0, density=0.15, chars="01")
+            except Exception as e:
+                # Catch any animation errors but continue
+                print(f"Animation error caught: {e}")
+                time.sleep(0.5)
             
             # Use hacker transition effect
-            animations.hacker_transition(console, lines=3)
+            try:
+                animations.hacker_transition(console, lines=3)
+            except Exception as e:
+                # Catch any animation errors but continue
+                print(f"Animation error caught: {e}")
+                time.sleep(0.5)
         else:
             # Still use basic hacker transition even if fancy animations are disabled
             animations.hacker_transition(console, lines=2)
