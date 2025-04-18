@@ -136,13 +136,21 @@
       "content": "## SynthWave Corporation\n\nData unavailable. Your neural interface has failed to retrieve information about this subject. Try reconnecting to a data terminal or visiting an information broker to update your knowledge database.",
       "related_entries": [],
       "image": null
+    },
+    "night_city": {
+      "category": "world",
+      "title": "Night City",
+      "content": "## Night City\n\nData unavailable. Your neural interface has failed to retrieve information about this subject. Try reconnecting to a data terminal or visiting an information broker to update your knowledge database.",
+      "related_entries": [],
+      "image": null
     }
   },
   "discovered": [
-    "neon_district",
     "neo_shanghai",
+    "night_city",
     "quantum_tech",
     "corporate_district",
+    "neon_district",
     "synth_corp"
   ]
 }
