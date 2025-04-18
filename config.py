@@ -28,7 +28,7 @@ MAX_INVENTORY_ITEMS = 20  # Maximum number of unique items in inventory
 # Ollama integration
 OLLAMA_API_URL = os.getenv("OLLAMA_API_URL", "http://localhost:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama2")
-USE_OLLAMA = False  # Set to True to use Ollama, False to use fallback content
+USE_OLLAMA = True  # Set to True to use Ollama, False to use fallback content
 
 # Debug mode
 DEBUG_MODE = os.getenv("DEBUG_MODE", "False").lower() in ("true", "1", "t")

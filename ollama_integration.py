@@ -236,3 +236,140 @@ class OllamaIntegration:
                 }
             ]
         }
+    
+    def generate_codex_entry(self, entry_id, category, title, existing_entries=None):
+        """Generate a dynamic codex entry based on entry ID, category, and title
+        
+        Args:
+            entry_id (str): The ID of the entry to generate
+            category (str): The category of the entry
+            title (str): The title of the entry
+            existing_entries (dict, optional): Dictionary of existing entries to provide context
+            
+        Returns:
+            dict: A dictionary containing the generated codex entry
+        """
+        # Check if we should use Ollama
+        from config import USE_OLLAMA
+        
+        if not USE_OLLAMA:
+            # Skip Ollama integration if disabled
+            return self._generate_fallback_codex_entry(entry_id, category, title)
+            
+        # Check if Ollama is available
+        if not self._check_availability():
+            self.console.print("[bold red]Ollama is not available. Using fallback content for codex entry.[/bold red]")
+            return self._generate_fallback_codex_entry(entry_id, category, title)
+        
+        # Create a prompt for the codex entry
+        prompt = self._create_codex_prompt(entry_id, category, title, existing_entries)
+        
+        # Make the request to Ollama
+        response = self._make_request(prompt)
+        
+        if not response:
+            self.console.print("[bold red]Failed to generate codex content. Using fallback.[/bold red]")
+            return self._generate_fallback_codex_entry(entry_id, category, title)
+        
+        # Extract the response text
+        response_text = response.get("response", "")
+        
+        # Parse the response to extract the codex entry
+        try:
+            # Find json within the response text
+            start_idx = response_text.find("{")
+            end_idx = response_text.rfind("}") + 1
+            
+            if start_idx >= 0 and end_idx > start_idx:
+                entry_json = response_text[start_idx:end_idx]
+                entry = json.loads(entry_json)
+                
+                # Validate that the entry has the required fields
+                if "content" in entry:
+                    # Add any missing fields
+                    entry.setdefault("category", category)
+                    entry.setdefault("title", title)
+                    entry.setdefault("related_entries", [])
+                    entry.setdefault("image", None)
+                    return entry
+        except Exception as e:
+            self.console.print(f"[bold red]Error parsing generated codex content: {str(e)}[/bold red]")
+        
+        # If parsing fails, use fallback
+        return self._generate_fallback_codex_entry(entry_id, category, title)
+    
+    def _create_codex_prompt(self, entry_id, category, title, existing_entries=None):
+        """Create a prompt for codex entry generation
+        
+        Args:
+            entry_id (str): The ID of the entry to generate
+            category (str): The category of the entry
+            title (str): The title of the entry
+            existing_entries (dict, optional): Dictionary of existing entries to provide context
+        """
+        # Dictionary mapping categories to descriptions
+        category_descriptions = {
+            "world": "Information about the world of Neo Shanghai and its history",
+            "factions": "Details about the major corporations, gangs, and other groups",
+            "technology": "Information about cybernetic implants, weapons, and other tech",
+            "locations": "Details about districts, landmarks, and important places",
+            "characters": "Background on key figures in the world",
+            "events": "Historical events that shaped the current world"
+        }
+        
+        # Build the prompt
+        header = f"You are writing content for a codex entry in a cyberpunk text adventure game. The entry has ID \"{entry_id}\", category \"{category}\" ({category_descriptions.get(category, '')}), and title \"{title}\".\n\n"
+        
+        # Add context from existing entries if available
+        context = ""
+        if existing_entries and len(existing_entries) > 0:
+            context = "Here are some existing codex entries to provide context for the world setting:\n\n"
+            # Include up to 3 related entries for context
+            count = 0
+            for eid, entry in existing_entries.items():
+                if count >= 3:
+                    break
+                context += f"Entry: {entry.get('title', 'Unknown')}\n"
+                context += f"Category: {entry.get('category', 'Unknown')}\n"
+                context += f"Content: {entry.get('content', '')}\n\n"
+                count += 1
+        
+        # Instructions for response format
+        instructions = "Create a detailed and atmospheric codex entry in JSON format with the following structure:\n\n"
+        instructions += "{\n"
+        instructions += '    "title": "The title of the entry",\n'
+        instructions += '    "category": "The category of the entry",\n'
+        instructions += '    "content": "Markdown-formatted content with rich details, history, and cyberpunk atmosphere",\n'
+        instructions += '    "related_entries": ["id_of_related_entry1", "id_of_related_entry2"],\n'
+        instructions += '    "image": "ASCII_ART_NAME"\n'
+        instructions += "}\n\n"
+        
+        # Style and content guidance
+        guidance = "The content should be detailed, atmospheric, and well-structured in markdown format with headings. "
+        guidance += "It should perfectly capture the cyberpunk aesthetic with themes of high tech and low life, "
+        guidance += "corporate domination, cybernetic enhancement, and the struggle for humanity in a digital world. "
+        guidance += "Include appropriate cyberpunk terminology, cultural references, and world-building details. "
+        guidance += "Make sure the content is between 200-500 words and uses markdown formatting effectively.\n\n"
+        guidance += "The response should be ONLY the JSON object, nothing else."
+        
+        # Combine all parts
+        prompt = header + context + instructions + guidance
+        
+        return prompt
+    
+    def _generate_fallback_codex_entry(self, entry_id, category, title):
+        """Generate a fallback codex entry when Ollama is unavailable
+        
+        Args:
+            entry_id (str): The ID of the entry to generate
+            category (str): The category of the entry
+            title (str): The title of the entry
+        """
+        # Create a basic placeholder entry
+        return {
+            "category": category,
+            "title": title,
+            "content": f"## {title}\n\nData unavailable. Your neural interface has failed to retrieve information about this subject. Try reconnecting to a data terminal or visiting an information broker to update your knowledge database.",
+            "related_entries": [],
+            "image": None
+        }

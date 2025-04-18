@@ -122,11 +122,27 @@
         "climate_crisis"
       ],
       "image": "CITY_RUINS"
+    },
+    "quantum_tech": {
+      "category": "technology",
+      "title": "Quantum Hacking",
+      "content": "## Quantum Hacking\n\nData unavailable. Your neural interface has failed to retrieve information about this subject. Try reconnecting to a data terminal or visiting an information broker to update your knowledge database.",
+      "related_entries": [],
+      "image": null
+    },
+    "synth_corp": {
+      "category": "factions",
+      "title": "SynthWave Corporation",
+      "content": "## SynthWave Corporation\n\nData unavailable. Your neural interface has failed to retrieve information about this subject. Try reconnecting to a data terminal or visiting an information broker to update your knowledge database.",
+      "related_entries": [],
+      "image": null
     }
   },
   "discovered": [
+    "synth_corp",
+    "quantum_tech",
+    "neon_district",
     "neo_shanghai",
-    "corporate_district",
-    "neon_district"
+    "corporate_district"
   ]
 }

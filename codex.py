@@ -97,7 +97,7 @@ class Codex:
         except IOError as e:
             print(f"Error saving codex data: {e}")
     
-    def add_entry(self, entry_id, category, title, content, related_entries=None, image=None):
+    def add_entry(self, entry_id, category, title, content, related_entries=None, image=None, dynamic_generation=False):
         """
         Add a new entry to the codex
         
@@ -108,6 +108,7 @@ class Codex:
             content (str): Markdown-formatted content
             related_entries (list, optional): List of related entry IDs
             image (str, optional): ASCII art reference for the entry
+            dynamic_generation (bool, optional): Whether to dynamically generate content with Ollama
         
         Returns:
             bool: Whether the entry was added successfully
@@ -115,10 +116,41 @@ class Codex:
         if category not in CATEGORIES:
             return False
             
-        if entry_id in self.entries:
+        if entry_id in self.entries and not dynamic_generation:
             # Entry already exists, could update it here if needed
             return False
-            
+        
+        # If dynamic generation is enabled and Ollama is configured, generate content
+        if dynamic_generation:
+            try:
+                # Import here to avoid circular imports
+                from config import USE_OLLAMA
+                
+                if USE_OLLAMA:
+                    from ollama_integration import OllamaIntegration
+                    
+                    ollama = OllamaIntegration()
+                    generated_entry = ollama.generate_codex_entry(
+                        entry_id, 
+                        category, 
+                        title,
+                        self.entries
+                    )
+                    
+                    # Use generated content if available
+                    if generated_entry and "content" in generated_entry:
+                        # Override content with generated content
+                        content = generated_entry.get("content", content)
+                        # Use generated related entries if provided
+                        if "related_entries" in generated_entry and generated_entry["related_entries"]:
+                            related_entries = generated_entry.get("related_entries", related_entries)
+                        # Use suggested image if provided
+                        if "image" in generated_entry and generated_entry["image"]:
+                            image = generated_entry.get("image", image)
+            except Exception as e:
+                print(f"Error generating dynamic content: {str(e)}")
+                # Continue with provided content if generation fails
+        
         self.entries[entry_id] = {
             "category": category,
             "title": title,
@@ -130,22 +162,43 @@ class Codex:
         self.save_data()
         return True
     
-    def discover_entry(self, entry_id):
+    def discover_entry(self, entry_id, title=None, category=None):
         """
         Mark an entry as discovered by the player
         
         Args:
             entry_id (str): ID of the entry to mark as discovered
+            title (str, optional): Title of the entry if it doesn't exist yet
+            category (str, optional): Category of the entry if it doesn't exist yet
             
         Returns:
             bool: Whether the entry was newly discovered
         """
+        # If the entry doesn't exist yet but title and category are provided,
+        # create it dynamically with Ollama
+        if entry_id not in self.entries and title and category:
+            if category in CATEGORIES:
+                # Create default placeholder content
+                default_content = f"## {title}\n\nInformation on this subject is being retrieved..."
+                
+                # Attempt to add the entry with dynamic generation
+                self.add_entry(
+                    entry_id=entry_id,
+                    category=category,
+                    title=title,
+                    content=default_content,
+                    dynamic_generation=True  # This will trigger Ollama content generation
+                )
+        
+        # Check if the entry exists now
         if entry_id not in self.entries:
             return False
             
+        # Check if it's already discovered
         if entry_id in self.discovered_entries:
             return False
             
+        # Mark as discovered
         self.discovered_entries.add(entry_id)
         self.save_data()
         return True
@@ -265,6 +318,36 @@ class Codex:
             
         self.save_data()
         return discovered
+        
+    def to_dict(self):
+        """
+        Convert the codex to a dictionary for saving
+        
+        Returns:
+            dict: Dictionary representation of the codex
+        """
+        return {
+            "entries": self.entries,
+            "discovered": list(self.discovered_entries)
+        }
+        
+    def from_dict(self, data):
+        """
+        Load codex from a dictionary (for loading saves)
+        
+        Args:
+            data (dict): Dictionary with codex data
+            
+        Returns:
+            Codex: Self for method chaining
+        """
+        if "entries" in data:
+            self.entries = data["entries"]
+            
+        if "discovered" in data:
+            self.discovered_entries = set(data["discovered"])
+            
+        return self
 
 def display_codex_menu(console, codex, player=None):
     """

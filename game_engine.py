@@ -43,6 +43,10 @@ class GameEngine:
         # Initialize location action handler
         self.location_handler = LocationActionHandler(self)
         
+        # Initialize codex system
+        import codex
+        self.codex = codex.Codex()
+        
         # Initialize audio system if available
         try:
             import audio
@@ -202,6 +206,12 @@ class GameEngine:
             if 'district_manager' in save_data:
                 self.district_manager = DistrictManager.from_dict(save_data['district_manager'])
             
+            # Load codex data if it exists
+            if 'codex' in save_data:
+                import codex as codex_module
+                self.codex = codex_module.Codex()
+                self.codex.from_dict(save_data['codex'])
+            
             console.print("[bold green]Game loaded successfully![/bold green]")
             time.sleep(1)
             return True
@@ -229,6 +239,7 @@ class GameEngine:
             'current_node': self.current_node,
             'choice_history': self.choice_history.to_dict(),
             'district_manager': self.district_manager.to_dict(),
+            'codex': self.codex.to_dict(),
             'metadata': {
                 'character_name': self.player.name,
                 'character_class': self.player.char_class,
@@ -298,6 +309,68 @@ class GameEngine:
                 self.handle_death(console)
                 self.game_over = True
     
+    def _process_codex_discoveries(self, console, codex_entries):
+        """Process codex discoveries from a story node
+        
+        Args:
+            console: Console for output
+            codex_entries: List of codex entries to discover
+        """
+        newly_discovered = []
+        import codex as codex_module  # Import locally to avoid circular imports
+        
+        for entry in codex_entries:
+            entry_id = entry.get("id")
+            
+            # Skip if no ID provided
+            if not entry_id:
+                continue
+                
+            # Check if the entry should be dynamically generated
+            dynamic = entry.get("dynamic", False)
+            title = entry.get("title")
+            category = entry.get("category")
+            
+            # First try to discover an existing entry
+            was_discovered = self.codex.discover_entry(
+                entry_id=entry_id,
+                title=title,
+                category=category
+            )
+            
+            # If the entry doesn't exist yet and we have enough info, create it
+            if not was_discovered and title and category:
+                # Create a default entry that will be dynamically generated if needed
+                default_content = f"## {title}\n\nInformation on this subject is being retrieved..."
+                self.codex.add_entry(
+                    entry_id=entry_id,
+                    category=category,
+                    title=title,
+                    content=default_content,
+                    dynamic_generation=dynamic
+                )
+                
+                # Mark it as discovered
+                was_discovered = self.codex.discover_entry(entry_id)
+            
+            if was_discovered:
+                newly_discovered.append(entry_id)
+        
+        # Notify player of new codex entries if any were discovered
+        if newly_discovered:
+            # Play discovery sound if available
+            if self.audio_enabled and self.audio_system:
+                self.audio_system.play_sound("level_up")  # Reuse level up sound for now
+                
+            console.print("\n[bold cyan]New Codex Entry Discovered![/bold cyan]")
+            for entry_id in newly_discovered:
+                entry = self.codex.get_entry(entry_id)
+                if entry:
+                    console.print(f"[cyan]• {entry['title']} (in {codex_module.CATEGORIES[entry['category']]['name']})[/cyan]")
+            
+            console.print(f"[italic cyan]Access the Codex from the Main Menu to view these entries.[/italic cyan]")
+            time.sleep(2)
+    
     def handle_narrative(self, console, node):
         """Process a narrative story node"""
         # Display node text with proper formatting
@@ -320,6 +393,10 @@ class GameEngine:
         except (ImportError, AttributeError):
             # Fall back to standard display if animations not available
             console.print(Panel(f"[green]{node['text']}[/green]", title=node.get('title', '')))
+        
+        # Process codex discoveries if present in the node
+        if node.get('codex_entries'):
+            self._process_codex_discoveries(console, node['codex_entries'])
         
         # Check if this is an ending
         if node.get('is_ending', False):
