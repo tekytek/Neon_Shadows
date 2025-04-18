@@ -23,9 +23,11 @@ The game features:
 - Dynamic content generation using Ollama (optional)
 - Save/load game functionality
 
-## Installation
+## Installation & Running
 
-```
+### Quick Start
+
+```bash
 # Clone the repository
 git clone https://github.com/yourusername/neon-shadows.git
 cd neon-shadows
@@ -33,13 +35,144 @@ cd neon-shadows
 # Install required packages
 pip install -r requirements.txt
 
-# Run the game
+# Run the setup utility to verify your system is ready
+python setup.py
+
+# Or run the game directly
 python main.py
 ```
 
-Required packages:
-- rich (for enhanced terminal display)
-- requests (for API communication)
+### Detailed Installation Guide
+
+#### Requirements
+
+- Python 3.8 or higher
+- Terminal with color support
+- Recommended: At least 80×24 terminal size for best experience
+
+#### Required Packages
+
+- `rich`: Enhanced terminal display with color and formatting
+- `pygame`: Audio system for music and sound effects
+- `requests`: API communication for Ollama integration (optional)
+- `numpy`: Used for various calculations
+- `scipy`: Used for advanced calculations in the tactical combat system
+
+#### Installation Methods
+
+##### Method 1: Using the Setup Utility (Recommended)
+
+The setup utility will check your system, install required dependencies, and run tests to ensure everything is working properly:
+
+```bash
+# Run the setup utility
+python setup.py
+```
+
+The setup utility will:
+1. Check Python version
+2. Verify all dependencies are installed (and install missing ones)
+3. Test critical game components
+4. Start the game when everything is ready
+
+##### Method 2: Manual Installation
+
+If you prefer to install dependencies manually:
+
+```bash
+# For pip users
+pip install rich pygame requests numpy scipy
+
+# For conda users
+conda install rich pygame requests numpy scipy
+```
+
+##### Method 3: Requirements File
+
+```bash
+# Create a virtual environment (recommended)
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install from requirements
+pip install -r requirements.txt
+```
+
+### Running the Game
+
+There are multiple ways to start the game:
+
+#### Standard Launch
+
+```bash
+python main.py
+```
+
+#### With Setup Check
+
+```bash
+python setup.py
+```
+
+#### Running Test Modules
+
+The game includes several test modules for specific components:
+
+```bash
+# Test ASCII art display
+python test_ascii_art.py
+
+# Test animation system
+python test_animations.py
+
+# Test new animations
+python test_new_animations.py
+
+# Test tactical combat system
+python test_tactical_combat.py
+
+# Test tactical abilities
+python test_tactical_abilities.py
+
+# Test dynamic codex
+python test_dynamic_codex.py
+```
+
+### Optional: Ollama Integration
+
+For enhanced story generation with AI, you can enable Ollama integration.
+
+#### Setting Up Ollama (Optional)
+
+1. Install Ollama from [ollama.ai](https://ollama.ai)
+2. Pull a compatible model (llama2 recommended):
+   ```bash
+   ollama pull llama2
+   ```
+3. Start the Ollama server:
+   ```bash
+   ollama serve
+   ```
+4. Enable Ollama in the game by editing `config.py`:
+   ```python
+   USE_OLLAMA = True
+   ```
+
+### Troubleshooting
+
+If you encounter issues:
+
+1. Make sure Python 3.8+ is installed and in your PATH
+2. Verify all dependencies are correctly installed
+3. Check console output for specific error messages
+4. Run the setup utility for automatic diagnostics:
+   ```bash
+   python setup.py
+   ```
+5. If audio is not working, ensure pygame is correctly installed
+6. For terminal display issues, verify rich library is installed and your terminal supports color
+
+For persistent issues, please open an issue on the GitHub repository.
 
 ## Game Features
 
