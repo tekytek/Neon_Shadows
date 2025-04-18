@@ -194,13 +194,18 @@ def display_status_bar(console, player):
 
 def display_responsive_title(console):
     """Display the title banner in a way that adapts to terminal width"""
+    # Import Text class for special character handling
+    from rich.text import Text
+    
     # Get terminal width for responsive display
     term_width, term_height = shutil.get_terminal_size()
     
     # Full banner requires at least 100 columns
     if term_width >= 100:
-        # Display full ASCII art title
-        console.print(assets.get_ascii_art('title'), style=Style(color=COLORS['primary']))
+        # Display full ASCII art title with Text object to prevent markup interpretation
+        title_art = assets.get_ascii_art('title')
+        title_text = Text(title_art)
+        console.print(title_text, style=Style(color=COLORS['primary']))
     else:
         # Display compact alternative for smaller terminals
         compact_title = f"""
@@ -217,10 +222,15 @@ def display_responsive_title(console):
     ███████║██║  ██║██║  ██║██████╔╝╚██████╔╝╚███╔███╔╝███████║
     ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝  ╚═════╝  ╚══╝╚══╝ ╚══════╝
         """
-        console.print(compact_title, style=Style(color=COLORS['primary']))
+        # Create a Text object to prevent markup interpretation
+        compact_text = Text(compact_title)
+        console.print(compact_text, style=Style(color=COLORS['primary']))
 
 def display_ascii_art(console, art_name):
     """Display ASCII art"""
+    # Import Text class for special character handling
+    from rich.text import Text
+    
     # Special case for title banner
     if art_name == 'title':
         display_responsive_title(console)
@@ -228,7 +238,9 @@ def display_ascii_art(console, art_name):
         
     art = assets.get_ascii_art(art_name)
     if art:
-        console.print(art, style=Style(color=COLORS['primary']))
+        # Create a Text object to prevent markup interpretation
+        art_text = Text(art)
+        console.print(art_text, style=Style(color=COLORS['primary']))
 
 def main_menu(console):
     """Display main menu and get user choice"""

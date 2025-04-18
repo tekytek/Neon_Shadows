@@ -477,13 +477,20 @@ class SkillTree:
                     return False, f"Requires {prereq_id.capitalize()} of {prereq_level}, you have {stat_value}"
                     
             elif prereq_type == "skill":
-                char_skill_level = character.skills.get(prereq_id, {}).get("level", 0)
+                # Access skills through the progression object instead of directly
+                char_skill_level = 0
+                if hasattr(character, 'progression') and hasattr(character.progression, 'skills'):
+                    char_skill_level = character.progression.skills.get(prereq_id, {}).get("level", 0)
                 if char_skill_level < prereq_level:
                     skill_name = self.get_skill(prereq_id).name if self.get_skill(prereq_id) else prereq_id
                     return False, f"Requires {skill_name} level {prereq_level}, you have level {char_skill_level}"
                     
             elif prereq_type == "perk":
-                if prereq_id not in character.perks:
+                # Access perks through the progression object instead of directly
+                has_perk = False
+                if hasattr(character, 'progression') and hasattr(character.progression, 'perks'):
+                    has_perk = prereq_id in character.progression.perks
+                if not has_perk:
                     perk_name = self.get_perk(prereq_id).name if self.get_perk(prereq_id) else prereq_id
                     return False, f"Requires {perk_name} perk"
                     

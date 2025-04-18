@@ -466,6 +466,9 @@ def hologram_effect(text, console, style=None):
     lines = text.split("\n")
     max_length = max(len(line) for line in lines)
     
+    # Use rich.text.Text objects to prevent special character interpretation
+    from rich.text import Text
+    
     # Simulate hologram startup
     for i in range(3):
         # Static noise effect
@@ -484,7 +487,9 @@ def hologram_effect(text, console, style=None):
         
         # Display noise with a blue hologram tint
         for noise_line in noise_lines:
-            console.print(noise_line, style=Style(color="#00AAFF", bold=False), end="\n")
+            # Create a Text object to prevent rich markup interpretation
+            text_obj = Text(noise_line)
+            console.print(text_obj, style=Style(color="#00AAFF", bold=False), end="\n")
         
         time.sleep(delay)
         
@@ -495,12 +500,15 @@ def hologram_effect(text, console, style=None):
     # Display with scan lines effect
     for i in range(2):
         for j, line in enumerate(lines):
+            # Create a Text object for each line to prevent rich markup interpretation
+            text_obj = Text(line)
+            
             # Add scan line effect
             if i % 2 == j % 2:
                 # Add a slight brightness variation to alternate lines
-                console.print(line, style=Style(color="#00FFFF", bold=True), end="\n")
+                console.print(text_obj, style=Style(color="#00FFFF", bold=True), end="\n")
             else:
-                console.print(line, style=Style(color="#00CCFF", bold=False), end="\n")
+                console.print(text_obj, style=Style(color="#00CCFF", bold=False), end="\n")
         
         time.sleep(delay)
         
@@ -510,7 +518,9 @@ def hologram_effect(text, console, style=None):
     
     # Final display with proper style
     for line in lines:
-        console.print(line, style=style, end="\n")
+        # Create a Text object for final display
+        text_obj = Text(line)
+        console.print(text_obj, style=style, end="\n")
 
 def data_corruption(text, console, style=None, corruption_level=0.3):
     """
@@ -529,8 +539,12 @@ def data_corruption(text, console, style=None, corruption_level=0.3):
     delay = get_animation_delay()
     corruption_chars = "█▓▒░▓▒░"
     
+    # Use rich.text.Text objects to prevent special character interpretation
+    from rich.text import Text
+    
     # Start with clean text
-    console.print(text, style=style, end="\r")
+    text_obj = Text(text)
+    console.print(text_obj, style=style, end="\r")
     time.sleep(delay * 3)
     
     # Apply increasing corruption
@@ -542,7 +556,8 @@ def data_corruption(text, console, style=None, corruption_level=0.3):
             else:
                 corrupted += char
         
-        console.print(corrupted, style=style, end="\r")
+        text_obj = Text(corrupted)
+        console.print(text_obj, style=style, end="\r")
         time.sleep(delay)
     
     # Show mild corruption briefly
@@ -554,11 +569,13 @@ def data_corruption(text, console, style=None, corruption_level=0.3):
             else:
                 mild_corrupted += char
         
-        console.print(mild_corrupted, style=style, end="\r")
+        text_obj = Text(mild_corrupted)
+        console.print(text_obj, style=style, end="\r")
         time.sleep(delay)
     
     # Final clean display
-    console.print(text, style=style)
+    text_obj = Text(text)
+    console.print(text_obj, style=style)
 
 def code_decryption(text, console, style=None):
     """
@@ -575,6 +592,9 @@ def code_decryption(text, console, style=None):
     
     delay = get_animation_delay() * 1.5
     encrypted_chars = "!@#$%^&*()_+{}|:<>?~`-=[]\\;',./0123456789ABCDEF"
+    
+    # Use rich.text.Text objects to prevent special character interpretation
+    from rich.text import Text
     
     # Create a mask of which characters are fixed (remain static)
     fixed_chars = [False] * len(text)
@@ -597,11 +617,13 @@ def code_decryption(text, console, style=None):
                     current += random.choice(encrypted_chars)
         
         # Print the current state
-        console.print(current, style=style, end="\r")
+        text_obj = Text(current)
+        console.print(text_obj, style=style, end="\r")
         time.sleep(delay)
     
     # Ensure the final state is fully decrypted
-    console.print(text, style=style)
+    text_obj = Text(text)
+    console.print(text_obj, style=style)
 
 def neural_interface(console, message="NEURAL LINK ESTABLISHED", style=None, duration=2.0):
     """
@@ -867,6 +889,9 @@ def data_stream(text, console, style=None, stream_chars="10"):
     delay = get_animation_delay() * 0.8
     stream_length = 30
     
+    # Use rich.text.Text objects to prevent special character interpretation
+    from rich.text import Text
+    
     # Create streams of data that will appear to flow
     streams = []
     for _ in range(5):
@@ -886,7 +911,9 @@ def data_stream(text, console, style=None, stream_chars="10"):
             intensity = 155 + int((s_idx / len(streams)) * 100)  # Vary from 155-255
             color = f"#00{intensity:02X}00"  # Green with varying intensity
             
-            console.print(streams[s_idx][:20], style=Style(color=color))
+            # Create a Text object to prevent rich markup interpretation
+            text_obj = Text(streams[s_idx][:20])
+            console.print(text_obj, style=Style(color=color))
         
         time.sleep(delay)
         
@@ -895,7 +922,9 @@ def data_stream(text, console, style=None, stream_chars="10"):
             sys.stdout.write("\033[F")
     
     # Display the actual text
-    console.print(text, style=style)
+    # Create a Text object for the main text to prevent rich markup interpretation
+    text_obj = Text(text)
+    console.print(text_obj, style=style)
     
     # More streaming data after the text (just a brief flash)
     for i in range(5):
@@ -907,7 +936,9 @@ def data_stream(text, console, style=None, stream_chars="10"):
             intensity = 155 + int((s_idx / len(streams)) * 100)  # Vary from 155-255
             color = f"#00{intensity:02X}00"  # Green with varying intensity
             
-            console.print(streams[s_idx][:20], style=Style(color=color))
+            # Create a Text object to prevent rich markup interpretation
+            text_obj = Text(streams[s_idx][:20])
+            console.print(text_obj, style=Style(color=color))
         
         time.sleep(delay)
         

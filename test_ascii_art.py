@@ -7,6 +7,7 @@ import time
 import sys
 from data.ascii_art import ASCII_ART
 from rich.console import Console
+from rich.text import Text
 
 console = Console()
 
@@ -22,7 +23,9 @@ def main():
     # Display each art piece
     for name in art_names:
         console.print(f"\n[bold magenta]===== {name.upper()} =====[/bold magenta]")
-        console.print(ASCII_ART[name])
+        # Create a Text object to prevent rich markup interpretation
+        art_text = Text(ASCII_ART[name])
+        console.print(art_text)
         time.sleep(0.5)  # Pause between displays
     
     console.print("\n[bold green]All ASCII art displayed successfully![/bold green]")
