@@ -139,20 +139,99 @@ def matrix_effect(text, console, style=None):
     console.print(text, style=style)
 
 def typing_effect(text, console, style=None):
-    """Display text with a typewriter effect"""
-    if not ANIMATION_SETTINGS["enabled"]:
-        console.print(text, style=style)
-        return
+    """
+    Display text with a typewriter effect
     
-    delay = get_animation_delay() * 2  # Slightly slower for readability
-    
-    # Type out the text character by character
-    for i in range(len(text) + 1):
-        console.print(text[:i], style=style, end="\r")
-        time.sleep(delay)
-    
-    # Add a newline at the end
-    console.print()
+    Args:
+        text: Text to display (string) or Panel object
+        console: Console for output
+        style: Style to apply to the text
+    """
+    # Extra safety - ensure we can gracefully handle any input
+    try:
+        # Import here to prevent circular imports
+        from rich.panel import Panel
+        from rich.console import Console
+        from rich.text import Text
+        
+        # Skip animation if disabled in settings
+        if not ANIMATION_SETTINGS["enabled"]:
+            console.print(text, style=style)
+            return
+        
+        delay = get_animation_delay() * 2  # Slightly slower for readability
+        
+        # Handle Panel objects specially
+        if isinstance(text, Panel):
+            # Store the panel for final display
+            panel = text
+            
+            # Extract plain text from panel (robust method)
+            plain_text = ""
+            if hasattr(panel, 'renderable'):
+                if isinstance(panel.renderable, str):
+                    plain_text = panel.renderable
+                elif hasattr(panel.renderable, 'plain'):
+                    # Handle Text objects
+                    plain_text = panel.renderable.plain
+                else:
+                    # Best effort to get string representation
+                    plain_text = str(panel.renderable)
+            
+            # Remove any rich formatting markers like [green] or [/]
+            # This is a simple way to handle it, not perfect but works for common cases
+            import re
+            plain_text = re.sub(r'\[[^\]]*\]', '', plain_text)
+            
+            # If we couldn't get meaningful text, just show the panel without animation
+            if not plain_text:
+                console.print(panel)
+                return
+            
+            # Type out the extracted text character by character
+            temp_console = Console(width=console.width, no_color=True)
+            try:
+                for i in range(min(len(plain_text) + 1, 500)):  # Limit to 500 chars for safety
+                    with temp_console.capture() as capture:
+                        temp_console.print(plain_text[:i], end="")
+                    captured_text = capture.get()
+                    console.print(captured_text, end="\r")
+                    time.sleep(delay)
+            except Exception:
+                # If any issue during animation, just show the panel
+                pass
+            
+            # Now show the full formatted panel
+            console.print()  # Clear the line
+            console.print(panel)
+        else:
+            # For normal text strings
+            try:
+                # Convert to string if it isn't already
+                if not isinstance(text, str):
+                    text = str(text)
+                    
+                # Type out the text character by character
+                for i in range(min(len(text) + 1, 500)):  # Limit to 500 chars for safety
+                    console.print(text[:i], style=style, end="\r")
+                    time.sleep(delay)
+                
+                # Add a newline at the end
+                console.print()
+            except Exception:
+                # Fallback to direct printing if animation fails
+                console.print(text, style=style)
+    except Exception as e:
+        # Ultimate fallback - if anything goes wrong, just print the text
+        try:
+            console.print(text, style=style)
+        except:
+            # If even that fails, try basic printing
+            try:
+                print(text)
+            except:
+                # If all else fails, at least show something
+                print("Error displaying text content")
 
 def loading_bar(console, length=20, message="Loading", style=None):
     """Display a cyberpunk-themed loading bar"""
