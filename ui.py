@@ -94,10 +94,10 @@ def display_splash_screen(console):
         from config import GAME_SETTINGS
         
         if GAME_SETTINGS.get("ui_animations_enabled", True):
-            version_text = f"[{COLORS['secondary']}]Version {VERSION}[/{COLORS['secondary']}]"
-            subtitle_text = f"[{COLORS['text']}]A text-based cyberpunk adventure[/{COLORS['text']}]"
-            
-            animations.typing_effect(version_text + "\n" + subtitle_text, console)
+            # Use style parameter instead of markup to avoid raw formatting codes
+            animations.typing_effect(f"Version {VERSION}", console, style=Style(color=COLORS['secondary']))
+            console.print() # Add a newline
+            animations.typing_effect("A text-based cyberpunk adventure", console, style=Style(color=COLORS['text']))
         else:
             console.print(f"[{COLORS['secondary']}]Version {VERSION}[/{COLORS['secondary']}]")
             console.print(f"[{COLORS['text']}]A text-based cyberpunk adventure[/{COLORS['text']}]")
@@ -108,7 +108,7 @@ def display_splash_screen(console):
     # Bottom line - adapt to terminal width
     separator_width = min(60, term_width - 4)  # Leave a small margin
     console.print("\n" + "=" * separator_width, style=Style(color=COLORS['primary']))
-    console.print(f"[{COLORS['text']}]Press Enter to continue...[/{COLORS['text']}]")
+    console.print("Press Enter to continue...", style=Style(color=COLORS['text']))
     try:
         # Set a timeout for input to handle potential blocking
         import sys
@@ -122,15 +122,15 @@ def display_splash_screen(console):
                 input()
             except (EOFError, KeyboardInterrupt):
                 # Handle EOF error in non-interactive terminals
-                console.print("[yellow]Note: Input interrupted. Continuing automatically.[/yellow]")
+                console.print("Note: Input interrupted. Continuing automatically.", style="yellow")
                 time.sleep(1)
         else:
             # Non-interactive terminal or redirected input, don't wait for input
-            console.print("[yellow]Note: Non-interactive terminal detected. Continuing automatically.[/yellow]")
+            console.print("Note: Non-interactive terminal detected. Continuing automatically.", style="yellow")
             time.sleep(2)
     except Exception as e:
         # Catch any other input-related issues
-        console.print(f"[yellow]Input handling exception: {str(e)}. Continuing automatically.[/yellow]")
+        console.print(f"Input handling exception: {str(e)}. Continuing automatically.", style="yellow")
         time.sleep(2)
 
 def display_header(console, title_text):
@@ -270,14 +270,15 @@ def main_menu(console):
     
     # Create menu panel with cyberpunk-themed items
     menu_items = [
-        f"[{COLORS['text']}]1. New Game[/{COLORS['text']}]",
-        f"[{COLORS['text']}]2. Load Game[/{COLORS['text']}]",
-        f"[{COLORS['text']}]3. Codex[/{COLORS['text']}]",
-        f"[{COLORS['text']}]4. Options[/{COLORS['text']}]",
-        f"[{COLORS['text']}]5. Credits[/{COLORS['text']}]",
-        f"[{COLORS['text']}]6. Quit[/{COLORS['text']}]"
+        "1. New Game",
+        "2. Load Game",
+        "3. Codex",
+        "4. Options",
+        "5. Credits",
+        "6. Quit"
     ]
     
+    # Format all menu items with proper style
     menu_text = "\n".join(menu_items)
     
     # Try to use animation for menu display if available
@@ -287,16 +288,17 @@ def main_menu(console):
         
         if GAME_SETTINGS.get("ui_animations_enabled", True):
             # Create a panel with cyberpunk-themed title
-            menu_panel = Panel(menu_text, title=f"[{COLORS['secondary']}]MAIN MENU[/{COLORS['secondary']}]")
+            menu_panel = Panel(menu_text, title="MAIN MENU", title_align="center", style=Style(color=COLORS['text']))
             
             # Use neon border effect for the menu to make it stand out
             animations.neon_border(menu_panel, console, style=Style(color=COLORS['secondary']), border_char="█")
         else:
             # Use simpler neon fade for basic animation
-            animations.neon_fade_in(Panel(menu_text, title=f"[{COLORS['secondary']}]MAIN MENU[/{COLORS['secondary']}]"), console)
+            menu_panel = Panel(menu_text, title="MAIN MENU", title_align="center", style=Style(color=COLORS['text']))
+            animations.neon_fade_in(menu_panel, console)
     except (ImportError, AttributeError):
         # Fall back to standard display if animations not available
-        console.print(Panel(menu_text, title=f"[{COLORS['secondary']}]MAIN MENU[/{COLORS['secondary']}]"))
+        console.print(Panel(menu_text, title="MAIN MENU", title_align="center", style=Style(color=COLORS['text'])))
     
     # Display a cyberpunk-themed prompt with flicker effect if animations are enabled
     try:

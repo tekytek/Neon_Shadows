@@ -146,11 +146,11 @@
     }
   },
   "discovered": [
-    "quantum_tech",
-    "night_city",
-    "corporate_district",
     "neo_shanghai",
+    "corporate_district",
+    "neon_district",
     "synth_corp",
-    "neon_district"
+    "quantum_tech",
+    "night_city"
   ]
 }

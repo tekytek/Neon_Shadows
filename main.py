@@ -30,8 +30,9 @@ def main():
         # This check itself might fail in certain environments, so we just continue
         pass
     
-    # Initialize the console
-    console = Console()
+    # Initialize the console with settings optimized for terminal compatibility
+    # Set highlight=False to prevent formatting tags from appearing in some terminals
+    console = Console(highlight=False)
     
     # Look for Raspberry Pi environment
     is_raspberry_pi = False
@@ -42,7 +43,7 @@ def main():
                 model = f.read()
                 if 'Raspberry Pi' in model:
                     is_raspberry_pi = True
-                    console.print("[yellow]Raspberry Pi detected. Using compatible input mode.[/yellow]")
+                    console.print("Raspberry Pi detected. Using compatible input mode.", style="yellow")
     except Exception:
         pass  # Continue without detection
         
@@ -53,8 +54,8 @@ def main():
             # Play menu theme music
             audio.play_music("menu_theme")
     except Exception as e:
-        console.print(f"[yellow]Audio initialization warning: {str(e)}[/yellow]")
-        console.print("[yellow]Continuing without audio...[/yellow]")
+        console.print(f"Audio initialization warning: {str(e)}", style="yellow")
+        console.print("Continuing without audio...", style="yellow")
     
     # Display intro and splash screen
     ui.clear_screen()
@@ -154,29 +155,29 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         # Handle clean exit with CTRL+C
-        console = Console()
+        console = Console(highlight=False)  # Disable highlighting to prevent formatting issues
         ui.clear_screen()
-        console.print("\n[bold cyan]Game terminated by user. Exiting...[/bold cyan]")
+        console.print("\nGame terminated by user. Exiting...", style="bold cyan")
         sys.exit(0)
     except EOFError:
         # Handle EOF error (which can occur in non-interactive environments)
-        console = Console()
+        console = Console(highlight=False)  # Disable highlighting to prevent formatting issues
         ui.clear_screen()
-        console.print("\n[bold yellow]Input stream ended unexpectedly (EOF). This can happen in non-interactive terminals.[/bold yellow]")
-        console.print("[cyan]If you are running this on a Raspberry Pi, try using 'python3 main.py < /dev/tty' to ensure input works correctly.[/cyan]")
+        console.print("\nInput stream ended unexpectedly (EOF). This can happen in non-interactive terminals.", style="bold yellow")
+        console.print("If you are running this on a Raspberry Pi, try using 'python3 main.py < /dev/tty' to ensure input works correctly.", style="cyan")
         sys.exit(1)
     except Exception as e:
         # Handle unexpected errors
-        console = Console()
+        console = Console(highlight=False)  # Disable highlighting to prevent formatting issues
         ui.clear_screen()
-        console.print(f"\n[bold red]An error occurred: {str(e)}[/bold red]")
+        console.print(f"\nAn error occurred: {str(e)}", style="bold red")
         
         # Always print traceback for better debugging
         import traceback
-        console.print("[yellow]===== Debug Traceback =====[/yellow]")
+        console.print("===== Debug Traceback =====", style="yellow")
         tb_text = traceback.format_exc()
-        console.print(f"[yellow]{tb_text}[/yellow]")
-        console.print("[yellow]=========================[/yellow]")
+        console.print(tb_text, style="yellow")
+        console.print("=========================", style="yellow")
         
-        console.print("[cyan]Please report this issue to the developers.[/cyan]")
+        console.print("Please report this issue to the developers.", style="cyan")
         sys.exit(1)
