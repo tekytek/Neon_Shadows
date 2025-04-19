@@ -52,6 +52,11 @@ def update_setting(key, value):
         if key == "enable_ollama":
             import config
             config.USE_OLLAMA = value
+        
+        # If we're updating ollama_api_url, update the config module
+        elif key == "ollama_api_url":
+            import config
+            config.OLLAMA_API_URL = value
             
         return True
     return False
@@ -62,9 +67,10 @@ def get_setting(key):
 
 def reset_to_defaults():
     """Reset settings to default values"""
-    # Import the original default value
+    # Import the original default values
     import config
     original_ollama_setting = config.USE_OLLAMA
+    original_ollama_api_url = config.OLLAMA_API_URL
     
     # Reset to defaults
     GAME_SETTINGS["difficulty"] = "normal"
@@ -84,6 +90,7 @@ def reset_to_defaults():
     GAME_SETTINGS["auto_save"] = False
     GAME_SETTINGS["show_hints"] = True
     GAME_SETTINGS["enable_ollama"] = original_ollama_setting
+    GAME_SETTINGS["ollama_api_url"] = original_ollama_api_url
     
     # Save changes
     save_settings()

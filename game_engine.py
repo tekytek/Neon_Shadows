@@ -53,9 +53,17 @@ class GameEngine:
             audio.initialize()
             self.audio_system = audio
             self.audio_enabled = True
+            
+            # Initialize sound design system if audio is available
+            try:
+                import sound_design
+                self.sound_design_system = sound_design.SoundDesignSystem(audio)
+            except ImportError:
+                self.sound_design_system = None
         except ImportError:
             self.audio_system = None
             self.audio_enabled = False
+            self.sound_design_system = None
         
         # Ensure save directory exists
         if not os.path.exists(SAVE_DIR):
@@ -948,9 +956,38 @@ class GameEngine:
                 if success:
                     console.print(f"[green]Successfully traveled to {target_district.name}.[/green]")
                     
-                    # Play sound effect if available
+                    # Play district transition sound and set district sound profile
                     if self.audio_enabled and self.audio_system:
-                        self.audio_system.play_sound("door_open")
+                        # Use basic sound effect if sound design system isn't available
+                        if not self.sound_design_system:
+                            self.audio_system.play_sound("door_open")
+                        else:
+                            # Play district transition sound
+                            self.sound_design_system.play_event_sound("district_enter")
+                            
+                            # Set district-specific audio profile
+                            # Determine the time of day (simplified for now - could be based on game time)
+                            time_of_day = "night" if random.random() < 0.5 else "day"
+                            
+                            # Determine the danger level based on district's danger rating
+                            if target_district.danger_level <= 2:
+                                danger_level = "low"
+                            elif target_district.danger_level <= 4:
+                                danger_level = "medium"
+                            else:
+                                danger_level = "high"
+                                
+                            # Set the sound design system's state and play district sounds
+                            self.sound_design_system.set_time_of_day(time_of_day)
+                            self.sound_design_system.set_danger_level(danger_level)
+                            self.sound_design_system.set_district(target_district.district_id)
+                            
+                            # Give user feedback about the atmosphere
+                            if time_of_day == "night":
+                                console.print(f"[blue]The night brings a different atmosphere to {target_district.name}.[/blue]")
+                            
+                            if danger_level == "high":
+                                console.print(f"[red]You feel a sense of danger in the air. Best stay alert.[/red]")
                     
                     # Check for district-specific actions and offer them to the player
                     location_choices = self.district_manager.get_district_location_choices()
@@ -1057,14 +1094,38 @@ class GameEngine:
                 }
             }
             
+            # Set sound design to combat context if available
+            if self.audio_enabled and self.sound_design_system:
+                self.sound_design_system.play_emotional_cue("tension")
+                self.sound_design_system.set_context("combat", intensity=0.4)
+            
             # Run the combat encounter
             self.handle_combat(console, combat_node)
+            
+            # Return to district ambience after combat
+            if self.audio_enabled and self.sound_design_system:
+                self.sound_design_system.return_to_district_ambience()
         
         elif encounter_type == "skill_check":
             # Create a skill check based on danger level
             skills = ["strength", "intelligence", "charisma", "reflex"]
             skill = random.choice(skills)
             difficulty = 3 + danger_level  # Base difficulty (3) plus danger level
+            
+            # Set sound design to appropriate context if available
+            if self.audio_enabled and self.sound_design_system:
+                # Choose context based on skill
+                if skill == "strength":
+                    context_type = "combat"
+                elif skill == "intelligence":
+                    context_type = "hacking"
+                elif skill == "charisma":
+                    context_type = "conversation"
+                else:  # reflex
+                    context_type = "stealth"
+                
+                # Set the context with medium intensity
+                self.sound_design_system.set_context(context_type, intensity=0.5)
             
             # Create skill check node
             skill_node = {
@@ -1102,12 +1163,20 @@ class GameEngine:
             else:
                 self.player.inventory.add_item(found_item['name'], found_item['count'])
             
-            # Play appropriate sound if available
-            if self.audio_enabled and self.audio_system:
-                if found_item['name'] == "Credits":
-                    self.audio_system.play_sound("credits_pickup")
+            # Use sound design system for item discovery if available
+            if self.audio_enabled:
+                if self.sound_design_system:
+                    # Play an emotional cue of wonder
+                    self.sound_design_system.play_emotional_cue("wonder")
+                    
+                    # Play the item acquisition event sound
+                    self.sound_design_system.play_event_sound("item_acquired")
                 else:
-                    self.audio_system.play_sound("item_pickup")
+                    # Fallback to basic audio system
+                    if found_item['name'] == "Credits":
+                        self.audio_system.play_sound("credits_pickup")
+                    else:
+                        self.audio_system.play_sound("item_pickup")
             
             time.sleep(2)
     
@@ -1118,6 +1187,13 @@ class GameEngine:
         
         shop_name = node.get('shop_name', 'Shop')
         ui.display_header(console, shop_name)
+        
+        # Use sound design for shop atmosphere if available
+        if self.audio_enabled and self.sound_design_system:
+            # Set context to shopping with medium intensity for ambient market sounds
+            self.sound_design_system.set_context("shopping", intensity=0.4)
+            # Play the shop entry sound event
+            self.sound_design_system.play_event_sound("shop_enter")
         
         # Apply reputation-based discounts and item availability
         district_id = node.get('district_id', self.current_district) if hasattr(self, 'current_district') else None
@@ -1331,6 +1407,12 @@ class GameEngine:
         if action != "3":
             self.handle_shop(console, node)
         else:
+            # Return to district ambience if sound design is enabled
+            if self.audio_enabled and self.sound_design_system:
+                self.sound_design_system.play_event_sound("shop_exit")
+                # Return to the current district's ambience
+                self.sound_design_system.return_to_district_ambience()
+                
             # Return to the previous node or specified exit node
             self.current_node = node.get('exit_node', self.current_node)
     
@@ -1338,6 +1420,28 @@ class GameEngine:
         """Handle a skill check scenario"""
         ui.clear_screen()
         ui.display_status_bar(console, self.player)
+        
+        # Get skill check details for sound design context
+        skill = node.get('skill', 'intelligence')
+        
+        # Use sound design system for appropriate skill check atmosphere
+        if self.audio_enabled and self.sound_design_system:
+            # Set appropriate context based on skill type
+            if skill == "strength":
+                context_type = "physical"
+            elif skill == "intelligence":
+                context_type = "hacking"
+            elif skill == "charisma":
+                context_type = "conversation"
+            elif skill == "reflex":
+                context_type = "stealth"
+            else:
+                context_type = "general"
+                
+            # Set context with medium intensity for skill check atmosphere
+            self.sound_design_system.set_context(context_type, intensity=0.6)
+            # Play the skill check initialization sound
+            self.sound_design_system.play_event_sound("skill_check")
         
         if node.get('ascii_art'):
             ui.display_ascii_art(console, node['ascii_art'])
@@ -1382,9 +1486,16 @@ class GameEngine:
         if success:
             console.print(f"\n[bold green]SUCCESS![/bold green]")
             
-            # Play success sound if audio system is available
-            if self.audio_enabled and self.audio_system:
-                self.audio_system.play_sound("skill_success")
+            # Play success sound effects
+            if self.audio_enabled:
+                if self.sound_design_system:
+                    # Play success emotional cue
+                    self.sound_design_system.play_emotional_cue("triumph")
+                    # Return to ambient sounds after success
+                    self.sound_design_system.return_to_district_ambience()
+                # Also play basic success sound if available
+                if self.audio_system:
+                    self.audio_system.play_sound("skill_success")
             
             # Process success rewards
             rewards = node.get('success_rewards', {})
@@ -1417,9 +1528,16 @@ class GameEngine:
         else:
             console.print(f"\n[bold red]FAILURE![/bold red]")
             
-            # Play failure sound if audio system is available
-            if self.audio_enabled and self.audio_system:
-                self.audio_system.play_sound("skill_failure")
+            # Play failure sound effects
+            if self.audio_enabled:
+                if self.sound_design_system:
+                    # Play failure emotional cue
+                    self.sound_design_system.play_emotional_cue("tension")
+                    # Gradually return to ambient sounds
+                    self.sound_design_system.return_to_district_ambience()
+                # Also play basic failure sound if available
+                if self.audio_system:
+                    self.audio_system.play_sound("skill_failure")
             
             # Process failure consequences
             consequences = node.get('failure_consequences', {})

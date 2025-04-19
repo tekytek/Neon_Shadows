@@ -51,7 +51,8 @@ GAME_SETTINGS = {
     
     "auto_save": False,
     "show_hints": True,
-    "enable_ollama": USE_OLLAMA
+    "enable_ollama": USE_OLLAMA,
+    "ollama_api_url": OLLAMA_API_URL  # The API endpoint for Ollama
 }
 
 # Difficulty settings

@@ -6,7 +6,10 @@
   "effects_enabled": true,
   "music_volume": 0.5,
   "effects_volume": 0.7,
-  "auto_save": true,
+  "ui_animations_enabled": true,
+  "ui_animation_speed": "medium",
+  "auto_save": false,
   "show_hints": true,
-  "enable_ollama": false
+  "enable_ollama": false,
+  "ollama_api_url": "http://test-api.example.com:11434"
 }

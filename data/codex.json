@@ -157,16 +157,24 @@
       "content": "## Quantum Cryptography\n\n**TECHNICAL DOCUMENTATION UNAVAILABLE**\n\n*Your interface displays scrolling error codes as it attempts to access technical specifications.*\n\n### Retrieval Failure\n\nSchematic data for this technology appears to be protected by proprietary encryption. Standard NetLink access has been denied.\n\n### Technical Analysis\n* Encryption: **Quantum-resistant**\n* Access level required: **Corporate Executive**\n* Known workarounds: **REDACTED**\n\n**HINT**: *Street vendors in the Lower Markets sometimes sell bootleg technical documentation. Reliability not guaranteed.*",
       "related_entries": [],
       "image": null
+    },
+    "chrome_dragons": {
+      "category": "factions",
+      "title": "Chrome Dragons",
+      "content": "## Chrome Dragons\n\n**SECURITY ALERT: ACCESS DENIED**\n\n*Your neural interface displays a pulsing red warning as you attempt to access this restricted file.*\n\n### Security Protocol Active\n\nInformation on this faction has been classified under Neo Shanghai Security Directive 377-D. Unauthorized access attempts have been logged.\n\n### Intelligence Status\n* Known surveillance: **HIGH**\n* Encryption level: **MILITARY GRADE**\n* Last data update: **UNAVAILABLE**\n\n**SYSTEM WARNING**: *Multiple retrieval attempts may trigger autonomous security countermeasures. Corporate enforcers have been dispatched to similar intrusion attempts.*",
+      "related_entries": [],
+      "image": null
     }
   },
   "discovered": [
-    "corporate_district",
-    "neo_shanghai",
     "synth_corp",
-    "night_city",
-    "neural_alley",
+    "neo_shanghai",
     "quantum_tech",
+    "night_city",
+    "neon_district",
     "quantum_crypto",
-    "neon_district"
+    "neural_alley",
+    "chrome_dragons",
+    "corporate_district"
   ]
 }

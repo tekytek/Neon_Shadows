@@ -13,14 +13,39 @@ class OllamaIntegration:
     
     def __init__(self):
         """Initialize Ollama integration"""
-        self.api_url = OLLAMA_API_URL
+        # Load the API URL from settings if available, fall back to config default
+        try:
+            from config import GAME_SETTINGS
+            self.api_url = GAME_SETTINGS.get("ollama_api_url", OLLAMA_API_URL)
+        except:
+            self.api_url = OLLAMA_API_URL
+            
         self.model = OLLAMA_MODEL
         self.console = Console()
     
     def _make_request(self, prompt, max_retries=3):
         """Make a request to the Ollama API"""
-        # Define the API endpoint
-        endpoint = f"{self.api_url}/api/generate"
+        # If the URL already contains "/api/generate", use it directly,
+        # otherwise construct the full endpoint
+        if self.api_url.endswith("/api/generate"):
+            endpoint = self.api_url
+        elif self.api_url.endswith("/api"):
+            endpoint = f"{self.api_url}/generate"
+        elif self.api_url.endswith("/api/"):
+            # Handle trailing slash properly
+            endpoint = f"{self.api_url}generate"
+        else:
+            # Ensure we have the /api path
+            base_url = self.api_url
+            if not base_url.endswith("/api"):
+                if base_url.endswith("/"):
+                    base_url += "api"
+                else:
+                    base_url += "/api"
+            endpoint = f"{base_url}/generate"
+            
+        # Print the endpoint for debugging
+        print(f"Making request to: {endpoint}")
         
         # Prepare the data payload
         data = {
@@ -103,9 +128,18 @@ class OllamaIntegration:
     def _check_availability(self):
         """Check if Ollama is available"""
         try:
-            response = requests.get(f"{self.api_url}/api/tags", timeout=5)
+            # If the URL ends with "/api" or "/api/", remove it for the tags endpoint
+            base_url = self.api_url
+            if base_url.endswith("/api"):
+                base_url = base_url[:-4]
+            elif base_url.endswith("/api/"):
+                base_url = base_url[:-5]
+                
+            # Check availability
+            response = requests.get(f"{base_url}/api/tags", timeout=5)
             return response.status_code == 200
-        except Exception:
+        except Exception as e:
+            print(f"Ollama availability check failed: {str(e)}")
             return False
     
     def _create_story_prompt(self, node_id, player, choice_history=None):

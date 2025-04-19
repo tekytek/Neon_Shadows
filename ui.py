@@ -102,7 +102,7 @@ def display_splash_screen(console):
     # Get terminal width for responsive display
     term_width, term_height = shutil.get_terminal_size()
     
-    # Display version and credits with typing effect if available
+    # Display version only with typing effect if available - removed tagline to prevent duplication
     try:
         import animations
         from config import GAME_SETTINGS
@@ -110,14 +110,10 @@ def display_splash_screen(console):
         if GAME_SETTINGS.get("ui_animations_enabled", True):
             # Use style parameter instead of markup to avoid raw formatting codes
             animations.typing_effect(f"Version {VERSION}", console, style=Style(color=COLORS['secondary']))
-            console.print() # Add a newline
-            animations.typing_effect("A text-based cyberpunk adventure", console, style=Style(color=COLORS['text']))
         else:
             console.print(f"[{COLORS['secondary']}]Version {VERSION}[/{COLORS['secondary']}]")
-            console.print(f"[{COLORS['text']}]A text-based cyberpunk adventure[/{COLORS['text']}]")
     except (ImportError, AttributeError):
         console.print(f"[{COLORS['secondary']}]Version {VERSION}[/{COLORS['secondary']}]")
-        console.print(f"[{COLORS['text']}]A text-based cyberpunk adventure[/{COLORS['text']}]")
     
     # Bottom line - adapt to terminal width
     separator_width = min(60, term_width - 4)  # Leave a small margin
@@ -298,6 +294,22 @@ def main_menu(console):
         # Fall back to standard display - this uses Text objects now
         display_responsive_title(console)
     
+    # Display tagline - moved from splash screen to prevent duplication
+    try:
+        import animations
+        from config import GAME_SETTINGS
+        
+        if GAME_SETTINGS.get("ui_animations_enabled", True):
+            # Use styling without markup for compatibility
+            animations.typing_effect("A text-based cyberpunk adventure", console, style=Style(color=COLORS['text']))
+            console.print() # Add a newline spacing
+        else:
+            console.print(f"[{COLORS['text']}]A text-based cyberpunk adventure[/{COLORS['text']}]")
+            console.print() # Add a newline spacing
+    except (ImportError, AttributeError):
+        console.print(f"[{COLORS['text']}]A text-based cyberpunk adventure[/{COLORS['text']}]")
+        console.print() # Add a newline spacing
+    
     # Create menu panel with cyberpunk-themed items
     menu_items = [
         "1. New Game",
@@ -459,7 +471,8 @@ def options_menu(console):
         table.add_row("10. Auto Save", "Enabled" if GAME_SETTINGS["auto_save"] else "Disabled")
         table.add_row("11. Show Hints", "Enabled" if GAME_SETTINGS["show_hints"] else "Disabled")
         table.add_row("12. Enable Ollama", "Enabled" if GAME_SETTINGS["enable_ollama"] else "Disabled")
-        table.add_row("13. Reset to Defaults", "")
+        table.add_row("13. Ollama API Endpoint", GAME_SETTINGS["ollama_api_url"])
+        table.add_row("14. Reset to Defaults", "")
         table.add_row("0. Back to Main Menu", "")
         
         # Display the table
@@ -473,7 +486,7 @@ def options_menu(console):
         
         # Get user choice
         choice = Prompt.ask("[bold cyan]Select an option to change[/bold cyan]", 
-                          choices=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "0"])
+                          choices=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "0"])
         
         if choice == "0":
             # Save settings before returning to menu
@@ -673,6 +686,22 @@ def options_menu(console):
             # The update_setting function will handle updating USE_OLLAMA in config.py
             
         elif choice == "13":
+            # Configure Ollama API endpoint
+            clear_screen()
+            display_header(console, "OLLAMA API ENDPOINT")
+            
+            current_endpoint = GAME_SETTINGS["ollama_api_url"]
+            console.print(f"[{COLORS['text']}]Current Ollama API endpoint: {current_endpoint}[/{COLORS['text']}]")
+            console.print(f"[{COLORS['secondary']}]Enter the URL of your Ollama API endpoint.[/{COLORS['secondary']}]")
+            console.print(f"[{COLORS['text']}]Default is http://localhost:11434/api[/{COLORS['text']}]")
+            
+            new_endpoint = Prompt.ask("[bold cyan]New API endpoint[/bold cyan]", default=current_endpoint)
+            settings.update_setting("ollama_api_url", new_endpoint)
+            
+            console.print(f"[{COLORS['text']}]Ollama API endpoint updated.[/{COLORS['text']}]")
+            time.sleep(1)
+            
+        elif choice == "14":
             # Reset to defaults
             if Prompt.ask("[bold red]Reset all settings to defaults?[/bold red]", choices=["y", "n"]) == "y":
                 settings.reset_to_defaults()
