@@ -950,6 +950,20 @@ def character_introduction(console, char_class, name=None):
         console.print(panel)
         return
     
+    # First display the game logo
+    title_art = assets.get_ascii_art('title')
+    if title_art:
+        # Display the logo with a digital rain effect first
+        digital_rain(console, duration=1.0, density=0.2)
+        
+        # Create a Text object to prevent markup interpretation
+        title_text = Text(title_art)
+        console.print(title_text, style=Style(color="#FF00FF"))  # Neon pink for logo
+        time.sleep(1.0)
+        
+        # Clear the screen for the character intro
+        console.clear()
+    
     # Get character ASCII art
     art_name = None
     if char_class.lower() == "netrunner":
