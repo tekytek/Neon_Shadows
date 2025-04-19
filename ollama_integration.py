@@ -307,50 +307,88 @@ class OllamaIntegration:
             title (str): The title of the entry
             existing_entries (dict, optional): Dictionary of existing entries to provide context
         """
-        # Dictionary mapping categories to descriptions
-        category_descriptions = {
-            "world": "Information about the world of Neo Shanghai and its history",
-            "factions": "Details about the major corporations, gangs, and other groups",
-            "technology": "Information about cybernetic implants, weapons, and other tech",
-            "locations": "Details about districts, landmarks, and important places",
-            "characters": "Background on key figures in the world",
-            "events": "Historical events that shaped the current world"
+        # Dictionary mapping categories to descriptions and guidance
+        category_info = {
+            "world": {
+                "description": "Information about the world of Neo Shanghai and its history",
+                "guidance": "Focus on how climate change, corporate takeovers, and technological advancement shaped the city. Include geographical features, societal structure, governance, and key historical turning points. Describe the stratified urban architecture with ultra-wealthy living in sky-scraping arcologies while the underclass struggles in the perpetually dark, neon-lit streets below."
+            },
+            "factions": {
+                "description": "Details about the major corporations, gangs, and other groups",
+                "guidance": "Detail the faction's power structure, territory, specialization, notable members, rivals, and unique technologies or resources. Explain their origin story, current motives, and how they interact with other power players in Neo Shanghai. Include their reputation among different segments of society and any signature visual identifiers."
+            },
+            "technology": {
+                "description": "Information about cybernetic implants, weapons, and other tech",
+                "guidance": "Describe technical specifications, manufacturer, legality status, street price, and cultural impact. Detail any side effects, risks, or addiction potential. Explain how this technology altered society or created new subcultures. Include technical jargon that would appear in marketing or black market descriptions."
+            },
+            "locations": {
+                "description": "Details about districts, landmarks, and important places",
+                "guidance": "Paint a vivid picture of the atmosphere, architectural style, controlling factions, and social dynamics. Describe distinctive sights, sounds, smells, and the types of people found there. Detail security measures, unique features, hidden areas, and historical significance. Explain how this location connects to the broader city ecosystem."
+            },
+            "characters": {
+                "description": "Background on key figures in the world",
+                "guidance": "Develop a complex profile including appearance, cybernetic modifications, psychological traits, motivations, and connections to factions. Detail their rise to their current position, notable achievements, enemies, and allies. Include rumors about them that circulate in Neo Shanghai's streets."
+            },
+            "events": {
+                "description": "Historical events that shaped the current world",
+                "guidance": "Chronicle the causes, key players, timeline, immediate aftermath, and long-term consequences. Explain how various factions interpret or exploit this event today. Detail how this event changed power dynamics in Neo Shanghai or globally. Include primary sources like news excerpts or survivor accounts."
+            }
         }
         
-        # Build the prompt
-        header = f"You are writing content for a codex entry in a cyberpunk text adventure game. The entry has ID \"{entry_id}\", category \"{category}\" ({category_descriptions.get(category, '')}), and title \"{title}\".\n\n"
+        # Build the prompt with category-specific guidance
+        category_data = category_info.get(category, {"description": "General information", "guidance": "Provide detailed information"})
+        
+        # Core world context
+        world_context = "Neo Shanghai is a sprawling cyberpunk megalopolis built after climate catastrophes and economic collapse in the mid-21st century. It features massive corporate arcologies, neon-lit streets shrouded in perpetual rain, ubiquitous technology alongside crushing poverty, and a society where human augmentation blurs the line between person and machine. The city operates on multiple physical and social levels, from the corporate elite in the heights to the struggling masses in the depths."
+        
+        header = f"You are writing content for a codex entry in a cyberpunk text adventure game set in Neo Shanghai. The entry has ID \"{entry_id}\", category \"{category}\" ({category_data['description']}), and title \"{title}\".\n\n"
+        header += f"WORLD CONTEXT: {world_context}\n\n"
+        header += f"SPECIFIC GUIDANCE FOR THIS ENTRY: {category_data['guidance']}\n\n"
         
         # Add context from existing entries if available
         context = ""
         if existing_entries and len(existing_entries) > 0:
-            context = "Here are some existing codex entries to provide context for the world setting:\n\n"
-            # Include up to 3 related entries for context
-            count = 0
-            for eid, entry in existing_entries.items():
-                if count >= 3:
-                    break
+            context = "EXISTING CODEX ENTRIES FOR CONTEXT:\n\n"
+            # Include up to 3 related entries for context, prioritizing entries in the same category
+            same_category_entries = {eid: entry for eid, entry in existing_entries.items() if entry.get('category') == category}
+            other_entries = {eid: entry for eid, entry in existing_entries.items() if entry.get('category') != category}
+            
+            entries_to_use = list(same_category_entries.items())[:2] + list(other_entries.items())[:1]
+            
+            for eid, entry in entries_to_use:
                 context += f"Entry: {entry.get('title', 'Unknown')}\n"
                 context += f"Category: {entry.get('category', 'Unknown')}\n"
                 context += f"Content: {entry.get('content', '')}\n\n"
-                count += 1
         
-        # Instructions for response format
-        instructions = "Create a detailed and atmospheric codex entry in JSON format with the following structure:\n\n"
+        # Provide example for related entry naming conventions
+        related_entries_examples = {
+            "world": ["neo_shanghai", "corporate_takeover", "climate_crisis"],
+            "factions": ["arasaka_corp", "street_samurai_guild", "netrunner_collective"],
+            "technology": ["neural_interface", "combat_implants", "hacking_deck"],
+            "locations": ["neon_district", "corporate_district", "underground_markets"],
+            "characters": ["shadow_broker", "corporate_ceo", "street_doc"],
+            "events": ["net_crash", "corporate_war", "water_riots"]
+        }
+        
+        # Instructions for response format with better examples
+        instructions = "CREATE A DETAILED CODEX ENTRY IN THIS JSON FORMAT:\n\n"
         instructions += "{\n"
-        instructions += '    "title": "The title of the entry",\n'
-        instructions += '    "category": "The category of the entry",\n'
-        instructions += '    "content": "Markdown-formatted content with rich details, history, and cyberpunk atmosphere",\n'
-        instructions += '    "related_entries": ["id_of_related_entry1", "id_of_related_entry2"],\n'
-        instructions += '    "image": "ASCII_ART_NAME"\n'
+        instructions += f'    "title": "{title}",\n'
+        instructions += f'    "category": "{category}",\n'
+        instructions += '    "content": "## Main Heading\\n\\nDetailed markdown content with **bold text** for emphasis and *italics* for technical terms or slang.\\n\\n### Subheading One\\n\\nMore detailed information with rich cyberpunk atmosphere.\\n\\n### Subheading Two\\n\\nAdditional details with historical context and connections to other elements of Neo Shanghai.",\n'
+        instructions += f'    "related_entries": {str(related_entries_examples.get(category, ["example_entry_1", "example_entry_2"]))},\n'
+        instructions += '    "image": null\n'
         instructions += "}\n\n"
         
-        # Style and content guidance
-        guidance = "The content should be detailed, atmospheric, and well-structured in markdown format with headings. "
-        guidance += "It should perfectly capture the cyberpunk aesthetic with themes of high tech and low life, "
-        guidance += "corporate domination, cybernetic enhancement, and the struggle for humanity in a digital world. "
-        guidance += "Include appropriate cyberpunk terminology, cultural references, and world-building details. "
-        guidance += "Make sure the content is between 200-500 words and uses markdown formatting effectively.\n\n"
-        guidance += "The response should be ONLY the JSON object, nothing else."
+        # Style and content guidance with better formatting examples
+        guidance = "IMPORTANT STYLISTIC REQUIREMENTS:\n"
+        guidance += "1. Use markdown formatting effectively with ## for main heading (title), ### for subheadings, **bold** for emphasis, and *italics* for technical terms or slang.\n"
+        guidance += "2. Write in a technical yet atmospheric style that blends factual information with the gritty cyberpunk aesthetic.\n"
+        guidance += "3. Include appropriate cyberpunk terminology and cultural references that fit Neo Shanghai's world.\n"
+        guidance += "4. Content should be 300-500 words with 2-3 distinct sections under subheadings.\n"
+        guidance += "5. For related_entries, use snake_case IDs that logically connect to this entry's topic.\n"
+        guidance += "6. Do not use placeholders or meta-references to game mechanics.\n\n"
+        guidance += "YOUR RESPONSE MUST BE ONLY THE VALID JSON OBJECT, NOTHING ELSE."
         
         # Combine all parts
         prompt = header + context + instructions + guidance
@@ -365,11 +403,29 @@ class OllamaIntegration:
             category (str): The category of the entry
             title (str): The title of the entry
         """
-        # Create a basic placeholder entry
+        # Dictionary of category-specific fallback messages
+        category_fallbacks = {
+            "world": f"## {title}\n\n**NEURAL LINK ERROR: ARCHIVE CORRUPTED**\n\n*Your implant flickers with static as it attempts to access historical data on this subject.*\n\n### Connection Lost\n\nThe citywide data archives on this topic appear to have been corrupted or intentionally wiped. Multiple connection attempts have failed.\n\n### Recommended Actions\n* Visit a licensed data broker in the Neon District\n* Check black market data dealers in Neural Alley\n* Attempt connecting through a different uplink node\n\n**SYSTEM MESSAGE**: *Possible corporate data restriction detected. Caution advised when pursuing this information.*",
+            
+            "factions": f"## {title}\n\n**SECURITY ALERT: ACCESS DENIED**\n\n*Your neural interface displays a pulsing red warning as you attempt to access this restricted file.*\n\n### Security Protocol Active\n\nInformation on this faction has been classified under Neo Shanghai Security Directive 377-D. Unauthorized access attempts have been logged.\n\n### Intelligence Status\n* Known surveillance: **HIGH**\n* Encryption level: **MILITARY GRADE**\n* Last data update: **UNAVAILABLE**\n\n**SYSTEM WARNING**: *Multiple retrieval attempts may trigger autonomous security countermeasures. Corporate enforcers have been dispatched to similar intrusion attempts.*",
+            
+            "technology": f"## {title}\n\n**TECHNICAL DOCUMENTATION UNAVAILABLE**\n\n*Your interface displays scrolling error codes as it attempts to access technical specifications.*\n\n### Retrieval Failure\n\nSchematic data for this technology appears to be protected by proprietary encryption. Standard NetLink access has been denied.\n\n### Technical Analysis\n* Encryption: **Quantum-resistant**\n* Access level required: **Corporate Executive**\n* Known workarounds: **REDACTED**\n\n**HINT**: *Street vendors in the Lower Markets sometimes sell bootleg technical documentation. Reliability not guaranteed.*",
+            
+            "locations": f"## {title}\n\n**GEOSPATIAL DATA CORRUPTED**\n\n*Your mapping interface glitches, displaying fragmented location data and scattered coordinates.*\n\n### Area Access Status: UNKNOWN\n\nDetailed information about this location cannot be retrieved through standard channels. Map overlay functionality limited.\n\n### Navigation Advisory\n* Danger assessment: **CALCULATING...**\n* Faction control: **DATA UNAVAILABLE**\n* Public access: **UNDETERMINED**\n\n**LOCAL NETWORK MESSAGE**: *This area has been reported as contested territory. Physical reconnaissance recommended before visiting.*",
+            
+            "characters": f"## {title}\n\n**IDENTITY SCAN BLOCKED**\n\n*Your facial recognition software returns multiple contradictory matches as it attempts to analyze this individual.*\n\n### Biometric Analysis Failure\n\nThis person appears to be using advanced identity masking technology or has paid to have their records expunged from public databases.\n\n### Known Associates\n* **DATA PURGED**\n* **ACCESS DENIED**\n* **FILE CORRUPTED**\n\n**FIXER ADVISORY**: *Information on this individual might be available through black market channels, but expect to pay premium rates.*",
+            
+            "events": f"## {title}\n\n**HISTORICAL DATA QUARANTINED**\n\n*Your search for information triggers an automated censorship response.*\n\n### Media Control Notice\n\nReferences to this event have been restricted under the Corporate Truth in Information Act. Authorized narrative access requires special clearance.\n\n### Available Data\n* Official records: **SANITIZED**\n* Witness accounts: **SUPPRESSED**\n* Video evidence: **UNAVAILABLE**\n\n**UNDERGROUND NOTICE**: *Alternative accounts of this event circulate on physical media in the undercity markets. Corporate enforcement teams actively confiscate these materials.*"
+        }
+        
+        # Get the appropriate fallback message or use a generic one if category not found
+        fallback_content = category_fallbacks.get(category, f"## {title}\n\n**NEURAL INTERFACE ERROR**\n\nYour implant has failed to retrieve information about this subject. Connection to central database interrupted or data has been restricted.\n\n### Troubleshooting\n\nTry reconnecting to a data terminal or visiting an information broker to update your knowledge database.")
+        
+        # Create a thematic fallback entry
         return {
             "category": category,
             "title": title,
-            "content": f"## {title}\n\nData unavailable. Your neural interface has failed to retrieve information about this subject. Try reconnecting to a data terminal or visiting an information broker to update your knowledge database.",
+            "content": fallback_content,
             "related_entries": [],
             "image": None
         }

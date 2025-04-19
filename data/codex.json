@@ -143,14 +143,30 @@
       "content": "## Night City\n\nData unavailable. Your neural interface has failed to retrieve information about this subject. Try reconnecting to a data terminal or visiting an information broker to update your knowledge database.",
       "related_entries": [],
       "image": null
+    },
+    "neural_alley": {
+      "category": "locations",
+      "title": "Neural Alley",
+      "content": "## Neural Alley\n\n**GEOSPATIAL DATA CORRUPTED**\n\n*Your mapping interface glitches, displaying fragmented location data and scattered coordinates.*\n\n### Area Access Status: UNKNOWN\n\nDetailed information about this location cannot be retrieved through standard channels. Map overlay functionality limited.\n\n### Navigation Advisory\n* Danger assessment: **CALCULATING...**\n* Faction control: **DATA UNAVAILABLE**\n* Public access: **UNDETERMINED**\n\n**LOCAL NETWORK MESSAGE**: *This area has been reported as contested territory. Physical reconnaissance recommended before visiting.*",
+      "related_entries": [],
+      "image": null
+    },
+    "quantum_crypto": {
+      "category": "technology",
+      "title": "Quantum Cryptography",
+      "content": "## Quantum Cryptography\n\n**TECHNICAL DOCUMENTATION UNAVAILABLE**\n\n*Your interface displays scrolling error codes as it attempts to access technical specifications.*\n\n### Retrieval Failure\n\nSchematic data for this technology appears to be protected by proprietary encryption. Standard NetLink access has been denied.\n\n### Technical Analysis\n* Encryption: **Quantum-resistant**\n* Access level required: **Corporate Executive**\n* Known workarounds: **REDACTED**\n\n**HINT**: *Street vendors in the Lower Markets sometimes sell bootleg technical documentation. Reliability not guaranteed.*",
+      "related_entries": [],
+      "image": null
     }
   },
   "discovered": [
-    "quantum_tech",
-    "neo_shanghai",
-    "night_city",
-    "neon_district",
     "corporate_district",
-    "synth_corp"
+    "neo_shanghai",
+    "synth_corp",
+    "night_city",
+    "neural_alley",
+    "quantum_tech",
+    "quantum_crypto",
+    "neon_district"
   ]
 }
