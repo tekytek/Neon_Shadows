@@ -9,7 +9,7 @@ class Skill:
     """Represents a specific skill that a character can learn or improve"""
     
     def __init__(self, skill_id: str, name: str, description: str, max_level: int = 5, 
-                 prerequisites: List[Dict] = None, effects: Dict = None, category: str = "general"):
+                 prerequisites: Optional[List[Dict[str, Any]]] = None, effects: Optional[Dict[str, Any]] = None, category: str = "general"):
         """
         Initialize a skill
         
@@ -104,8 +104,8 @@ class Skill:
 class Perk:
     """Represents a special ability or trait that provides unique benefits"""
     
-    def __init__(self, perk_id: str, name: str, description: str, effects: Dict,
-                 prerequisites: List[Dict] = None, category: str = "general",
+    def __init__(self, perk_id: str, name: str, description: str, effects: Dict[str, Any],
+                 prerequisites: Optional[List[Dict[str, Any]]] = None, category: str = "general",
                  one_time_use: bool = False):
         """
         Initialize a perk
@@ -472,9 +472,10 @@ class SkillTree:
             prereq_level = prereq.get("level", 1)
             
             if prereq_type == "stat":
-                stat_value = character.stats.get(prereq_id, 0)
+                stat_value = character.stats.get(prereq_id, 0) if hasattr(character, 'stats') else 0
                 if stat_value < prereq_level:
-                    return False, f"Requires {prereq_id.capitalize()} of {prereq_level}, you have {stat_value}"
+                    stat_name = prereq_id.capitalize() if prereq_id else "Unknown stat"
+                    return False, f"Requires {stat_name} of {prereq_level}, you have {stat_value}"
                     
             elif prereq_type == "skill":
                 # Access skills through the progression object instead of directly
@@ -482,7 +483,8 @@ class SkillTree:
                 if hasattr(character, 'progression') and hasattr(character.progression, 'skills'):
                     char_skill_level = character.progression.skills.get(prereq_id, {}).get("level", 0)
                 if char_skill_level < prereq_level:
-                    skill_name = self.get_skill(prereq_id).name if self.get_skill(prereq_id) else prereq_id
+                    skill = self.get_skill(prereq_id) if prereq_id else None
+                    skill_name = skill.name if skill else str(prereq_id)
                     return False, f"Requires {skill_name} level {prereq_level}, you have level {char_skill_level}"
                     
             elif prereq_type == "perk":
@@ -491,7 +493,8 @@ class SkillTree:
                 if hasattr(character, 'progression') and hasattr(character.progression, 'perks'):
                     has_perk = prereq_id in character.progression.perks
                 if not has_perk:
-                    perk_name = self.get_perk(prereq_id).name if self.get_perk(prereq_id) else prereq_id
+                    perk = self.get_perk(prereq_id) if prereq_id else None
+                    perk_name = perk.name if perk else str(prereq_id)
                     return False, f"Requires {perk_name} perk"
                     
             elif prereq_type == "level":
@@ -524,6 +527,25 @@ class CharacterProgression:
         # Skill points and perk points available to spend
         self.skill_points = 0
         self.perk_points = 0
+        
+        # Character's specialization path
+        self.specialization = None
+        
+        # Synergy bonuses tracking
+        self.active_synergies = {}  # Dictionary of synergy_id -> level
+        
+        # Skill mastery level (increases as more skills in a category reach max level)
+        self.mastery_levels = {
+            "combat": 0, 
+            "hacking": 0, 
+            "social": 0, 
+            "stealth": 0, 
+            "tech": 0, 
+            "general": 0
+        }
+        
+        # Track skill experience separately from level
+        self.skill_experience = {}  # Dictionary of skill_id -> current_xp
     
     def to_dict(self) -> Dict:
         """Convert progression data to dictionary for saving"""
@@ -531,7 +553,11 @@ class CharacterProgression:
             "skills": self.skills,
             "perks": self.perks,
             "skill_points": self.skill_points,
-            "perk_points": self.perk_points
+            "perk_points": self.perk_points,
+            "specialization": self.specialization,
+            "active_synergies": self.active_synergies,
+            "mastery_levels": self.mastery_levels,
+            "skill_experience": self.skill_experience
         }
     
     @classmethod
@@ -543,6 +569,12 @@ class CharacterProgression:
         progression.perks = data.get("perks", [])
         progression.skill_points = data.get("skill_points", 0)
         progression.perk_points = data.get("perk_points", 0)
+        progression.specialization = data.get("specialization", None)
+        progression.active_synergies = data.get("active_synergies", {})
+        progression.mastery_levels = data.get("mastery_levels", {
+            "combat": 0, "hacking": 0, "social": 0, "stealth": 0, "tech": 0, "general": 0
+        })
+        progression.skill_experience = data.get("skill_experience", {})
         
         return progression
     
@@ -607,10 +639,16 @@ class CharacterProgression:
         
         # Apply skill effects
         level = self.skills[skill_id]["level"]
-        effects = skill.get_effects_at_level(level)
+        effects = {}
+        skill_name = skill_id
+        
+        if skill:
+            effects = skill.get_effects_at_level(level)
+            skill_name = skill.name
+            
         self._apply_skill_effects(effects)
         
-        return True, f"Successfully learned {skill.name} (Level {level})"
+        return True, f"Successfully learned {skill_name} (Level {level})"
     
     def can_learn_perk(self, perk_id: str) -> Tuple[bool, str]:
         """Check if the character can learn a perk"""
@@ -657,9 +695,16 @@ class CharacterProgression:
         perk = self.skill_tree.get_perk(perk_id)
         
         # Apply perk effects
-        self._apply_perk_effects(perk.effects)
+        effects = {}
+        perk_name = perk_id
         
-        return True, f"Successfully learned {perk.name} perk"
+        if perk:
+            effects = perk.effects
+            perk_name = perk.name
+            
+        self._apply_perk_effects(effects)
+        
+        return True, f"Successfully learned {perk_name} perk"
     
     def _apply_skill_effects(self, effects: Dict):
         """Apply skill effects to the character"""
@@ -754,9 +799,271 @@ class CharacterProgression:
         
         return results
     
+    def set_specialization(self, specialization: str) -> Tuple[bool, str]:
+        """
+        Set a character's specialization path
+        
+        Args:
+            specialization: Name of the specialization path to set
+            
+        Returns:
+            (bool, str): Success status and message
+        """
+        # Check if specialization is valid
+        valid_specializations = {
+            "NetRunner": ["hacking", "stealth"],  # Focuses on hacking and stealth
+            "Street Samurai": ["combat", "social"],  # Focuses on combat and social
+            "Techie": ["tech", "hacking"],  # Focuses on tech and hacking
+            "Fixer": ["social", "stealth"],  # Focuses on social and stealth
+            "Solo": ["combat", "tech"],  # Focuses on combat and tech
+        }
+        
+        if specialization not in valid_specializations:
+            return False, f"Invalid specialization: {specialization}"
+        
+        # Check character level requirement (level 5 minimum)
+        if self.character and self.character.level < 5:
+            return False, f"Character must be at least level 5 to specialize (currently level {self.character.level})"
+        
+        # Set the specialization
+        self.specialization = specialization
+        
+        return True, f"Successfully specialized as {specialization}"
+    
+    def gain_skill_experience(self, skill_id: str, xp_amount: int) -> Dict:
+        """
+        Add experience to a specific skill from usage
+        
+        Args:
+            skill_id: ID of the skill to gain experience for
+            xp_amount: Amount of experience to add
+            
+        Returns:
+            Dict with results including level ups
+        """
+        # Initialize tracking dictionaries if needed
+        if skill_id not in self.skill_experience:
+            self.skill_experience[skill_id] = 0
+            
+        if skill_id not in self.skills:
+            self.skills[skill_id] = {"level": 0, "xp": 0}
+        
+        # Get current skill info
+        current_xp = self.skill_experience[skill_id]
+        current_level = self.skills[skill_id]["level"]
+        
+        # Get skill object
+        skill = self.skill_tree.get_skill(skill_id)
+        if not skill:
+            return {"skill_id": skill_id, "level_up": False}
+            
+        # Calculate XP needed for next level (increases with level)
+        xp_for_next_level = 100 * (current_level + 1)
+        
+        # Add experience
+        self.skill_experience[skill_id] += xp_amount
+        
+        # Check if level up occurs
+        level_up = False
+        effects_gained = {}
+        
+        if current_level < skill.max_level and self.skill_experience[skill_id] >= xp_for_next_level:
+            # Level up the skill
+            self.skills[skill_id]["level"] += 1
+            level_up = True
+            
+            # Reset XP for next level
+            self.skill_experience[skill_id] = 0
+            
+            # Get new effects
+            new_level = self.skills[skill_id]["level"]
+            current_level_effects = skill.get_effects_at_level(new_level)
+            
+            # Store effects that were gained at this level
+            level_specific_effects = skill.effects.get(str(new_level), {})
+            effects_gained = level_specific_effects
+            
+            # Apply effects
+            self._apply_skill_effects(level_specific_effects)
+            
+            # Update mastery level for the skill's category
+            self._update_mastery_level(skill.category)
+            
+            # Check for synergy effects
+            self._check_skill_synergies()
+            
+        # Return results
+        return {
+            "skill_id": skill_id,
+            "skill_name": skill.name,
+            "previous_level": current_level,
+            "current_level": self.skills[skill_id]["level"],
+            "level_up": level_up,
+            "effects_gained": effects_gained
+        }
+    
+    def _update_mastery_level(self, category: str):
+        """
+        Update the mastery level for a skill category
+        
+        Args:
+            category: Category to update mastery for
+        """
+        if category not in self.mastery_levels:
+            return
+            
+        # Count max level skills in this category
+        max_level_count = 0
+        for skill_id, skill_data in self.skills.items():
+            skill = self.skill_tree.get_skill(skill_id)
+            if not skill or skill.category != category:
+                continue
+                
+            level = skill_data.get("level", 0)
+            max_possible = skill.max_level
+            
+            if level >= max_possible:
+                max_level_count += 1
+        
+        # Set mastery level based on max level skills
+        self.mastery_levels[category] = min(5, max_level_count)
+    
+    def _check_skill_synergies(self):
+        """Check for skill synergy bonuses based on combinations of skills"""
+        # Define synergy combinations
+        synergies = {
+            "hacker_ghost": {
+                "skills": [("network_infiltrator", 3), ("shadow_walker", 3)],
+                "bonus": {"stealth_bonus": 10, "hacking_bonus": 10},
+                "description": "Your hacking abilities are enhanced while remaining undetected"
+            },
+            "street_fighter": {
+                "skills": [("melee_master", 3), ("cyber_reflexes", 3)],
+                "bonus": {"damage_bonus": 3, "dodge_chance": 5},
+                "description": "Your combat abilities are enhanced in close quarters"
+            },
+            "tech_medic": {
+                "skills": [("cyber_surgeon", 3), ("drone_master", 2)],
+                "bonus": {"healing_bonus": 15},
+                "description": "Your medical drones provide enhanced healing"
+            },
+            "social_engineer": {
+                "skills": [("street_cred", 4), ("network_infiltrator", 3)],
+                "bonus": {"hacking_bonus": 5, "vendor_discount": 5},
+                "description": "Your social connections give you insider knowledge of systems"
+            },
+        }
+        
+        # Check each synergy
+        for synergy_id, synergy_data in synergies.items():
+            required_skills = synergy_data["skills"]
+            has_all_required = True
+            
+            # Check if character has all required skills at minimum levels
+            for skill_id, min_level in required_skills:
+                current_level = self.get_skill_level(skill_id)
+                if current_level < min_level:
+                    has_all_required = False
+                    break
+            
+            # Apply synergy if meets requirements and not already active
+            if has_all_required and synergy_id not in self.active_synergies:
+                self.active_synergies[synergy_id] = 1
+    
+    def get_specialization_bonuses(self) -> Dict:
+        """
+        Get bonuses from the character's specialization
+        
+        Returns:
+            Dictionary of specialization bonuses
+        """
+        if not self.specialization:
+            return {}
+            
+        # Define specialization bonuses
+        specialization_bonuses = {
+            "NetRunner": {
+                "hacking_bonus": 15,
+                "stealth_bonus": 10,
+                "stat_bonuses": {"intelligence": 2},
+                "special_abilities": ["Neural Override"]
+            },
+            "Street Samurai": {
+                "damage_bonus": 10,
+                "critical_chance": 15,
+                "stat_bonuses": {"strength": 2},
+                "special_abilities": ["Combat Rush"]
+            },
+            "Techie": {
+                "healing_bonus": 20,
+                "electronics_bonus": 15,
+                "stat_bonuses": {"intelligence": 1, "reflex": 1},
+                "special_abilities": ["Field Repair"]
+            },
+            "Fixer": {
+                "vendor_discount": 25,
+                "reputation_gain": 20,
+                "stat_bonuses": {"charisma": 2},
+                "special_abilities": ["Black Market Access"]
+            },
+            "Solo": {
+                "damage_bonus": 5,
+                "defense_bonus": 10,
+                "stat_bonuses": {"strength": 1, "reflex": 1},
+                "special_abilities": ["Last Stand"]
+            }
+        }
+        
+        return specialization_bonuses.get(self.specialization, {})
+        
+    def get_active_synergy_bonuses(self) -> Dict:
+        """
+        Get all active skill synergy bonuses
+        
+        Returns:
+            Dictionary of active synergy effects
+        """
+        all_synergy_bonuses = {}
+        
+        # Define synergy combinations
+        synergies = {
+            "hacker_ghost": {
+                "skills": [("network_infiltrator", 3), ("shadow_walker", 3)],
+                "bonus": {"stealth_bonus": 10, "hacking_bonus": 10},
+                "description": "Your hacking abilities are enhanced while remaining undetected"
+            },
+            "street_fighter": {
+                "skills": [("melee_master", 3), ("cyber_reflexes", 3)],
+                "bonus": {"damage_bonus": 3, "dodge_chance": 5},
+                "description": "Your combat abilities are enhanced in close quarters"
+            },
+            "tech_medic": {
+                "skills": [("cyber_surgeon", 3), ("drone_master", 2)],
+                "bonus": {"healing_bonus": 15},
+                "description": "Your medical drones provide enhanced healing"
+            },
+            "social_engineer": {
+                "skills": [("street_cred", 4), ("network_infiltrator", 3)],
+                "bonus": {"hacking_bonus": 5, "vendor_discount": 5},
+                "description": "Your social connections give you insider knowledge of systems"
+            },
+        }
+        
+        # Apply all active synergy bonuses
+        for synergy_id, level in self.active_synergies.items():
+            if synergy_id in synergies:
+                synergy_data = synergies[synergy_id]
+                all_synergy_bonuses[synergy_id] = {
+                    "bonus": synergy_data["bonus"],
+                    "description": synergy_data["description"],
+                    "level": level
+                }
+                
+        return all_synergy_bonuses
+    
     def calculate_all_effects(self) -> Dict:
         """
-        Calculate all effects from skills and perks
+        Calculate all effects from skills, perks, specializations and synergies
         
         Returns:
             Dictionary of effects
@@ -769,6 +1076,9 @@ class CharacterProgression:
             "stealth_bonus": 0,
             "hacking_bonus": 0,
             "healing_bonus": 0,
+            "electronics_bonus": 0,
+            "vendor_discount": 0,
+            "reputation_gain": 0,
             "stat_bonuses": {
                 "strength": 0,
                 "intelligence": 0,
@@ -807,6 +1117,12 @@ class CharacterProgression:
                     effects["hacking_bonus"] += effect_value
                 elif effect_type == "healing_bonus":
                     effects["healing_bonus"] += effect_value
+                elif effect_type == "electronics_bonus":
+                    effects["electronics_bonus"] += effect_value
+                elif effect_type == "vendor_discount":
+                    effects["vendor_discount"] += effect_value
+                elif effect_type == "reputation_gain":
+                    effects["reputation_gain"] += effect_value
                 elif effect_type == "stat_bonus":
                     for stat, bonus in effect_value.items():
                         effects["stat_bonuses"][stat] += bonus
@@ -823,5 +1139,44 @@ class CharacterProgression:
             # The actual effects are applied conditionally during gameplay
             if "ability" in perk.effects:
                 effects["abilities"].append(perk.effects["ability"])
+                
+        # Apply specialization bonuses
+        specialization_bonuses = self.get_specialization_bonuses()
+        for bonus_type, bonus_value in specialization_bonuses.items():
+            if bonus_type == "stat_bonuses":
+                for stat, bonus in bonus_value.items():
+                    effects["stat_bonuses"][stat] += bonus
+            elif bonus_type == "special_abilities":
+                effects["abilities"].extend(bonus_value)
+            elif bonus_type in effects:
+                effects[bonus_type] += bonus_value
+                
+        # Apply synergy bonuses
+        synergy_bonuses = self.get_active_synergy_bonuses()
+        for synergy_id, synergy_data in synergy_bonuses.items():
+            bonuses = synergy_data.get("bonus", {})
+            for bonus_type, bonus_value in bonuses.items():
+                if bonus_type in effects:
+                    effects[bonus_type] += bonus_value
         
+        # Apply mastery level bonuses
+        for category, mastery_level in self.mastery_levels.items():
+            if mastery_level <= 0:
+                continue
+                
+            # Mastery bonuses by category
+            if category == "combat":
+                effects["damage_bonus"] += mastery_level
+                effects["critical_chance"] += mastery_level * 2
+            elif category == "hacking":
+                effects["hacking_bonus"] += mastery_level * 5
+            elif category == "social":
+                effects["vendor_discount"] += mastery_level * 2
+                effects["reputation_gain"] += mastery_level * 3
+            elif category == "stealth":
+                effects["stealth_bonus"] += mastery_level * 5
+            elif category == "tech":
+                effects["healing_bonus"] += mastery_level * 3
+                effects["electronics_bonus"] += mastery_level * 5
+                
         return effects

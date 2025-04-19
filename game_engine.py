@@ -1484,9 +1484,15 @@ class GameEngine:
         
     def _handle_skills_menu(self, console):
         """Handle the skills submenu for upgrading character skills"""
+        # Import rich components for better displays
+        from rich.panel import Panel
+        from rich.table import Table
+        from rich.progress_bar import ProgressBar
+        import animations
+        
         while True:
             ui.clear_screen()
-            ui.display_header(console, "SKILLS")
+            ui.display_header(console, "SKILLS & SPECIALIZATIONS")
             
             # Get available skills from progression system
             available_skills = self.player.progression.get_available_skills()
@@ -1500,52 +1506,179 @@ class GameEngine:
                     skill_categories[category] = []
                 skill_categories[category].append((skill, can_learn, message))
             
+            # Display specialization status if any
+            specialization = self.player.progression.specialization
+            if specialization:
+                spec_bonuses = self.player.progression.get_specialization_bonuses()
+                spec_table = Table(show_header=False, box=None, padding=(0, 2, 0, 2))
+                spec_table.add_column("Type", style="cyan", width=15)
+                spec_table.add_column("Value", style="green")
+                
+                # Add specialization bonuses to table
+                for bonus_type, value in spec_bonuses.items():
+                    if bonus_type == "stat_bonuses":
+                        stat_text = ", ".join([f"{stat}: +{val}" for stat, val in value.items()])
+                        spec_table.add_row("Stat Bonuses", stat_text)
+                    elif bonus_type == "special_abilities":
+                        abilities = ", ".join(value)
+                        spec_table.add_row("Special Abilities", abilities)
+                    else:
+                        # Format bonus name from snake_case to Title Case
+                        display_name = " ".join(word.capitalize() for word in bonus_type.split("_"))
+                        spec_table.add_row(display_name, f"+{value}")
+                
+                console.print(Panel(
+                    spec_table,
+                    title=f"[bold magenta]SPECIALIZATION: {specialization}[/bold magenta]",
+                    expand=False,
+                    border_style="magenta"
+                ))
+            elif self.player.level >= 5:
+                # Only show specialization options if character is level 5+
+                console.print(Panel(
+                    "[yellow]You are eligible to choose a specialization path![/yellow]\n" +
+                    "[cyan]Specializations provide unique bonuses and abilities.[/cyan]",
+                    title="[bold magenta]CHOOSE A SPECIALIZATION[/bold magenta]",
+                    expand=False,
+                    border_style="magenta"
+                ))
+            
+            # Display active skill synergies if any
+            active_synergies = self.player.progression.get_active_synergy_bonuses()
+            if active_synergies:
+                synergy_table = Table(show_header=True, box=None, padding=(0, 2, 0, 2))
+                synergy_table.add_column("Synergy", style="cyan", width=20)
+                synergy_table.add_column("Description", style="white", width=40)
+                synergy_table.add_column("Bonuses", style="green")
+                
+                for synergy_id, synergy_data in active_synergies.items():
+                    name = synergy_id.replace("_", " ").title()
+                    description = synergy_data["description"]
+                    bonuses = ", ".join([f"{k}: +{v}" for k, v in synergy_data["bonus"].items()])
+                    synergy_table.add_row(name, description, bonuses)
+                
+                console.print(Panel(
+                    synergy_table,
+                    title="[bold cyan]ACTIVE SKILL SYNERGIES[/bold cyan]",
+                    expand=False,
+                    border_style="cyan"
+                ))
+            
+            # Display skill mastery levels
+            mastery_levels = self.player.progression.mastery_levels
+            if any(level > 0 for level in mastery_levels.values()):
+                mastery_table = Table(show_header=True, box=None, padding=(0, 2, 0, 2))
+                mastery_table.add_column("Category", style="cyan")
+                mastery_table.add_column("Mastery Level", style="green")
+                mastery_table.add_column("Bonuses", style="yellow")
+                
+                for category, level in mastery_levels.items():
+                    if level <= 0:
+                        continue
+                        
+                    # Define bonuses text based on category and level
+                    if category == "combat":
+                        bonuses = f"+{level} damage, +{level*2}% critical chance"
+                    elif category == "hacking":
+                        bonuses = f"+{level*5} hacking bonus"
+                    elif category == "social":
+                        bonuses = f"+{level*2}% vendor discount, +{level*3}% reputation gain"
+                    elif category == "stealth":
+                        bonuses = f"+{level*5} stealth bonus"
+                    elif category == "tech":
+                        bonuses = f"+{level*3} healing, +{level*5} electronics"
+                    else:
+                        bonuses = "Various bonuses"
+                    
+                    mastery_table.add_row(
+                        category.capitalize(),
+                        f"{level}/5",
+                        bonuses
+                    )
+                
+                console.print(Panel(
+                    mastery_table,
+                    title="[bold yellow]SKILL MASTERY LEVELS[/bold yellow]",
+                    expand=False,
+                    border_style="yellow"
+                ))
+            
             # Display skill points
             skill_points = self.player.progression.skill_points
-            console.print(f"[green]Available Skill Points: {skill_points}[/green]\n")
+            console.print(f"\n[green]Available Skill Points: {skill_points}[/green]\n")
             
             # Display skills by category
             for category, skills in skill_categories.items():
                 console.print(f"[bold cyan]{category.upper()}[/bold cyan]")
                 
-                for i, (skill, can_learn, message) in enumerate(skills, 1):
+                # Create a table for this category
+                skill_table = Table(show_header=False, box=None, padding=(0, 1, 0, 1))
+                skill_table.add_column("Name", style="bold", width=30)
+                skill_table.add_column("Level", width=20)
+                skill_table.add_column("Description", width=50)
+                
+                for skill, can_learn, message in skills:
                     current_level = self.player.progression.get_skill_level(skill.skill_id)
                     max_level = skill.max_level
                     
                     # Determine display color based on availability
-                    if can_learn:
-                        color = "green"
+                    name_color = "green" if can_learn else "gray"
+                    
+                    # Get skill experience data for progress bar
+                    skill_xp = self.player.progression.skill_experience.get(skill.skill_id, 0)
+                    xp_for_next_level = 100 * (current_level + 1) if current_level < max_level else 100
+                    xp_percent = min(100, int((skill_xp / xp_for_next_level) * 100)) if current_level < max_level else 100
+                    
+                    # Create progress bar based on XP
+                    level_text = f"[{name_color}]{current_level}/{max_level} "
+                    if current_level < max_level:
+                        level_text += f"({skill_xp}/{xp_for_next_level} XP)[/{name_color}]"
                     else:
-                        color = "gray"
+                        level_text += f"(MAX)[/{name_color}]"
                     
-                    # Display skill with level indicator
-                    console.print(f"[{color}]{i}. {skill.name} ({current_level}/{max_level}) - {skill.description}[/{color}]")
+                    # Add skill row
+                    skill_table.add_row(
+                        f"[{name_color}]{skill.name}[/{name_color}]",
+                        level_text,
+                        skill.description
+                    )
+                
+                console.print(skill_table)
+                
+                # Display detailed effects for each skill in this category
+                for i, (skill, can_learn, message) in enumerate(skills, 1):
+                    current_level = self.player.progression.get_skill_level(skill.skill_id)
+                    max_level = skill.max_level
                     
-                    # If there's a reason why skill can't be learned, show it
-                    if not can_learn and message:
-                        console.print(f"   [red]{message}[/red]")
-                    
-                    # Show skill level effects if they have any levels
+                    # If has some levels, show effects
                     if current_level > 0:
                         effects = skill.get_effects_at_level(current_level)
                         if effects:
                             effect_text = ", ".join([f"{k}: {v}" for k, v in effects.items()])
-                            console.print(f"   [cyan]Current Effects: {effect_text}[/cyan]")
-                    
-                    # Show next level effects if not at max
-                    if current_level < max_level:
-                        next_effects = skill.get_effects_at_level(current_level + 1)
-                        if next_effects:
-                            effect_text = ", ".join([f"{k}: {v}" for k, v in next_effects.items()])
-                            console.print(f"   [yellow]Next Level: {effect_text}[/yellow]")
+                            console.print(f"  [cyan]{skill.name} Effects: {effect_text}[/cyan]")
                 
                 console.print("")  # Add spacing between categories
             
-            # User options
-            console.print("[yellow]U. Upgrade a skill[/yellow]")
-            console.print("[yellow]B. Back to character menu[/yellow]")
+            # Display user options
+            options_table = Table(show_header=False, box=None, padding=(0, 2, 0, 2))
+            options_table.add_column("Option", style="yellow", width=20)
+            options_table.add_column("Description", style="white")
             
-            choice = Prompt.ask("[bold green]What would you like to do?[/bold green]", choices=["u", "U", "b", "B"])
+            options_table.add_row("U", "Upgrade a skill using skill points")
+            
+            if self.player.level >= 5 and not specialization:
+                options_table.add_row("S", "Choose a specialization path")
+                
+            options_table.add_row("B", "Back to character menu")
+            
+            console.print(Panel(options_table, title="[bold green]OPTIONS[/bold green]", expand=False))
+            
+            # Determine available choices
+            choices = ["u", "U", "b", "B"]
+            if self.player.level >= 5 and not specialization:
+                choices.extend(["s", "S"])
+                
+            choice = Prompt.ask("[bold green]What would you like to do?[/bold green]", choices=choices)
             
             if choice.upper() == "U" and skill_points > 0:
                 # Upgrade a skill
@@ -1577,7 +1710,11 @@ class GameEngine:
                     success, result_message = self.player.progression.learn_skill(selected_skill.skill_id)
                     
                     if success:
-                        console.print(f"[green]{result_message}[/green]")
+                        # Use an animation for successful skill upgrade
+                        try:
+                            animations.neon_fade_in(f"[green]{result_message}[/green]", console)
+                        except:
+                            console.print(f"[green]{result_message}[/green]")
                         
                         # Play sound if audio system available
                         if self.audio_enabled and self.audio_system:
@@ -1597,15 +1734,114 @@ class GameEngine:
                 
                 console.print("[cyan]Press Enter to continue...[/cyan]")
                 input()
+            elif choice.upper() == "S" and self.player.level >= 5 and not specialization:
+                # Choose a specialization
+                ui.clear_screen()
+                ui.display_header(console, "CHOOSE SPECIALIZATION")
+                
+                specializations = {
+                    "NetRunner": {
+                        "description": "Masters of the digital realm who can manipulate code and hack systems with ease.",
+                        "focus": "Hacking and stealth",
+                        "bonuses": "Hacking +15, Stealth +10, Intelligence +2",
+                        "ability": "Neural Override: Take control of an electronic system or enemy"
+                    },
+                    "Street Samurai": {
+                        "description": "Elite combat specialists with enhanced reflexes and unmatched fighting prowess.",
+                        "focus": "Combat and social",
+                        "bonuses": "Damage +10, Critical Chance +15%, Strength +2",
+                        "ability": "Combat Rush: Gain an extra action in combat for 3 turns"
+                    },
+                    "Techie": {
+                        "description": "Technical wizards who can repair, craft, and enhance equipment on the fly.",
+                        "focus": "Tech and hacking",
+                        "bonuses": "Healing +20, Electronics +15, Intelligence +1, Reflex +1",
+                        "ability": "Field Repair: Fix damaged equipment or restore health"
+                    },
+                    "Fixer": {
+                        "description": "Connected operators who know everyone and can acquire almost anything.",
+                        "focus": "Social and stealth",
+                        "bonuses": "Vendor Discount +25%, Reputation Gain +20%, Charisma +2",
+                        "ability": "Black Market Access: Find rare items at special prices"
+                    },
+                    "Solo": {
+                        "description": "Independent operators who excel at survival and adaptability in any situation.",
+                        "focus": "Combat and tech",
+                        "bonuses": "Damage +5, Defense +10, Strength +1, Reflex +1",
+                        "ability": "Last Stand: When health drops below 25%, gain massive combat bonuses"
+                    }
+                }
+                
+                # Display specialization options
+                spec_table = Table(show_header=True, width=100)
+                spec_table.add_column("Specialization", style="cyan", width=15)
+                spec_table.add_column("Description", style="white", width=40)
+                spec_table.add_column("Focus", style="yellow", width=15)
+                spec_table.add_column("Key Bonuses", style="green", width=30)
+                
+                for spec_name, spec_data in specializations.items():
+                    spec_table.add_row(
+                        spec_name,
+                        spec_data["description"],
+                        spec_data["focus"],
+                        spec_data["bonuses"]
+                    )
+                
+                console.print(spec_table)
+                console.print("\n[bold cyan]Specializations provide permanent bonuses and a unique ability.[/bold cyan]")
+                console.print("[bold yellow]This choice is permanent and cannot be changed later.[/bold yellow]\n")
+                
+                # Get choice
+                valid_specs = list(specializations.keys())
+                spec_choices = [str(i) for i in range(1, len(valid_specs)+1)]
+                
+                for i, spec in enumerate(valid_specs, 1):
+                    console.print(f"[cyan]{i}. {spec}[/cyan]")
+                
+                console.print("[cyan]0. Cancel[/cyan]")
+                
+                spec_choice = Prompt.ask("[bold green]Choose your specialization[/bold green]", 
+                                         choices=spec_choices + ["0"])
+                
+                if spec_choice == "0":
+                    continue
+                
+                # Set specialization
+                selected_spec = valid_specs[int(spec_choice)-1]
+                success, message = self.player.progression.set_specialization(selected_spec)
+                
+                if success:
+                    # Show cool animation for specialization selection
+                    try:
+                        animations.neural_interface(console, f"SPECIALIZATION SET: {selected_spec}")
+                    except:
+                        console.print(f"[green]You have specialized as a {selected_spec}![/green]")
+                    
+                    # Show ability details
+                    console.print(f"\n[bold cyan]Unlocked Special Ability: {specializations[selected_spec]['ability']}[/bold cyan]")
+                    
+                    # Play sound if audio system available
+                    if self.audio_enabled and self.audio_system:
+                        self.audio_system.play_sound("level_up")
+                else:
+                    console.print(f"[red]{message}[/red]")
+                
+                console.print("[cyan]Press Enter to continue...[/cyan]")
+                input()
             elif choice.upper() == "B":
                 # Return to character progression menu
                 break
             
     def _handle_perks_menu(self, console):
         """Handle the perks submenu for acquiring character perks"""
+        # Import rich components for better displays
+        from rich.panel import Panel
+        from rich.table import Table
+        import animations
+        
         while True:
             ui.clear_screen()
-            ui.display_header(console, "PERKS")
+            ui.display_header(console, "PERKS & ABILITIES")
             
             # Get available perks from progression system
             available_perks = self.player.progression.get_available_perks()
@@ -1619,47 +1855,144 @@ class GameEngine:
                     perk_categories[category] = []
                 perk_categories[category].append((perk, can_learn, message))
             
-            # Display perk points
+            # Display active perks summary
+            acquired_perks = [p for p, _, _ in [perk for perks in perk_categories.values() for perk in perks] 
+                             if self.player.progression.has_perk(p.perk_id)]
+            
+            if acquired_perks:
+                # Create a summary table of active perks
+                active_perks_table = Table(show_header=True, box=None, padding=(0, 2, 0, 2))
+                active_perks_table.add_column("Perk", style="green", width=25)
+                active_perks_table.add_column("Effects", style="cyan", width=50)
+                
+                for perk in acquired_perks[:5]:  # Show top 5 perks to avoid clutter
+                    effect_text = ", ".join([f"{k}: {v}" for k, v in perk.effects.items()])
+                    active_perks_table.add_row(perk.name, effect_text)
+                    
+                if len(acquired_perks) > 5:
+                    active_perks_table.add_row(f"... {len(acquired_perks) - 5} more", "Use detailed view for all perks")
+                
+                console.print(Panel(
+                    active_perks_table,
+                    title=f"[bold green]ACTIVE PERKS ({len(acquired_perks)})[/bold green]",
+                    expand=False,
+                    border_style="green"
+                ))
+            
+            # Display perk points with visual indicator
             perk_points = self.player.progression.perk_points
-            console.print(f"[green]Available Perk Points: {perk_points}[/green]\n")
+            perk_points_text = f"[green]Available Perk Points: {perk_points}[/green]"
+            if perk_points > 0:
+                perk_points_text += " [bold yellow]⚠ Unspent points available![/bold yellow]"
+            console.print(f"\n{perk_points_text}\n")
             
             # Display perks by category
             for category, perks in perk_categories.items():
                 console.print(f"[bold cyan]{category.upper()}[/bold cyan]")
                 
-                for i, (perk, can_learn, message) in enumerate(perks, 1):
+                # Create table for this category
+                perk_table = Table(show_header=False, box=None, padding=(0, 1, 0, 1))
+                perk_table.add_column("Name", style="bold", width=25)
+                perk_table.add_column("Status", width=15)
+                perk_table.add_column("Description", width=50)
+                
+                for perk, can_learn, message in perks:
                     has_perk = self.player.progression.has_perk(perk.perk_id)
                     
-                    # Determine display color based on availability
+                    # Determine display color and status text
                     if has_perk:
-                        color = "green"
-                        status = "[ACQUIRED]"
+                        name_color = "green"
+                        status = "[green]ACQUIRED[/green]"
                     elif can_learn:
-                        color = "yellow"
-                        status = "[AVAILABLE]"
+                        name_color = "yellow"
+                        status = "[yellow]AVAILABLE[/yellow]"
                     else:
-                        color = "gray"
-                        status = "[LOCKED]"
+                        name_color = "gray"
+                        status = "[gray]LOCKED[/gray]"
                     
-                    # Display perk information
-                    console.print(f"[{color}]{i}. {perk.name} {status} - {perk.description}[/{color}]")
+                    # Add row to table
+                    perk_table.add_row(
+                        f"[{name_color}]{perk.name}[/{name_color}]",
+                        status,
+                        perk.description
+                    )
+                
+                console.print(perk_table)
+                
+                # Display perk details
+                for perk, can_learn, message in perks:
+                    has_perk = self.player.progression.has_perk(perk.perk_id)
                     
-                    # If there's a reason why perk can't be learned, show it
-                    if not can_learn and not has_perk and message:
-                        console.print(f"   [red]{message}[/red]")
+                    # Show reason why perk can't be learned
+                    if not has_perk:
+                        if not can_learn and message:
+                            console.print(f"  [red]{perk.name} - {message}[/red]")
+                        elif can_learn:
+                            # List prerequisites nicely
+                            prereq_text = ""
+                            if perk.prerequisites:
+                                prereqs = []
+                                for prereq in perk.prerequisites:
+                                    if prereq.get("type") == "skill":
+                                        skill_id = prereq.get("id")
+                                        skill = self.player.progression.skill_tree.get_skill(skill_id)
+                                        if skill:
+                                            level = prereq.get("level", 1)
+                                            prereqs.append(f"{skill.name} (Level {level}+)")
+                                    elif prereq.get("type") == "perk":
+                                        perk_id = prereq.get("id")
+                                        prereq_perk = self.player.progression.skill_tree.get_perk(perk_id)
+                                        if prereq_perk:
+                                            prereqs.append(f"{prereq_perk.name}")
+                                    elif prereq.get("type") == "stat":
+                                        stat = prereq.get("id", "").capitalize()
+                                        level = prereq.get("level", 1)
+                                        prereqs.append(f"{stat} {level}+")
+                                
+                                if prereqs:
+                                    prereq_text = f"  [yellow]Requirements: {', '.join(prereqs)}[/yellow]"
+                                    console.print(prereq_text)
                     
                     # Show perk effects
                     if perk.effects:
-                        effect_text = ", ".join([f"{k}: {v}" for k, v in perk.effects.items()])
-                        console.print(f"   [cyan]Effects: {effect_text}[/cyan]")
+                        effect_icons = {
+                            "damage_bonus": "⚔️",
+                            "critical_chance": "🎯",
+                            "health_bonus": "❤️",
+                            "cooldown_reduction": "⏱️",
+                            "stealth_bonus": "👻",
+                            "hacking_bonus": "💻",
+                            "reputation_gain": "👥",
+                            "vendor_discount": "💰",
+                        }
+                        
+                        effects_text = "  [cyan]Effects: "
+                        effect_parts = []
+                        
+                        for k, v in perk.effects.items():
+                            icon = effect_icons.get(k, "✨")
+                            # Format the key from snake_case to Title Case
+                            key_name = " ".join(part.capitalize() for part in k.split("_"))
+                            effect_parts.append(f"{icon} {key_name}: {v}")
+                        
+                        effects_text += ", ".join(effect_parts) + "[/cyan]"
+                        console.print(effects_text)
                 
                 console.print("")  # Add spacing between categories
             
-            # User options
-            console.print("[yellow]A. Acquire a perk[/yellow]")
-            console.print("[yellow]B. Back to character menu[/yellow]")
+            # User options with table
+            options_table = Table(show_header=False, box=None, padding=(0, 2, 0, 2))
+            options_table.add_column("Option", style="yellow", width=20)
+            options_table.add_column("Description", style="white")
             
-            choice = Prompt.ask("[bold green]What would you like to do?[/bold green]", choices=["a", "A", "b", "B"])
+            options_table.add_row("A", "Acquire a perk using perk points")
+            options_table.add_row("D", "View detailed descriptions of all perks")
+            options_table.add_row("B", "Back to character menu")
+            
+            console.print(Panel(options_table, title="[bold green]OPTIONS[/bold green]", expand=False))
+            
+            choice = Prompt.ask("[bold green]What would you like to do?[/bold green]", 
+                               choices=["a", "A", "d", "D", "b", "B"])
             
             if choice.upper() == "A" and perk_points > 0:
                 # Acquire a perk
@@ -1676,32 +2009,76 @@ class GameEngine:
                     input()
                     continue
                 
-                # Choose perk to acquire
-                console.print("[bold cyan]Choose a perk to acquire:[/bold cyan]")
-                for i, (perk, _, _) in enumerate(flat_perks, 1):
-                    console.print(f"{i}. {perk.name}")
+                # Display available perks with better formatting
+                ui.clear_screen()
+                ui.display_header(console, "ACQUIRE PERK")
                 
-                perk_idx = IntPrompt.ask("[bold cyan]Enter perk number[/bold cyan]", 
-                                        choices=[str(i) for i in range(1, len(flat_perks)+1)])
+                console.print(f"[green]Available Perk Points: {perk_points}[/green]\n")
+                console.print("[bold cyan]Choose a perk to acquire:[/bold cyan]\n")
                 
-                selected_perk, can_learn, message = flat_perks[int(perk_idx)-1]
+                # Create table of acquirable perks
+                acquire_table = Table(show_header=True)
+                acquire_table.add_column("#", style="cyan", width=5)
+                acquire_table.add_column("Perk", style="yellow", width=20)
+                acquire_table.add_column("Category", style="magenta", width=15)
+                acquire_table.add_column("Effects", style="green", width=40)
+                
+                for i, (perk, can_learn, _) in enumerate(flat_perks, 1):
+                    if can_learn:
+                        effects_text = ", ".join([f"{k.replace('_', ' ')}: {v}" for k, v in perk.effects.items()])
+                        acquire_table.add_row(
+                            str(i),
+                            perk.name,
+                            perk.category.capitalize(),
+                            effects_text
+                        )
+                
+                console.print(acquire_table)
+                console.print("\n[cyan]0. Cancel[/cyan]")
+                
+                # Get perk choice
+                perk_choices = ["0"] + [str(i) for i, (_, can_learn, _) in enumerate(flat_perks, 1) if can_learn]
+                perk_choice = Prompt.ask("[bold green]Select perk to acquire[/bold green]", choices=perk_choices)
+                
+                if perk_choice == "0":
+                    continue
+                
+                selected_perk, can_learn, message = flat_perks[int(perk_choice)-1]
                 
                 if can_learn:
-                    # Attempt to learn the perk
-                    success, result_message = self.player.progression.learn_perk(selected_perk.perk_id)
+                    # Confirm perk acquisition
+                    console.print(f"\n[bold cyan]About to acquire: {selected_perk.name}[/bold cyan]")
+                    console.print(f"[cyan]{selected_perk.description}[/cyan]")
                     
-                    if success:
-                        console.print(f"[green]{result_message}[/green]")
+                    effects_text = ", ".join([f"{k.replace('_', ' ')}: {v}" for k, v in selected_perk.effects.items()])
+                    console.print(f"[green]Effects: {effects_text}[/green]")
+                    console.print("\n[yellow]This will cost 1 perk point.[/yellow]")
+                    
+                    confirm = Prompt.ask("[bold]Confirm acquisition?[/bold]", choices=["y", "n"])
+                    
+                    if confirm.lower() == "y":
+                        # Attempt to learn the perk
+                        success, result_message = self.player.progression.learn_perk(selected_perk.perk_id)
                         
-                        # Play sound if audio system available
-                        if self.audio_enabled and self.audio_system:
-                            self.audio_system.play_sound("skill_success")
+                        if success:
+                            # Use an animation for successful perk acquisition
+                            try:
+                                animations.hologram_effect(f"[bold green]PERK ACQUIRED: {selected_perk.name}[/bold green]", console)
+                                console.print(f"[green]{result_message}[/green]")
+                            except:
+                                console.print(f"[green]{result_message}[/green]")
+                            
+                            # Play sound if audio system available
+                            if self.audio_enabled and self.audio_system:
+                                self.audio_system.play_sound("skill_success")
+                        else:
+                            console.print(f"[red]{result_message}[/red]")
+                            
+                            # Play sound if audio system available
+                            if self.audio_enabled and self.audio_system:
+                                self.audio_system.play_sound("skill_failure")
                     else:
-                        console.print(f"[red]{result_message}[/red]")
-                        
-                        # Play sound if audio system available
-                        if self.audio_enabled and self.audio_system:
-                            self.audio_system.play_sound("skill_failure")
+                        console.print("[yellow]Acquisition cancelled.[/yellow]")
                 else:
                     console.print(f"[red]Cannot acquire this perk: {message}[/red]")
                     
@@ -1711,6 +2088,69 @@ class GameEngine:
                 
                 console.print("[cyan]Press Enter to continue...[/cyan]")
                 input()
+            elif choice.upper() == "D":
+                # Show detailed descriptions for all perks
+                ui.clear_screen()
+                ui.display_header(console, "PERK DETAILS")
+                
+                # Flatten the perks list
+                all_perks = [perk for perks in perk_categories.values() for perk, _, _ in perks]
+                
+                for i, perk in enumerate(all_perks, 1):
+                    has_perk = self.player.progression.has_perk(perk.perk_id)
+                    
+                    # Create detailed panel for each perk
+                    perk_color = "green" if has_perk else "yellow" if perk in [p for p, can_learn, _ in available_perks if can_learn] else "red"
+                    perk_status = "ACQUIRED" if has_perk else "AVAILABLE" if perk in [p for p, can_learn, _ in available_perks if can_learn] else "LOCKED"
+                    
+                    # Format prerequisites nicely
+                    prereq_text = ""
+                    if perk.prerequisites:
+                        prereqs = []
+                        for prereq in perk.prerequisites:
+                            if prereq.get("type") == "skill":
+                                skill_id = prereq.get("id")
+                                skill = self.player.progression.skill_tree.get_skill(skill_id)
+                                if skill:
+                                    level = prereq.get("level", 1)
+                                    prereqs.append(f"{skill.name} (Level {level}+)")
+                            elif prereq.get("type") == "perk":
+                                perk_id = prereq.get("id")
+                                prereq_perk = self.player.progression.skill_tree.get_perk(perk_id)
+                                if prereq_perk:
+                                    prereqs.append(f"{prereq_perk.name}")
+                            elif prereq.get("type") == "stat":
+                                stat = prereq.get("id", "").capitalize()
+                                level = prereq.get("level", 1)
+                                prereqs.append(f"{stat} {level}+")
+                        
+                        if prereqs:
+                            prereq_text = f"[yellow]Requirements: {', '.join(prereqs)}[/yellow]\n"
+                    
+                    # Format effects nicely
+                    effects_text = ""
+                    if perk.effects:
+                        effect_parts = []
+                        for k, v in perk.effects.items():
+                            # Format the key from snake_case to Title Case
+                            key_name = " ".join(part.capitalize() for part in k.split("_"))
+                            effect_parts.append(f"{key_name}: {v}")
+                        
+                        effects_text = f"[cyan]Effects: {', '.join(effect_parts)}[/cyan]\n"
+                    
+                    perk_content = f"{perk.description}\n\n{prereq_text}{effects_text}"
+                    
+                    console.print(Panel(
+                        perk_content,
+                        title=f"[bold {perk_color}]{i}. {perk.name} [{perk_status}][/bold {perk_color}]",
+                        subtitle=f"[{perk_color}]Category: {perk.category.capitalize()}[/{perk_color}]",
+                        expand=False,
+                        border_style=perk_color
+                    ))
+                
+                console.print("[cyan]Press Enter to return...[/cyan]")
+                input()
+                
             elif choice.upper() == "B":
                 # Return to character progression menu
                 break
