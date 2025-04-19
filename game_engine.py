@@ -1119,6 +1119,41 @@ class GameEngine:
         shop_name = node.get('shop_name', 'Shop')
         ui.display_header(console, shop_name)
         
+        # Apply reputation-based discounts and item availability
+        district_id = node.get('district_id', self.current_district) if hasattr(self, 'current_district') else None
+        discount_percent = 0
+        exclusive_items = []
+        
+        # Get reputation for current district
+        if district_id and hasattr(self.player, 'reputation'):
+            district_rep = self.player.reputation.get_district_reputation(district_id)
+            
+            # Apply district reputation effects
+            if district_rep >= 90:
+                discount_percent = 25
+                # Add exclusive high-tier items to shop inventory
+                exclusive_items = node.get('legendary_items', [])
+                console.print("[cyan]As a legendary figure in this district, you receive a 25% discount and access to exclusive items![/cyan]")
+            elif district_rep >= 75:
+                discount_percent = 15
+                # Add rare items to shop inventory
+                exclusive_items = node.get('rare_items', [])
+                console.print("[cyan]Your respected status in this district grants you a 15% discount and access to rare items![/cyan]")
+            elif district_rep >= 60:
+                discount_percent = 10
+                console.print("[cyan]Being friendly with locals gives you a 10% discount![/cyan]")
+            elif district_rep >= 40:
+                console.print("[dim cyan]The shopkeeper acknowledges you with a neutral nod.[/dim cyan]")
+            elif district_rep >= 25:
+                console.print("[yellow]The shopkeeper eyes you suspiciously. Some items may be marked up slightly.[/yellow]")
+                discount_percent = -5  # Price increase for suspicious reputation
+            elif district_rep >= 10:
+                console.print("[orange_red1]Your hostile reputation makes the shopkeeper nervous. Prices are higher than normal.[/orange_red1]")
+                discount_percent = -10  # Price increase for hostile reputation
+            else:
+                console.print("[red]The shopkeeper barely tolerates your presence. Prices are significantly higher.[/red]")
+                discount_percent = -20  # Significant price increase for hated reputation
+        
         if node.get('ascii_art'):
             ui.display_ascii_art(console, node['ascii_art'])
         
@@ -1140,7 +1175,24 @@ class GameEngine:
             console.print(Panel(f"[green]{node['text']}[/green]"))
         
         # Display shop inventory
-        shop_inventory = node.get('inventory', {})
+        shop_inventory = node.get('inventory', {}).copy()  # Create a copy to avoid modifying the original data
+        
+        # Add exclusive items based on reputation
+        for item in exclusive_items:
+            if item not in shop_inventory and isinstance(item, dict):
+                item_name = item.get('name')
+                item_details = {
+                    'price': item.get('price', 1000),
+                    'description': item.get('description', f'Special item unlocked by your reputation')
+                }
+                if item_name:
+                    shop_inventory[item_name] = item_details
+            elif item not in shop_inventory and isinstance(item, str):
+                # Support for simple item names, create a default entry
+                shop_inventory[item] = {
+                    'price': 1000,  # Default high price for special items
+                    'description': f'Special item unlocked by your reputation'
+                }
         
         if not shop_inventory:
             console.print("[bold red]The shop has nothing for sale.[/bold red]")
@@ -1149,10 +1201,22 @@ class GameEngine:
             console.print("\n[bold cyan]Items for sale:[/bold cyan]")
             
             for i, (item_name, details) in enumerate(shop_inventory.items(), 1):
-                price = details.get('price', 0)
+                # Apply reputation discount to displayed price
+                base_price = details.get('price', 0)
+                price = base_price
+                
+                if discount_percent != 0:
+                    price = int(base_price * (1 - discount_percent / 100))
+                
                 description = details.get('description', '')
-                console.print(f"[cyan]{i}. {item_name} - {price} credits[/cyan]")
-                console.print(f"   {description}")
+                
+                # Highlight exclusive items
+                if item_name in [i if isinstance(i, str) else i.get('name') for i in exclusive_items]:
+                    console.print(f"[bright_magenta]{i}. {item_name} - {price} credits [EXCLUSIVE][/bright_magenta]")
+                    console.print(f"   [bright_cyan]{description}[/bright_cyan]")
+                else:
+                    console.print(f"[cyan]{i}. {item_name} - {price} credits[/cyan]")
+                    console.print(f"   {description}")
         
         console.print("\n[yellow]1. Buy an item[/yellow]")
         console.print("[yellow]2. Sell an item[/yellow]")
@@ -1166,7 +1230,16 @@ class GameEngine:
                                     choices=[str(i) for i in range(1, len(shop_inventory)+1)])
             
             item_name = list(shop_inventory.keys())[item_idx-1]
-            price = shop_inventory[item_name]['price']
+            base_price = shop_inventory[item_name]['price']
+            
+            # Apply reputation-based discount or markup
+            price = base_price
+            if discount_percent != 0:
+                price = int(base_price * (1 - discount_percent / 100))
+                if discount_percent > 0:
+                    console.print(f"[green]Reputation discount: {discount_percent}% off (Original price: {base_price})[/green]")
+                else:
+                    console.print(f"[red]Reputation markup: {abs(discount_percent)}% (Original price: {base_price})[/red]")
             
             if self.player.credits >= price:
                 count = IntPrompt.ask(f"[bold cyan]How many {item_name} do you want to buy?[/bold cyan]", 
@@ -1221,12 +1294,20 @@ class GameEngine:
                 count = min(count, max_count)
                 
                 # Calculate sell price
-                sell_price = 0
+                base_sell_price = 0
                 if item_name in shop_inventory:
-                    sell_price = max(1, shop_inventory[item_name]['price'] // 2)
+                    base_sell_price = max(1, shop_inventory[item_name]['price'] // 2)
                 else:
                     # Default price for items not in shop
-                    sell_price = 5
+                    base_sell_price = 5
+                
+                # Apply reputation bonus to selling (if reputation is positive)
+                sell_price = base_sell_price
+                if discount_percent > 0:
+                    # When player has good reputation, selling prices are better too
+                    sell_bonus_percent = discount_percent // 2  # Half the buy discount applies to selling
+                    sell_price = int(base_sell_price * (1 + sell_bonus_percent / 100))
+                    console.print(f"[green]Reputation bonus: +{sell_bonus_percent}% selling price (Base value: {base_sell_price})[/green]")
                 
                 total_price = sell_price * count
                 
@@ -1386,9 +1467,10 @@ class GameEngine:
         console.print("\n[yellow]1. View/Upgrade Skills[/yellow]")
         console.print("[yellow]2. View/Acquire Perks[/yellow]")
         console.print("[yellow]3. View Active Abilities[/yellow]")
-        console.print("[yellow]4. Return to Game[/yellow]")
+        console.print("[yellow]4. View Reputation & Status[/yellow]")
+        console.print("[yellow]5. Return to Game[/yellow]")
         
-        action = Prompt.ask("[bold green]What would you like to do?[/bold green]", choices=["1", "2", "3", "4"])
+        action = Prompt.ask("[bold green]What would you like to do?[/bold green]", choices=["1", "2", "3", "4", "5"])
         
         if action == "1":
             self._handle_skills_menu(console)
@@ -1396,7 +1478,9 @@ class GameEngine:
             self._handle_perks_menu(console)
         elif action == "3":
             self._handle_abilities_menu(console)
-        # action 4 returns to game
+        elif action == "4":
+            self._handle_reputation_menu(console)
+        # action 5 returns to game
         
     def _handle_skills_menu(self, console):
         """Handle the skills submenu for upgrading character skills"""
@@ -1631,6 +1715,211 @@ class GameEngine:
                 # Return to character progression menu
                 break
                 
+    def _handle_reputation_menu(self, console):
+        """Handle the reputation and status menu for viewing reputation with factions and districts"""
+        while True:
+            ui.clear_screen()
+            ui.display_header(console, "REPUTATION & STATUS")
+            
+            # Import rich components for better display
+            from rich.panel import Panel
+            from rich.columns import Columns
+            from rich.table import Table
+            import animations
+            
+            # Get player's reputation data
+            district_reps = self.player.reputation.get_all_district_reputations()
+            faction_reps = self.player.reputation.get_all_faction_reputations()
+            rep_history = self.player.reputation.get_history(10)  # Get last 10 reputation changes
+            
+            # Create district reputation table
+            district_table = Table(title="District Reputations", show_header=True, header_style="bold cyan")
+            district_table.add_column("District")
+            district_table.add_column("Reputation")
+            district_table.add_column("Status")
+            
+            for district_id, rep_value in district_reps.items():
+                # Get district name from district manager
+                district = self.district_manager.get_district(district_id)
+                if not district:
+                    continue
+                
+                # Determine status text and color based on reputation value
+                status, color = self._get_reputation_status(rep_value)
+                
+                district_table.add_row(
+                    district.name,
+                    f"{rep_value}/100",
+                    f"[{color}]{status}[/{color}]"
+                )
+            
+            # Create faction reputation table
+            faction_table = Table(title="Faction Reputations", show_header=True, header_style="bold cyan")
+            faction_table.add_column("Faction")
+            faction_table.add_column("Reputation")
+            faction_table.add_column("Status")
+            
+            for faction_id, rep_value in faction_reps.items():
+                # Get faction name from district manager
+                faction = self.district_manager.get_faction(faction_id)
+                if not faction:
+                    continue
+                
+                # Determine status text and color based on reputation value
+                status, color = self._get_reputation_status(rep_value)
+                
+                faction_table.add_row(
+                    faction.name,
+                    f"{rep_value}/100",
+                    f"[{color}]{status}[/{color}]"
+                )
+            
+            # Create reputation history table
+            history_table = Table(title="Recent Reputation Changes", show_header=True, header_style="bold cyan")
+            history_table.add_column("Time")
+            history_table.add_column("Target")
+            history_table.add_column("Change")
+            history_table.add_column("Reason")
+            
+            for entry in rep_history:
+                # Convert timestamp to readable format
+                timestamp = entry.get("timestamp", "Unknown")
+                if isinstance(timestamp, float):
+                    import datetime
+                    timestamp = datetime.datetime.fromtimestamp(timestamp).strftime("%H:%M:%S")
+                
+                # Get target name (district or faction)
+                target_id = entry.get("target_id", "")
+                target_type = entry.get("target_type", "")
+                
+                if target_type == "district":
+                    district = self.district_manager.get_district(target_id)
+                    target_name = district.name if district else target_id
+                elif target_type == "faction":
+                    faction = self.district_manager.get_faction(target_id)
+                    target_name = faction.name if faction else target_id
+                else:
+                    target_name = target_id
+                
+                # Format the change value with color
+                change = entry.get("change", 0)
+                if change > 0:
+                    change_text = f"[green]+{change}[/green]"
+                else:
+                    change_text = f"[red]{change}[/red]"
+                
+                # Add row to the history table
+                history_table.add_row(
+                    timestamp,
+                    target_name,
+                    change_text,
+                    entry.get("reason", "Unknown")
+                )
+            
+            # Get active benefits based on reputation levels
+            active_benefits = self._get_active_reputation_benefits()
+            
+            # Create a panel for the active benefits
+            benefits_panel = Panel(
+                "\n".join([f"[cyan]▪[/cyan] {benefit}" for benefit in active_benefits]) if active_benefits else "No active benefits yet.",
+                title="Active Reputation Benefits",
+                border_style="green"
+            )
+            
+            # Display the tables
+            console.print(district_table)
+            console.print("")
+            console.print(faction_table)
+            console.print("")
+            console.print(benefits_panel)
+            console.print("")
+            console.print(history_table)
+            
+            # User options
+            console.print("\n[yellow]B. Back to character menu[/yellow]")
+            
+            choice = Prompt.ask("[bold green]What would you like to do?[/bold green]", choices=["b", "B"])
+            
+            if choice.upper() == "B":
+                # Return to character progression menu
+                break
+
+    def _get_reputation_status(self, reputation_value):
+        """Get a text description and color for a reputation value"""
+        if reputation_value >= 90:
+            return "Legendary", "bright_magenta"
+        elif reputation_value >= 75:
+            return "Respected", "bright_green"
+        elif reputation_value >= 60:
+            return "Friendly", "green"
+        elif reputation_value >= 40:
+            return "Neutral", "yellow"
+        elif reputation_value >= 25:
+            return "Suspicious", "orange_red1"
+        elif reputation_value >= 10:
+            return "Hostile", "red"
+        else:
+            return "Hated", "bright_red"
+            
+    def _get_active_reputation_benefits(self):
+        """Get a list of active benefits based on player's reputation levels"""
+        benefits = []
+        
+        # Get all district and faction reputations
+        district_reps = self.player.reputation.get_all_district_reputations()
+        faction_reps = self.player.reputation.get_all_faction_reputations()
+        
+        # District benefits
+        for district_id, rep_value in district_reps.items():
+            district = self.district_manager.get_district(district_id)
+            if not district:
+                continue
+                
+            # Add benefits based on reputation thresholds
+            if rep_value >= 90:
+                benefits.append(f"In {district.name}: 25% discount on all goods and services")
+                benefits.append(f"In {district.name}: Access to exclusive high-tier items")
+            elif rep_value >= 75:
+                benefits.append(f"In {district.name}: 15% discount on all goods and services")
+                benefits.append(f"In {district.name}: Access to rare items and equipment")
+            elif rep_value >= 60:
+                benefits.append(f"In {district.name}: 10% discount on all goods and services")
+                benefits.append(f"In {district.name}: Citizens provide useful information")
+            elif rep_value >= 40:
+                benefits.append(f"In {district.name}: Basic access to local services")
+            
+        # Faction benefits
+        for faction_id, rep_value in faction_reps.items():
+            faction = self.district_manager.get_faction(faction_id)
+            if not faction:
+                continue
+                
+            # Add benefits based on reputation thresholds and faction types
+            if rep_value >= 90:
+                benefits.append(f"{faction.name}: Special missions and exclusive equipment")
+                if faction.faction_type == "corporate":
+                    benefits.append(f"{faction.name}: Corporate safe houses available")
+                elif faction.faction_type == "gang":
+                    benefits.append(f"{faction.name}: Gang members will assist in combat")
+                elif faction.faction_type == "hacker":
+                    benefits.append(f"{faction.name}: Deep net access and data decryption")
+            elif rep_value >= 75:
+                if faction.faction_type == "corporate":
+                    benefits.append(f"{faction.name}: Access to corporate tech and equipment")
+                elif faction.faction_type == "gang":
+                    benefits.append(f"{faction.name}: Protection in gang-controlled districts")
+                elif faction.faction_type == "hacker":
+                    benefits.append(f"{faction.name}: Netrunning support and data access")
+            elif rep_value >= 60:
+                if faction.faction_type == "corporate":
+                    benefits.append(f"{faction.name}: Corporate credentials open some doors")
+                elif faction.faction_type == "gang":
+                    benefits.append(f"{faction.name}: Safe passage through territories")
+                elif faction.faction_type == "hacker":
+                    benefits.append(f"{faction.name}: Basic network access privileges")
+        
+        return benefits
+
     def _handle_abilities_menu(self, console):
         """Handle the active abilities menu for viewing character abilities"""
         ui.clear_screen()
@@ -1878,14 +2167,42 @@ class GameEngine:
         # Handle district reputation changes
         for district_id, rep_change in results.get('reputation_change', {}).items():
             if rep_change != 0:
+                # Get district name for display
+                district_name = self.district_manager.get_district(district_id).name
+                
+                # Use enhanced modify_district_reputation method which returns results with milestone info
+                result = self.player.reputation.modify_district_reputation(
+                    district_id, 
+                    rep_change,
+                    f"Action result in {district_name}"
+                )
+                
+                # Display basic reputation change
                 if rep_change > 0:
-                    self.player.reputation.modify_district_reputation(district_id, rep_change)
-                    district_name = self.district_manager.get_district(district_id).name
                     console.print(f"[green]Your reputation in {district_name} increased by {rep_change}.[/green]")
                 else:
-                    self.player.reputation.modify_district_reputation(district_id, rep_change)
-                    district_name = self.district_manager.get_district(district_id).name
                     console.print(f"[red]Your reputation in {district_name} decreased by {abs(rep_change)}.[/red]")
+                
+                # Check if a milestone was reached
+                if "milestone" in result and result["milestone"]:
+                    milestone = result["milestone"]
+                    
+                    # Show milestone notification with animations if enabled
+                    import animations
+                    
+                    console.print()
+                    milestone_panel = Panel.fit(
+                        f"[bold cyan]{milestone['description']}[/bold cyan]",
+                        title="[bold yellow]MILESTONE REACHED![/bold yellow]",
+                        border_style="yellow"
+                    )
+                    animations.neon_fade_in(milestone_panel, console)
+                    
+                    # Play achievement sound if audio system is available
+                    if self.audio_enabled and self.audio_system:
+                        self.audio_system.play_sound("achievement")
+                    
+                    time.sleep(1)
         
         # Handle faction reputation changes
         for faction_id, rep_change in results.get('faction_reputation_change', {}).items():
@@ -1908,12 +2225,40 @@ class GameEngine:
                 else:
                     console.print(f"[red]Your reputation with {faction.name} decreased by {abs(rep_change)}.[/red]")
                 
+                # Check if a milestone was reached for the primary faction
+                primary_change = faction_results.get("primary_change", {})
+                if "milestone" in primary_change and primary_change["milestone"]:
+                    milestone = primary_change["milestone"]
+                    
+                    # Show milestone notification with animations
+                    import animations
+                    
+                    console.print()
+                    milestone_panel = Panel.fit(
+                        f"[bold cyan]{milestone['description']}[/bold cyan]",
+                        title=f"[bold yellow]MILESTONE REACHED WITH {faction.name.upper()}![/bold yellow]",
+                        border_style="yellow"
+                    )
+                    animations.neon_fade_in(milestone_panel, console)
+                    
+                    # Play achievement sound if audio system is available
+                    if self.audio_enabled and self.audio_system:
+                        self.audio_system.play_sound("achievement")
+                    
+                    time.sleep(1)
+                
                 # Display ripple effects (secondary reputation changes)
                 for ripple_id, ripple_amount in faction_results.get('ripple_effects', {}).items():
                     # Skip small ripple effects to avoid overwhelming the player
                     if abs(ripple_amount) < 3:
                         continue
                         
+                    # Extract ripple effect details
+                    ripple_effect = faction_results["ripple_effects"].get(ripple_id, {})
+                    if not isinstance(ripple_effect, dict):
+                        # Handle case where ripple_effect is just the amount
+                        ripple_effect = {"new_value": 0, "change": ripple_amount}
+                    
                     # Check if this is a district or faction effect
                     if ripple_id.startswith('district_'):
                         # This is a district reputation change
@@ -1924,6 +2269,11 @@ class GameEngine:
                                 console.print(f"[dim green]► This also improved your standing in {district.name} slightly.[/dim green]")
                             else:
                                 console.print(f"[dim red]► This also harmed your standing in {district.name} slightly.[/dim red]")
+                            
+                            # Check if a milestone was reached for this district as a ripple effect
+                            if "milestone" in ripple_effect and ripple_effect["milestone"]:
+                                milestone = ripple_effect["milestone"]
+                                console.print(f"[dim yellow]  ► Milestone reached in {district.name}: {milestone['description']}[/dim yellow]")
                     else:
                         # This is a faction reputation change
                         affected_faction = self.district_manager.get_faction(ripple_id)
@@ -1932,6 +2282,11 @@ class GameEngine:
                                 console.print(f"[dim green]► Your standing with {affected_faction.name} also improved slightly.[/dim green]")
                             else:
                                 console.print(f"[dim red]► Your standing with {affected_faction.name} also decreased slightly.[/dim red]")
+                                
+                            # Check if a milestone was reached for this faction as a ripple effect
+                            if "milestone" in ripple_effect and ripple_effect["milestone"]:
+                                milestone = ripple_effect["milestone"]
+                                console.print(f"[dim yellow]  ► Milestone reached with {affected_faction.name}: {milestone['description']}[/dim yellow]")
         
         # Handle combat encounter if one was triggered
         if 'combat_encounter' in results:
