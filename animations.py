@@ -458,8 +458,13 @@ def hologram_effect(text, console, style=None):
         console: Console for output
         style: Style to apply to the text
     """
+    # Import at the start to ensure it's available for all code paths
+    from rich.text import Text
+    
     if not ANIMATION_SETTINGS["enabled"]:
-        console.print(text, style=style)
+        # Create a Text object to prevent rich markup interpretation even when animation is disabled
+        text_obj = Text(text)
+        console.print(text_obj, style=style)
         return
     
     delay = get_animation_delay()
@@ -467,7 +472,6 @@ def hologram_effect(text, console, style=None):
     max_length = max(len(line) for line in lines)
     
     # Use rich.text.Text objects to prevent special character interpretation
-    from rich.text import Text
     
     # Simulate hologram startup
     for i in range(3):
@@ -532,15 +536,17 @@ def data_corruption(text, console, style=None, corruption_level=0.3):
         style: Style to apply to the text
         corruption_level: Level of corruption (0.0 to 1.0)
     """
+    # Import at the start to ensure it's available for all code paths
+    from rich.text import Text
+    
     if not ANIMATION_SETTINGS["enabled"]:
-        console.print(text, style=style)
+        # Create a Text object to prevent rich markup interpretation even when animation is disabled
+        text_obj = Text(text)
+        console.print(text_obj, style=style)
         return
     
     delay = get_animation_delay()
     corruption_chars = "█▓▒░▓▒░"
-    
-    # Use rich.text.Text objects to prevent special character interpretation
-    from rich.text import Text
     
     # Start with clean text
     text_obj = Text(text)
@@ -586,15 +592,17 @@ def code_decryption(text, console, style=None):
         console: Console for output
         style: Style to apply to the text
     """
+    # Import at the start to ensure it's available for all code paths
+    from rich.text import Text
+    
     if not ANIMATION_SETTINGS["enabled"]:
-        console.print(text, style=style)
+        # Create a Text object to prevent rich markup interpretation even when animation is disabled
+        text_obj = Text(text)
+        console.print(text_obj, style=style)
         return
     
     delay = get_animation_delay() * 1.5
     encrypted_chars = "!@#$%^&*()_+{}|:<>?~`-=[]\\;',./0123456789ABCDEF"
-    
-    # Use rich.text.Text objects to prevent special character interpretation
-    from rich.text import Text
     
     # Create a mask of which characters are fixed (remain static)
     fixed_chars = [False] * len(text)
@@ -635,8 +643,13 @@ def neural_interface(console, message="NEURAL LINK ESTABLISHED", style=None, dur
         style: Style to apply to the text
         duration: Duration of the animation in seconds
     """
+    # Import at the start to ensure it's available for all code paths
+    from rich.text import Text
+    
     if not ANIMATION_SETTINGS["enabled"]:
-        console.print(message, style=style)
+        # Create a Text object to prevent rich markup interpretation even when animation is disabled
+        text_obj = Text(message)
+        console.print(text_obj, style=style)
         return
     
     delay = get_animation_delay() * 0.5
@@ -689,9 +702,14 @@ def heartbeat_monitor(console, heartbeats=5, bpm=80, flatline=False, style=None)
         flatline: Whether to end with a flatline effect
         style: Style to apply to the text
     """
+    # Import at the start to ensure it's available for all code paths
+    from rich.text import Text
+    
     if not ANIMATION_SETTINGS["enabled"]:
         if flatline:
-            console.print("_____________________", style=Style(color="#FF0000"))
+            # Create a Text object to prevent rich markup interpretation even when animation is disabled
+            text_obj = Text("_____________________")
+            console.print(text_obj, style=Style(color="#FF0000"))
         return
     
     delay = 60 / (bpm * 20)  # Convert BPM to delay between frames (20 frames per beat)
@@ -755,7 +773,14 @@ def circuit_pattern(console, duration=2.0, style=None):
         duration: Duration of the animation in seconds
         style: Style to apply to the circuit
     """
+    # Import at the start to ensure it's available for all code paths
+    from rich.text import Text
+    
     if not ANIMATION_SETTINGS["enabled"]:
+        # When animations are disabled, just display a simple circuit symbol
+        circuit_symbol = "◉─◌─┼─□"
+        text_obj = Text(circuit_symbol)
+        console.print(text_obj, style=Style(color="#00AAFF"))
         return
     
     delay = get_animation_delay() * 0.8
@@ -837,9 +862,13 @@ def circuit_pattern(console, duration=2.0, style=None):
         
         # Render the current state with a moving "pulse" of energy
         pulse_pos = int(((time.time() - start_time) * 15) % width)
+        from rich.text import Text
         
         for y in range(height):
-            line = ""
+            # Build the line as a list of characters first
+            line_chars = []
+            line_styles = []
+            
             for x in range(width):
                 char = circuit[y][x]
                 
@@ -848,13 +877,21 @@ def circuit_pattern(console, duration=2.0, style=None):
                     distance = abs(x - pulse_pos)
                     if distance < 5:
                         intensity = 255 - (distance * 40)
-                        line += f"[#{intensity:02X}{intensity:02X}FF]{char}[/]"
+                        color = f"#{intensity:02X}{intensity:02X}FF"
                     else:
-                        line += f"[#00AAFF]{char}[/]"
+                        color = "#00AAFF"
+                    
+                    line_chars.append(char)
+                    line_styles.append((len(line_chars) - 1, 1, Style(color=color)))
                 else:
-                    line += " "
+                    line_chars.append(" ")
             
-            console.print(line)
+            # Create a Text object with styled spans
+            line_text = Text("".join(line_chars))
+            for start, length, style in line_styles:
+                line_text.stylize(style, start, start + length)
+                
+            console.print(line_text)
         
         time.sleep(delay)
         
@@ -863,14 +900,116 @@ def circuit_pattern(console, duration=2.0, style=None):
             sys.stdout.write("\033[F")
     
     # Final clean display
+    from rich.text import Text
+    
     for y in range(height):
-        line = ""
+        # Create a line manually without rich markup
+        line_chars = []
         for x in range(width):
             if circuit[y][x] != " ":
-                line += f"[#00AAFF]{circuit[y][x]}[/]"
+                line_chars.append(circuit[y][x])
             else:
-                line += " "
-        console.print(line)
+                line_chars.append(" ")
+                
+        # Create a Text object to prevent markup interpretation
+        line_text = Text("".join(line_chars))
+        console.print(line_text, style=Style(color="#00AAFF"))
+
+def character_introduction(console, char_class, name=None):
+    """
+    Display an engaging character introduction animation
+    
+    Args:
+        console: Console for output
+        char_class: Character class (NetRunner, Street Samurai, Techie, Fixer)
+        name: Character name (optional)
+    """
+    # Import at the start to ensure it's available for all code paths
+    from rich.text import Text
+    from rich.panel import Panel
+    from rich.style import Style
+    import assets
+    
+    if not ANIMATION_SETTINGS["enabled"]:
+        # When animation is disabled, just display character info
+        title = f"Character: {name if name else char_class}"
+        content = f"Class: {char_class}\n\n"
+        
+        if char_class.lower() == "netrunner":
+            content += "Specialist in hacking and digital infiltration."
+        elif char_class.lower() == "street samurai":
+            content += "Augmented fighter with unmatched combat skills."
+        elif char_class.lower() == "techie":
+            content += "Expert in technology repair and improvised gadgets."
+        elif char_class.lower() == "fixer":
+            content += "Connected dealer, negotiator, and information broker."
+            
+        # Create a Text object to prevent markup interpretation
+        text_obj = Text(content)
+        panel = Panel(text_obj, title=title)
+        console.print(panel)
+        return
+    
+    # Get character ASCII art
+    art_name = None
+    if char_class.lower() == "netrunner":
+        art_name = "netrunner"
+    elif char_class.lower() == "street samurai":
+        art_name = "street_samurai"
+    elif char_class.lower() == "techie":
+        art_name = "techie"
+    elif char_class.lower() == "fixer":
+        art_name = "fixer"
+    
+    # Fallback to hacker if no specific art found
+    char_art = assets.get_ascii_art(art_name if art_name else "hacker")
+    
+    # Use neural interface animation as intro
+    neural_interface(console, message="NEURAL LINK ESTABLISHED", duration=1.5)
+    
+    # Glitchy scanning effect
+    console.print()
+    glitch_text("SCANNING NEURAL IDENTITY...", console, style=Style(color="#00FFAA"))
+    time.sleep(0.5)
+    
+    # Character class reveal with typing effect
+    console.print()
+    typing_effect(f"CLASS IDENTIFIED: [bold]{char_class.upper()}[/bold]", console, style=Style(color="#FF00AA"))
+    time.sleep(0.5)
+    
+    # Name reveal if provided
+    if name:
+        console.print()
+        typing_effect(f"IDENTITY: [bold]{name.upper()}[/bold]", console, style=Style(color="#00AAFF"))
+        time.sleep(0.5)
+    
+    # Show character art with a neon effect
+    console.print()
+    if char_art:
+        # Create a Text object to prevent markup interpretation
+        char_art_text = Text(char_art)
+        console.print(char_art_text, style=Style(color="#00FFAA"))
+    
+    # Class description with typing effect
+    console.print()
+    description = ""
+    if char_class.lower() == "netrunner":
+        description = "Specialist in hacking and digital infiltration. Exceptional at bypassing security and manipulating data."
+    elif char_class.lower() == "street samurai":
+        description = "Augmented fighter with unmatched combat skills. Cybernetic enhancements provide superior strength and reflexes."
+    elif char_class.lower() == "techie":
+        description = "Expert in technology repair and improvised gadgets. Can create useful tools from scavenged parts."
+    elif char_class.lower() == "fixer":
+        description = "Connected dealer, negotiator, and information broker. Knows who to talk to and how to make deals."
+    
+    typing_effect(description, console, style=Style(color="#AAAAFF"))
+    
+    # Final flourish
+    console.print()
+    circuit_pattern(console, duration=1.0)
+    console.print()
+    typing_effect("READY FOR OPERATION. GOOD LUCK, RUNNER.", console, style=Style(color="#00FFAA"))
+    console.print()
 
 def data_stream(text, console, style=None, stream_chars="10"):
     """
@@ -882,15 +1021,17 @@ def data_stream(text, console, style=None, stream_chars="10"):
         style: Style to apply to the text
         stream_chars: Characters to use in the data stream
     """
+    # Import at the start to ensure it's available for all code paths
+    from rich.text import Text
+    
     if not ANIMATION_SETTINGS["enabled"]:
-        console.print(text, style=style)
+        # Create a Text object to prevent rich markup interpretation even when animation is disabled
+        text_obj = Text(text)
+        console.print(text_obj, style=style)
         return
     
     delay = get_animation_delay() * 0.8
     stream_length = 30
-    
-    # Use rich.text.Text objects to prevent special character interpretation
-    from rich.text import Text
     
     # Create streams of data that will appear to flow
     streams = []

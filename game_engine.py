@@ -165,10 +165,28 @@ class GameEngine:
             self.player.inventory.add_item("Stimpack", 1)  # One extra stimpack
             console.print(f"[green]Difficulty bonus: Extra Stimpack[/green]")
         
+        # Show character introduction animation
+        try:
+            import animations
+            from config import GAME_SETTINGS
+            
+            if GAME_SETTINGS.get("ui_animations_enabled", True):
+                # Use the character introduction animation
+                animations.character_introduction(console, selected_class['name'], name)
+                # Wait for user acknowledgment
+                Prompt.ask("\nPress Enter to continue")
+            else:
+                # Just print a simple message
+                console.print("\n[bold green]Character created! Your cyberpunk adventure begins...[/bold green]")
+                time.sleep(2)
+        except (ImportError, AttributeError, Exception) as e:
+            # Fallback if animation module is not available or if there's an error
+            console.print("\n[bold green]Character created! Your cyberpunk adventure begins...[/bold green]")
+            console.print(f"[yellow]Note: Animation couldn't be displayed: {str(e)}[/yellow]")
+            time.sleep(2)
+        
         # Start the intro sequence
         self.current_node = "intro"
-        console.print("\n[bold green]Character created! Your cyberpunk adventure begins...[/bold green]")
-        time.sleep(2)
     
     def load_game(self, console):
         """Load a saved game"""

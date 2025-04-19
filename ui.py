@@ -82,18 +82,21 @@ def display_splash_screen(console):
     try:
         import animations
         from config import GAME_SETTINGS
+        from rich.text import Text
         
         # Get title ASCII art
         title_art = assets.get_ascii_art('title')
         
         # Apply hologram effect to title if animations enabled
         if GAME_SETTINGS.get("ui_animations_enabled", True):
+            # Let the hologram_effect function handle Text creation
             animations.hologram_effect(title_art, console, style=Style(color=COLORS['primary']))
         else:
-            # Fall back to standard display
-            display_responsive_title(console)
+            # Create a Text object to prevent markup interpretation
+            title_text = Text(title_art)
+            console.print(title_text, style=Style(color=COLORS['primary']))
     except (ImportError, AttributeError):
-        # Fall back to standard display
+        # Fall back to standard display - this uses Text objects now
         display_responsive_title(console)
     
     # Get terminal width for responsive display
@@ -278,18 +281,21 @@ def main_menu(console):
     try:
         import animations
         from config import GAME_SETTINGS
+        from rich.text import Text
         
         # Get title ASCII art
         title_art = assets.get_ascii_art('title')
         
         # Apply hologram effect to title if animations enabled
         if GAME_SETTINGS.get("ui_animations_enabled", True):
+            # Let the hologram_effect function handle Text creation
             animations.hologram_effect(title_art, console, style=Style(color=COLORS['primary']))
         else:
-            # Fall back to standard display
-            display_responsive_title(console)
+            # Create a Text object to prevent markup interpretation
+            title_text = Text(title_art)
+            console.print(title_text, style=Style(color=COLORS['primary']))
     except (ImportError, AttributeError):
-        # Fall back to standard display
+        # Fall back to standard display - this uses Text objects now
         display_responsive_title(console)
     
     # Create menu panel with cyberpunk-themed items
