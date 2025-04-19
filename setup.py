@@ -668,8 +668,15 @@ def main():
         console.print("\nStarting game in 3 seconds...")
         time.sleep(3)
         
-        # Start the game
-        subprocess.Popen([sys.executable, "main.py"])
+        # Start the game and wait for it to complete
+        console.print("[cyan]Starting game...[/cyan]")
+        try:
+            # Using call instead of Popen to wait for the process to complete
+            subprocess.call([sys.executable, "main.py"])
+        except KeyboardInterrupt:
+            console.print("[yellow]Game execution interrupted.[/yellow]")
+        except Exception as e:
+            console.print(f"[red]Error running the game: {e}[/red]")
     else:
         console.print("\n[yellow bold]Some tests failed. You may experience issues when running the game.[/yellow bold]")
         console.print("[yellow]Please review the errors above and try to resolve them before playing.[/yellow]")
@@ -682,7 +689,13 @@ def main():
             proceed = 'y'
         if proceed == 'y':
             console.print("\nStarting game...")
-            subprocess.Popen([sys.executable, "main.py"])
+            try:
+                # Using call instead of Popen to wait for the process to complete
+                subprocess.call([sys.executable, "main.py"])
+            except KeyboardInterrupt:
+                console.print("[yellow]Game execution interrupted.[/yellow]")
+            except Exception as e:
+                console.print(f"[red]Error running the game: {e}[/red]")
         else:
             console.print("\nSetup aborted. Please fix the issues and run setup.py again.")
 
