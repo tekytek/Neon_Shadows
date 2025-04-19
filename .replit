@@ -64,6 +64,10 @@ args = "Sound Design Test"
 task = "workflow.run"
 args = "Sound Design Demo"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Exit Feature Test"
+
 [[workflows.workflow]]
 name = "Cyberpunk Adventure Game"
 author = "agent"
@@ -246,6 +250,20 @@ task = "packager.installForAll"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python test_sound_design_demo.py"
+
+[[workflows.workflow]]
+name = "Exit Feature Test"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python test_exit_feature.py"
 
 [deployment]
 run = ["sh", "-c", "python main.py"]

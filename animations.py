@@ -345,7 +345,29 @@ def cyber_flicker(text, console, style=None, flicker_count=3):
     
     delay = get_animation_delay()
     
-    # Flicker effect
+    # Check if we're dealing with a Panel or rich component that doesn't support len()
+    from rich.panel import Panel
+    from rich.text import Text
+    
+    # For Panel objects, use a different approach
+    if isinstance(text, Panel) or not hasattr(text, "__len__"):
+        # For objects without len(), just use on/off blinking
+        for _ in range(flicker_count):
+            # Clear the area with a newline
+            console.print("", end="\r")
+            time.sleep(delay)
+            
+            # Display and hide the text without trying to blank it out
+            console.print(text, style=style)
+            time.sleep(delay * 2)
+            console.print("\n" * 5, end="\r")  # Push content out of view
+            time.sleep(delay)
+        
+        # Final display
+        console.print(text, style=style)
+        return
+    
+    # Regular string handling
     for _ in range(flicker_count):
         # Display blank
         console.print(" " * len(text), end="\r")
