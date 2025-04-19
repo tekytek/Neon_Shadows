@@ -701,19 +701,51 @@ class LocationActionHandler:
     def _get_district_enemy(self, district_id: str) -> str:
         """Get an appropriate enemy type for a district"""
         district_enemies = {
+            # Core districts
             "downtown": ["Corporate Guard", "Street Thug", "Corrupt Cop"],
             "industrial": ["Security Robot", "Gang Member", "Factory Worker"],
             "residential": ["Local Tough", "Home Defender", "Gang Recruit"],
             "outskirts": ["Wasteland Scavenger", "Mutant", "Gang Enforcer"],
+            
+            # Corporate areas
             "corporate": ["Corporate Security", "Combat Droid", "Executive Bodyguard"],
+            "corporate_sector": ["Elite Security", "Corporate Enforcer", "Security Drone"],
+            
+            # Commerce areas
             "nightmarket": ["Market Guard", "Smuggler", "Thief"],
             "entertainment": ["Club Bouncer", "Drug Dealer", "Rich Thug"],
             "upscale": ["Private Security", "Armed Civilian", "Corporate Agent"],
-            "wasteland": ["Mutant Beast", "Rad-Scavenger", "Tribal Warrior"]
+            
+            # Outer areas
+            "wasteland": ["Mutant Beast", "Rad-Scavenger", "Tribal Warrior"],
+            
+            # Tech areas
+            "tech_district": ["Rogue AI Bot", "Tech Gang Member", "Cyber-Enhanced Guard"],
+            
+            # Add any other districts that might be present in your game
         }
         
-        # Get enemies list for this district, or use a default list
-        enemies = district_enemies.get(district_id, ["Hostile Stranger", "Armed Civilian", "Street Fighter"])
+        # Normalize district ID to handle variations in naming
+        normalized_id = district_id.lower().replace(' ', '_').replace('-', '_')
+        
+        # Try exact match first
+        if normalized_id in district_enemies:
+            enemies = district_enemies[normalized_id]
+        else:
+            # Try partial matching for similar district names
+            matched = False
+            for key in district_enemies:
+                if key in normalized_id or normalized_id in key:
+                    enemies = district_enemies[key]
+                    matched = True
+                    break
+            
+            # Fall back to default enemies if no match found
+            if not matched:
+                enemies = ["Hostile Stranger", "Armed Civilian", "Street Fighter"]
+            
+            # Log the fallback for debugging
+            print(f"Warning: No exact enemy match for district '{district_id}', using best match or default.")
         
         # Return a random enemy from the list
         return random.choice(enemies)
@@ -721,6 +753,7 @@ class LocationActionHandler:
     def _get_district_resources(self, district_id: str) -> List[Dict]:
         """Get resources that can be found in a specific district"""
         district_resources = {
+            # Core districts
             "downtown": [
                 {"name": "Credit Chip", "chance": 0.3, "min": 1, "max": 1},
                 {"name": "Tech Component", "chance": 0.4, "min": 1, "max": 2},
@@ -741,11 +774,20 @@ class LocationActionHandler:
                 {"name": "Stimpack", "chance": 0.3, "min": 1, "max": 1},
                 {"name": "Makeshift Weapon", "chance": 0.4, "min": 1, "max": 1}
             ],
+            
+            # Corporate areas
             "corporate": [
                 {"name": "Corporate ID Card", "chance": 0.3, "min": 1, "max": 1},
                 {"name": "Premium Tech Component", "chance": 0.4, "min": 1, "max": 1},
                 {"name": "Encrypted Data Chip", "chance": 0.5, "min": 1, "max": 2}
             ],
+            "corporate_sector": [
+                {"name": "High-End Datachip", "chance": 0.3, "min": 1, "max": 1},
+                {"name": "Corporate Access Card", "chance": 0.2, "min": 1, "max": 1},
+                {"name": "Premium Stimpack", "chance": 0.4, "min": 1, "max": 1}
+            ],
+            
+            # Commerce areas
             "nightmarket": [
                 {"name": "Street Food", "chance": 0.7, "min": 1, "max": 3},
                 {"name": "Black Market Item", "chance": 0.4, "min": 1, "max": 1},
@@ -761,15 +803,45 @@ class LocationActionHandler:
                 {"name": "Designer Clothes", "chance": 0.3, "min": 1, "max": 1},
                 {"name": "Gourmet Food", "chance": 0.5, "min": 1, "max": 2}
             ],
+            
+            # Outer areas
             "wasteland": [
                 {"name": "Rare Metal", "chance": 0.4, "min": 1, "max": 2},
                 {"name": "Mutant Tissue", "chance": 0.5, "min": 1, "max": 3},
                 {"name": "Radiation Pills", "chance": 0.6, "min": 1, "max": 2}
+            ],
+            
+            # Tech areas
+            "tech_district": [
+                {"name": "Experimental Chip", "chance": 0.4, "min": 1, "max": 1},
+                {"name": "AI Core Fragment", "chance": 0.3, "min": 1, "max": 1},
+                {"name": "Neural Interface", "chance": 0.2, "min": 1, "max": 1}
             ]
         }
         
-        # Get resources list for this district, or use a default list
-        return district_resources.get(district_id, [
-            {"name": "Scrap Parts", "chance": 0.6, "min": 1, "max": 3},
-            {"name": "Stimpack", "chance": 0.3, "min": 1, "max": 1}
-        ])
+        # Normalize district ID to handle variations in naming
+        normalized_id = district_id.lower().replace(' ', '_').replace('-', '_')
+        
+        # Try exact match first
+        if normalized_id in district_resources:
+            resources = district_resources[normalized_id]
+        else:
+            # Try partial matching for similar district names
+            matched = False
+            for key in district_resources:
+                if key in normalized_id or normalized_id in key:
+                    resources = district_resources[key]
+                    matched = True
+                    break
+            
+            # Fall back to default resources if no match found
+            if not matched:
+                resources = [
+                    {"name": "Scrap Parts", "chance": 0.6, "min": 1, "max": 3},
+                    {"name": "Stimpack", "chance": 0.3, "min": 1, "max": 1}
+                ]
+            
+            # Log the fallback for debugging
+            print(f"Warning: No exact resource match for district '{district_id}', using best match or default.")
+        
+        return resources

@@ -1937,11 +1937,19 @@ class GameEngine:
         if 'combat_encounter' in results:
             combat_data = results['combat_encounter']
             
+            # Error handling - ensure combat_data and enemy_type are valid
+            if not combat_data or 'enemy_type' not in combat_data or not combat_data['enemy_type']:
+                # Default to a generic enemy if missing
+                enemy_type = "Hostile Stranger"
+                console.print("[yellow]Warning: Encountered an unknown hostile entity.[/yellow]")
+            else:
+                enemy_type = combat_data['enemy_type']
+            
             # Create a combat node from the encounter data
             combat_node = {
                 "type": "combat",
-                "text": f"You're confronted by a {combat_data['enemy_type']}!",
-                "enemy": {"name": combat_data['enemy_type']},
+                "text": f"You're confronted by a {enemy_type}!",
+                "enemy": {"name": enemy_type},
                 "rewards": combat_data.get('rewards', {
                     "experience": 20 * combat_data.get('danger_level', 3),
                     "credits": 10 * combat_data.get('danger_level', 3)
