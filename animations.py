@@ -210,14 +210,23 @@ def typing_effect(text, console, style=None):
                 # Convert to string if it isn't already
                 if not isinstance(text, str):
                     text = str(text)
-                    
+                
+                # Remove any Rich markup to prevent showing tags
+                import re
+                plain_text = re.sub(r'\[[^\]]*\]', '', text)
+                
                 # Type out the text character by character
-                for i in range(min(len(text) + 1, 500)):  # Limit to 500 chars for safety
-                    console.print(text[:i], style=style, end="\r")
+                for i in range(min(len(plain_text) + 1, 500)):  # Limit to 500 chars for safety
+                    # Create a Text object to ensure no markup interpretation
+                    current_text = Text(plain_text[:i])
+                    console.print(current_text, style=style, end="\r")
                     time.sleep(delay)
                 
-                # Add a newline at the end
+                # Print the final version with proper styling
                 console.print()
+                # Use a clean Text object for final display to avoid markup issues
+                final_text = Text(plain_text)
+                console.print(final_text, style=style)
             except Exception:
                 # Fallback to direct printing if animation fails
                 console.print(text, style=style)
@@ -988,13 +997,14 @@ def character_introduction(console, char_class, name=None):
     
     # Character class reveal with typing effect
     console.print()
-    typing_effect(f"CLASS IDENTIFIED: [bold]{char_class.upper()}[/bold]", console, style=Style(color="#FF00AA"))
+    # Don't use Rich markup inside typing_effect - create a non-markup version instead
+    typing_effect(f"CLASS IDENTIFIED: {char_class.upper()}", console, style=Style(color="#FF00AA", bold=True))
     time.sleep(0.5)
     
     # Name reveal if provided
     if name:
         console.print()
-        typing_effect(f"IDENTITY: [bold]{name.upper()}[/bold]", console, style=Style(color="#00AAFF"))
+        typing_effect(f"IDENTITY: {name.upper()}", console, style=Style(color="#00AAFF", bold=True))
         time.sleep(0.5)
     
     # Show character art with a neon effect
@@ -1022,7 +1032,9 @@ def character_introduction(console, char_class, name=None):
     console.print()
     circuit_pattern(console, duration=1.0)
     console.print()
-    typing_effect("READY FOR OPERATION. GOOD LUCK, RUNNER.", console, style=Style(color="#00FFAA"))
+    # Create a Text object to prevent markup interpretation
+    final_text = Text("READY FOR OPERATION. GOOD LUCK, RUNNER.")
+    typing_effect(final_text, console, style=Style(color="#00FFAA"))
     console.print()
 
 def data_stream(text, console, style=None, stream_chars="10"):
