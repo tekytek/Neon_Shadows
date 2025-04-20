@@ -61,9 +61,16 @@ def main():
     ui.clear_screen()
     ui.display_splash_screen(console)
     
+    # Flag to track first menu display
+    first_menu_display = True
+    
     # Main menu loop
     while True:
-        choice = ui.main_menu(console)
+        choice = ui.main_menu(console, skip_title=not first_menu_display)
+        
+        # After first display, we don't need to show the title again
+        if first_menu_display:
+            first_menu_display = False
         
         if choice == "new_game":
             # Play menu selection sound if available

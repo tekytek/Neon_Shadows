@@ -78,42 +78,16 @@ def display_splash_screen(console):
     except (ImportError, AttributeError):
         pass
     
-    # Display responsive title banner with animation if available
-    try:
-        import animations
-        from config import GAME_SETTINGS
-        from rich.text import Text
-        
-        # Get title ASCII art
-        title_art = assets.get_ascii_art('title')
-        
-        # Apply hologram effect to title if animations enabled
-        if GAME_SETTINGS.get("ui_animations_enabled", True):
-            # Let the hologram_effect function handle Text creation
-            animations.hologram_effect(title_art, console, style=Style(color=COLORS['primary']))
-        else:
-            # Create a Text object to prevent markup interpretation
-            title_text = Text(title_art)
-            console.print(title_text, style=Style(color=COLORS['primary']))
-    except (ImportError, AttributeError):
-        # Fall back to standard display - this uses Text objects now
-        display_responsive_title(console)
+    # In the splash screen, don't show the ASCII title art anymore
+    # We'll show it only in the main menu to prevent duplication
     
     # Get terminal width for responsive display
     term_width, term_height = shutil.get_terminal_size()
     
-    # Display version only with typing effect if available - removed tagline to prevent duplication
-    try:
-        import animations
-        from config import GAME_SETTINGS
-        
-        if GAME_SETTINGS.get("ui_animations_enabled", True):
-            # Use style parameter instead of markup to avoid raw formatting codes
-            animations.typing_effect(f"Version {VERSION}", console, style=Style(color=COLORS['secondary']))
-        else:
-            console.print(f"[{COLORS['secondary']}]Version {VERSION}[/{COLORS['secondary']}]")
-    except (ImportError, AttributeError):
-        console.print(f"[{COLORS['secondary']}]Version {VERSION}[/{COLORS['secondary']}]")
+    # Display simple NEON SHADOWS text instead of ASCII art
+    console.print("\n[bold]NEON SHADOWS[/bold]", style=Style(color=COLORS['primary']), justify="center")
+    
+    # Don't show version in splash screen as it's already in the main menu
     
     # Bottom line - adapt to terminal width
     separator_width = min(60, term_width - 4)  # Leave a small margin
@@ -241,11 +215,17 @@ def display_ascii_art(console, art_name):
         art_text = Text(art)
         console.print(art_text, style=Style(color=COLORS['primary']))
 
-def main_menu(console):
-    """Display main menu and get user choice"""
+def main_menu(console, skip_title=False):
+    """
+    Display main menu and get user choice
+    
+    Args:
+        console: Console for output
+        skip_title (bool): If True, skip displaying the title art to avoid duplication
+    """
     clear_screen()
     
-    # Try to use more advanced animation effects if available
+    # Try to use advanced animation effects if available
     try:
         import animations
         from config import GAME_SETTINGS
@@ -273,42 +253,52 @@ def main_menu(console):
     except (ImportError, AttributeError):
         pass
     
-    # Display title with hologram effect if available
-    try:
-        import animations
-        from config import GAME_SETTINGS
-        from rich.text import Text
+    # Only display title on first menu load to prevent duplication
+    if not skip_title:
+        # Display title with hologram effect if available
+        try:
+            import animations
+            from config import GAME_SETTINGS
+            from rich.text import Text
+            
+            # Get title ASCII art
+            title_art = assets.get_ascii_art('title')
+            
+            # Apply hologram effect to title if animations enabled
+            if GAME_SETTINGS.get("ui_animations_enabled", True):
+                # Let the hologram_effect function handle Text creation
+                animations.hologram_effect(title_art, console, style=Style(color=COLORS['primary']))
+            else:
+                # Create a Text object to prevent markup interpretation
+                title_text = Text(title_art)
+                console.print(title_text, style=Style(color=COLORS['primary']))
+        except (ImportError, AttributeError):
+            # Fall back to standard display - this uses Text objects now
+            display_responsive_title(console)
         
-        # Get title ASCII art
-        title_art = assets.get_ascii_art('title')
-        
-        # Apply hologram effect to title if animations enabled
-        if GAME_SETTINGS.get("ui_animations_enabled", True):
-            # Let the hologram_effect function handle Text creation
-            animations.hologram_effect(title_art, console, style=Style(color=COLORS['primary']))
-        else:
-            # Create a Text object to prevent markup interpretation
-            title_text = Text(title_art)
-            console.print(title_text, style=Style(color=COLORS['primary']))
-    except (ImportError, AttributeError):
-        # Fall back to standard display - this uses Text objects now
-        display_responsive_title(console)
-    
-    # Display tagline - moved from splash screen to prevent duplication
-    try:
-        import animations
-        from config import GAME_SETTINGS
-        
-        if GAME_SETTINGS.get("ui_animations_enabled", True):
-            # Use styling without markup for compatibility
-            animations.typing_effect("A text-based cyberpunk adventure", console, style=Style(color=COLORS['text']))
-            console.print() # Add a newline spacing
-        else:
+        # Display tagline
+        try:
+            import animations
+            from config import GAME_SETTINGS
+            
+            if GAME_SETTINGS.get("ui_animations_enabled", True):
+                # Use styling without markup for compatibility
+                animations.typing_effect("A text-based cyberpunk adventure", console, style=Style(color=COLORS['text']))
+                
+                # Display version
+                animations.typing_effect(f"Version {VERSION}", console, style=Style(color=COLORS['secondary']))
+                console.print() # Add a newline spacing
+            else:
+                console.print(f"[{COLORS['text']}]A text-based cyberpunk adventure[/{COLORS['text']}]")
+                console.print(f"[{COLORS['secondary']}]Version {VERSION}[/{COLORS['secondary']}]")
+                console.print() # Add a newline spacing
+        except (ImportError, AttributeError):
             console.print(f"[{COLORS['text']}]A text-based cyberpunk adventure[/{COLORS['text']}]")
+            console.print(f"[{COLORS['secondary']}]Version {VERSION}[/{COLORS['secondary']}]")
             console.print() # Add a newline spacing
-    except (ImportError, AttributeError):
-        console.print(f"[{COLORS['text']}]A text-based cyberpunk adventure[/{COLORS['text']}]")
-        console.print() # Add a newline spacing
+    else:
+        # When skipping the title, just display a simple header
+        display_header(console, "MAIN MENU")
     
     # Create menu panel with cyberpunk-themed items
     menu_items = [
