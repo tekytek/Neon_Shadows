@@ -13,5 +13,6 @@
   "enable_ollama": true,
   "ollama_api_url": "http://localhost:11434",
   "ollama_model": "llama2",
-  "ollama_token": ""
+  "ollama_token": "",
+  "auto_input": false
 }

@@ -473,7 +473,8 @@ def options_menu(console):
         table.add_row("13. Ollama API Endpoint", GAME_SETTINGS["ollama_api_url"])
         table.add_row("14. Ollama API Token", f"{'[Set]' if GAME_SETTINGS.get('ollama_token') else '[Not Set]'}")
         table.add_row("15. Ollama Model", GAME_SETTINGS.get("ollama_model", "llama2"))
-        table.add_row("16. Reset to Defaults", "")
+        table.add_row("16. Auto Input", "Enabled" if GAME_SETTINGS.get("auto_input", False) else "Disabled")
+        table.add_row("17. Reset to Defaults", "")
         table.add_row("0. Back to Main Menu", "")
         
         # Display the table
@@ -487,7 +488,7 @@ def options_menu(console):
         
         # Get user choice
         choice = Prompt.ask("[bold cyan]Select an option to change[/bold cyan]", 
-                          choices=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "0"])
+                          choices=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "0"])
         
         if choice == "0":
             # Save settings before returning to menu
@@ -745,6 +746,41 @@ def options_menu(console):
             time.sleep(1)
             
         elif choice == "16":
+            # Toggle Auto Input mode
+            clear_screen()
+            display_header(console, "AUTO INPUT MODE")
+            
+            current_setting = GAME_SETTINGS.get("auto_input", False)
+            if current_setting:
+                console.print(f"[{COLORS['text']}]Auto-input is currently [bold green]ENABLED[/bold green][/{COLORS['text']}]")
+                console.print(f"[{COLORS['secondary']}]The game will automatically provide default inputs in non-interactive environments.[/{COLORS['secondary']}]")
+                console.print(f"[{COLORS['secondary']}]This is useful for running in workflow environments or automated tests.[/{COLORS['secondary']}]")
+            else:
+                console.print(f"[{COLORS['text']}]Auto-input is currently [bold red]DISABLED[/bold red][/{COLORS['text']}]")
+                console.print(f"[{COLORS['secondary']}]The game will wait for user input in all environments.[/{COLORS['secondary']}]")
+                console.print(f"[{COLORS['secondary']}]This is the normal mode for interactive gameplay.[/{COLORS['secondary']}]")
+            
+            console.print()
+            console.print(f"[{COLORS['text']}]Would you like to toggle auto-input mode?[/{COLORS['text']}]")
+            toggle_choice = Prompt.ask("[bold cyan]Toggle auto-input[/bold cyan]", choices=["y", "n"])
+            
+            if toggle_choice.lower() == "y":
+                new_value = not current_setting
+                settings.update_setting("auto_input", new_value)
+                
+                # Restart effect for global variable
+                try:
+                    from main import AUTO_INPUT
+                    # Note that this only updates the imported module variable,
+                    # The running instance won't be affected until restart
+                    console.print(f"[{COLORS['text']}]Auto-input has been {'enabled' if new_value else 'disabled'}.[/{COLORS['text']}]")
+                    console.print(f"[{COLORS['secondary']}]This setting will take full effect when you restart the game.[/{COLORS['secondary']}]")
+                except ImportError:
+                    console.print(f"[{COLORS['text']}]Setting updated. This will take effect when you restart the game.[/{COLORS['text']}]")
+                
+                time.sleep(1.5)
+                
+        elif choice == "17":
             # Reset to defaults
             if Prompt.ask("[bold red]Reset all settings to defaults?[/bold red]", choices=["y", "n"]) == "y":
                 settings.reset_to_defaults()

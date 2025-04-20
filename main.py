@@ -74,23 +74,28 @@ def main():
     # Import os at the top of the function to ensure it's available
     import os
     
-    # Check for input stream issues early
-    try:
-        if not sys.stdin.isatty():
-            print("WARNING: Running in a non-interactive terminal environment.")
-            print("If you experience input issues, try running with: python3 main.py < /dev/tty")
-            
-            # Set AUTO_INPUT for workflow environment
-            if "REPL_SLUG" in os.environ or "REPL_ID" in os.environ:
-                print("Replit workflow environment detected. Enabling automatic input mode.")
-                AUTO_INPUT = True
-    except Exception:
-        # This check itself might fail in certain environments, so we just continue
-        pass
-    
     # Initialize the console with settings optimized for terminal compatibility
     # Set highlight=False to prevent formatting tags from appearing in some terminals
     console = Console(highlight=False)
+    
+    # Check auto_input setting from game_settings.json
+    from config import GAME_SETTINGS
+    if GAME_SETTINGS.get("auto_input", False):
+        AUTO_INPUT = True
+        console.print("Auto-input mode enabled in settings.", style="yellow")
+    
+    # Check for input stream issues early
+    try:
+        if not sys.stdin.isatty():
+            console.print("WARNING: Running in a non-interactive terminal environment.", style="yellow")
+            console.print("If you experience input issues, try running with: python3 main.py < /dev/tty", style="yellow")
+            
+            # Suggest auto-input mode if in workflow but not already enabled
+            if (os.getenv("REPLIT_DEPLOYMENT") or os.getenv("REPL_SLUG") or os.getenv("REPL_ID")) and not AUTO_INPUT:
+                console.print("Replit workflow environment detected. You may want to enable auto_input in game_settings.json.", style="yellow")
+    except Exception:
+        # This check itself might fail in certain environments, so we just continue
+        pass
     
     # Look for Raspberry Pi environment
     is_raspberry_pi = False
@@ -102,13 +107,11 @@ def main():
                 if 'Raspberry Pi' in model:
                     is_raspberry_pi = True
                     console.print("Raspberry Pi detected. Using compatible input mode.", style="yellow")
+                    # Suggest auto-input mode if not already enabled
+                    if not AUTO_INPUT:
+                        console.print("For better compatibility on Raspberry Pi, consider enabling auto_input in game_settings.json", style="yellow")
     except Exception:
         pass  # Continue without detection
-        
-    # Check if we're in a Replit workflow
-    if os.getenv("REPLIT_DEPLOYMENT") or os.getenv("REPL_SLUG") or os.getenv("REPL_ID"):
-        AUTO_INPUT = True
-        console.print("Replit workflow environment detected. Enabling automatic input mode.", style="yellow")
         
     # Initialize audio if available
     try:
