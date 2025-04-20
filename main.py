@@ -12,6 +12,53 @@ import game_engine
 import ui
 from config import DEBUG_MODE, GAME_SETTINGS
 
+# Global flag for automatic input (used in workflow environments)
+AUTO_INPUT = False
+
+# Override input function for workflow environments
+original_input = input
+def auto_input_override(prompt=''):
+    """Override input function to provide automatic responses in workflow environments"""
+    if AUTO_INPUT:
+        print(prompt)
+        time.sleep(0.5)  # Simulate user thinking
+        print("<AUTO INPUT>")
+        return ""  # Return empty string as if user just pressed Enter
+    return original_input(prompt)
+
+# Patch the built-in input function for workflow environments
+input = auto_input_override
+
+# Try to patch Rich's Prompt class for auto-input support
+try:
+    from rich.prompt import Prompt
+    original_ask = Prompt.ask
+    
+    @classmethod
+    def auto_ask_override(cls, prompt, *args, **kwargs):
+        """Override Rich Prompt.ask to handle auto-input mode"""
+        if AUTO_INPUT:
+            from rich.console import Console
+            console = Console()
+            console.print(prompt)
+            time.sleep(0.5)  # Simulate user thinking
+            console.print("<AUTO INPUT>")
+            
+            # If choices are provided, return the first choice
+            if 'choices' in kwargs and kwargs['choices']:
+                return kwargs['choices'][0]
+            # If default is provided, return that
+            elif 'default' in kwargs:
+                return kwargs['default']
+            # Otherwise return empty string
+            return ""
+        return original_ask(prompt, *args, **kwargs)
+    
+    # Patch Rich's Prompt.ask method
+    Prompt.ask = auto_ask_override
+except ImportError:
+    pass  # Rich module not available
+
 # Try to import audio module
 try:
     import audio
@@ -21,11 +68,22 @@ except ImportError:
 
 def main():
     """Main entry point for the game"""
+    # Declare global access to AUTO_INPUT at the beginning of the function
+    global AUTO_INPUT
+    
+    # Import os at the top of the function to ensure it's available
+    import os
+    
     # Check for input stream issues early
     try:
         if not sys.stdin.isatty():
             print("WARNING: Running in a non-interactive terminal environment.")
             print("If you experience input issues, try running with: python3 main.py < /dev/tty")
+            
+            # Set AUTO_INPUT for workflow environment
+            if "REPL_SLUG" in os.environ or "REPL_ID" in os.environ:
+                print("Replit workflow environment detected. Enabling automatic input mode.")
+                AUTO_INPUT = True
     except Exception:
         # This check itself might fail in certain environments, so we just continue
         pass
@@ -46,6 +104,11 @@ def main():
                     console.print("Raspberry Pi detected. Using compatible input mode.", style="yellow")
     except Exception:
         pass  # Continue without detection
+        
+    # Check if we're in a Replit workflow
+    if os.getenv("REPLIT_DEPLOYMENT") or os.getenv("REPL_SLUG") or os.getenv("REPL_ID"):
+        AUTO_INPUT = True
+        console.print("Replit workflow environment detected. Enabling automatic input mode.", style="yellow")
         
     # Initialize audio if available
     try:

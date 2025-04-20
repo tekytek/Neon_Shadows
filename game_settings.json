@@ -10,6 +10,8 @@
   "ui_animation_speed": "medium",
   "auto_save": false,
   "show_hints": true,
-  "enable_ollama": false,
-  "ollama_api_url": "http://test-api.example.com:11434"
+  "enable_ollama": true,
+  "ollama_api_url": "http://localhost:11434",
+  "ollama_model": "llama2",
+  "ollama_token": ""
 }

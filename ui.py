@@ -370,6 +370,15 @@ def main_menu(console, skip_title=False):
             # Handle EOF error with a clear message
             console.print("EOF detected. Using default option (1).", style="yellow")
             choice = "1"  # Default to "New Game"
+        
+        # Check for auto input mode (defined in main.py)
+        try:
+            from main import AUTO_INPUT
+            if AUTO_INPUT:
+                console.print("Auto-input mode active. Using default option (1).", style="yellow")
+                choice = "1"  # Default to "New Game" in auto-input mode
+        except ImportError:
+            pass  # Auto-input not available
     
     # Check for dev mode activation
     if choice.lower() == "dev":
