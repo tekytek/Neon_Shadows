@@ -54,10 +54,17 @@ class OllamaIntegration:
             "stream": False
         }
         
+        
+        # Add API token if available
+        headers = {}
+        ollama_token = os.getenv("OLLAMA_TOKEN")
+        if ollama_token:
+            headers["Authorization"] = f"Bearer {ollama_token}"
+        
         # Try to make the request with retries
         for attempt in range(max_retries):
             try:
-                response = requests.post(endpoint, json=data, timeout=30)
+                response = requests.post(endpoint, json=data, headers=headers, timeout=30)
                 
                 if response.status_code == 200:
                     return response.json()
@@ -136,7 +143,14 @@ class OllamaIntegration:
                 base_url = base_url[:-5]
                 
             # Check availability
-            response = requests.get(f"{base_url}/api/tags", timeout=5)
+            
+            # Get API token if available
+            headers = {}
+            ollama_token = os.getenv("OLLAMA_TOKEN")
+            if ollama_token:
+                headers["Authorization"] = f"Bearer {ollama_token}"
+                
+            response = requests.get(f"{base_url}/api/tags", headers=headers, timeout=5)
             return response.status_code == 200
         except Exception as e:
             print(f"Ollama availability check failed: {str(e)}")
