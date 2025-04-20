@@ -58,6 +58,19 @@ def update_setting(key, value):
             import config
             config.OLLAMA_API_URL = value
             
+        # If we're updating ollama_token, update the config module and env var
+        elif key == "ollama_token":
+            import config
+            import os
+            config.OLLAMA_TOKEN = value
+            # Set as environment variable so it's accessible to subprocess calls
+            os.environ["OLLAMA_TOKEN"] = value
+            
+        # If we're updating ollama_model, update the config module
+        elif key == "ollama_model":
+            import config
+            config.OLLAMA_MODEL = value
+            
         return True
     return False
 
@@ -71,6 +84,8 @@ def reset_to_defaults():
     import config
     original_ollama_setting = config.USE_OLLAMA
     original_ollama_api_url = config.OLLAMA_API_URL
+    original_ollama_token = config.OLLAMA_TOKEN
+    original_ollama_model = config.OLLAMA_MODEL
     
     # Reset to defaults
     GAME_SETTINGS["difficulty"] = "normal"
@@ -87,10 +102,15 @@ def reset_to_defaults():
     GAME_SETTINGS["ui_animations_enabled"] = True
     GAME_SETTINGS["ui_animation_speed"] = "medium"
     
+    # Game features
     GAME_SETTINGS["auto_save"] = False
     GAME_SETTINGS["show_hints"] = True
+    
+    # Ollama settings
     GAME_SETTINGS["enable_ollama"] = original_ollama_setting
     GAME_SETTINGS["ollama_api_url"] = original_ollama_api_url
+    GAME_SETTINGS["ollama_token"] = original_ollama_token
+    GAME_SETTINGS["ollama_model"] = original_ollama_model
     
     # Save changes
     save_settings()

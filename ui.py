@@ -462,7 +462,9 @@ def options_menu(console):
         table.add_row("11. Show Hints", "Enabled" if GAME_SETTINGS["show_hints"] else "Disabled")
         table.add_row("12. Enable Ollama", "Enabled" if GAME_SETTINGS["enable_ollama"] else "Disabled")
         table.add_row("13. Ollama API Endpoint", GAME_SETTINGS["ollama_api_url"])
-        table.add_row("14. Reset to Defaults", "")
+        table.add_row("14. Ollama API Token", f"{'[Set]' if GAME_SETTINGS.get('ollama_token') else '[Not Set]'}")
+        table.add_row("15. Ollama Model", GAME_SETTINGS.get("ollama_model", "llama2"))
+        table.add_row("16. Reset to Defaults", "")
         table.add_row("0. Back to Main Menu", "")
         
         # Display the table
@@ -476,7 +478,7 @@ def options_menu(console):
         
         # Get user choice
         choice = Prompt.ask("[bold cyan]Select an option to change[/bold cyan]", 
-                          choices=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "0"])
+                          choices=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "0"])
         
         if choice == "0":
             # Save settings before returning to menu
@@ -692,6 +694,48 @@ def options_menu(console):
             time.sleep(1)
             
         elif choice == "14":
+            # Configure Ollama API token
+            clear_screen()
+            display_header(console, "OLLAMA API TOKEN")
+            
+            current_token = GAME_SETTINGS.get("ollama_token", "")
+            if current_token:
+                console.print(f"[{COLORS['text']}]Ollama API token is currently set.[/{COLORS['text']}]")
+            else:
+                console.print(f"[{COLORS['text']}]Ollama API token is not set.[/{COLORS['text']}]")
+                
+            console.print(f"[{COLORS['secondary']}]Enter your Ollama API token for authentication.[/{COLORS['secondary']}]")
+            console.print(f"[{COLORS['text']}]Leave blank to clear the current token.[/{COLORS['text']}]")
+            
+            # Don't show the current token for security reasons, just ask for a new one
+            new_token = Prompt.ask("[bold cyan]API Token[/bold cyan]", password=True, default="")
+            settings.update_setting("ollama_token", new_token)
+            
+            if new_token:
+                console.print(f"[{COLORS['text']}]Ollama API token has been set.[/{COLORS['text']}]")
+            else:
+                console.print(f"[{COLORS['text']}]Ollama API token has been cleared.[/{COLORS['text']}]")
+                
+            console.print(f"[{COLORS['secondary']}]The token will be used for all future API calls.[/{COLORS['secondary']}]")
+            time.sleep(1.5)
+            
+        elif choice == "15":
+            # Configure Ollama Model
+            clear_screen()
+            display_header(console, "OLLAMA MODEL")
+            
+            current_model = GAME_SETTINGS.get("ollama_model", "llama2")
+            console.print(f"[{COLORS['text']}]Current Ollama model: {current_model}[/{COLORS['text']}]")
+            console.print(f"[{COLORS['secondary']}]Enter the name of the Ollama model to use.[/{COLORS['secondary']}]")
+            console.print(f"[{COLORS['text']}]Examples: llama2, mistral, dolphin-mistral:latest[/{COLORS['text']}]")
+            
+            new_model = Prompt.ask("[bold cyan]Model Name[/bold cyan]", default=current_model)
+            settings.update_setting("ollama_model", new_model)
+            
+            console.print(f"[{COLORS['text']}]Ollama model updated to: {new_model}[/{COLORS['text']}]")
+            time.sleep(1)
+            
+        elif choice == "16":
             # Reset to defaults
             if Prompt.ask("[bold red]Reset all settings to defaults?[/bold red]", choices=["y", "n"]) == "y":
                 settings.reset_to_defaults()

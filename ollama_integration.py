@@ -13,14 +13,19 @@ class OllamaIntegration:
     
     def __init__(self):
         """Initialize Ollama integration"""
-        # Load the API URL from settings if available, fall back to config default
+        # Load settings from GAME_SETTINGS if available, fall back to config defaults
         try:
             from config import GAME_SETTINGS
             self.api_url = GAME_SETTINGS.get("ollama_api_url", OLLAMA_API_URL)
+            self.model = GAME_SETTINGS.get("ollama_model", OLLAMA_MODEL)
+            
+            # Store token in instance for easy access (it's also in env var)
+            self.token = GAME_SETTINGS.get("ollama_token", "")
         except:
             self.api_url = OLLAMA_API_URL
+            self.model = OLLAMA_MODEL
+            self.token = os.getenv("OLLAMA_TOKEN", "")
             
-        self.model = OLLAMA_MODEL
         self.console = Console()
     
     def _make_request(self, prompt, max_retries=3):
@@ -55,11 +60,10 @@ class OllamaIntegration:
         }
         
         
-        # Add API token if available
+        # Add API token if available (use the instance token)
         headers = {}
-        ollama_token = os.getenv("OLLAMA_TOKEN")
-        if ollama_token:
-            headers["Authorization"] = f"Bearer {ollama_token}"
+        if self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
         
         # Try to make the request with retries
         for attempt in range(max_retries):
@@ -144,11 +148,10 @@ class OllamaIntegration:
                 
             # Check availability
             
-            # Get API token if available
+            # Get API token if available (use the instance token)
             headers = {}
-            ollama_token = os.getenv("OLLAMA_TOKEN")
-            if ollama_token:
-                headers["Authorization"] = f"Bearer {ollama_token}"
+            if self.token:
+                headers["Authorization"] = f"Bearer {self.token}"
                 
             response = requests.get(f"{base_url}/api/tags", headers=headers, timeout=5)
             return response.status_code == 200

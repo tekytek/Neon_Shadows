@@ -12,7 +12,7 @@ console = Console()
 
 # Import settings
 try:
-    from config import GAME_SETTINGS, OLLAMA_API_URL, USE_OLLAMA
+    from config import GAME_SETTINGS, OLLAMA_API_URL, OLLAMA_TOKEN, OLLAMA_MODEL, USE_OLLAMA
     from ollama_integration import OllamaIntegration
 except ImportError as e:
     console.print(f"[bold red]Error importing modules: {e}[/bold red]")
@@ -28,12 +28,16 @@ def debug_ollama_connection():
     console.print(f"Ollama API URL: {GAME_SETTINGS['ollama_api_url']}")
     console.print(f"Ollama Model: {OLLAMA_MODEL if 'OLLAMA_MODEL' in globals() else 'Not found'}")
     
-    # Check for API token in environment variables
-    ollama_token = os.getenv("OLLAMA_TOKEN")
-    if ollama_token:
+    # Check for API token in settings and environment variables
+    settings_token = GAME_SETTINGS.get("ollama_token", "")
+    env_token = os.getenv("OLLAMA_TOKEN", "")
+    
+    if settings_token:
+        console.print(f"Ollama API Token: [green]Set in game settings[/green]")
+    elif env_token:
         console.print(f"Ollama API Token: [green]Found in environment variables[/green]")
     else:
-        console.print(f"Ollama API Token: [yellow]Not found in environment variables[/yellow]")
+        console.print(f"Ollama API Token: [yellow]Not set in settings or environment variables[/yellow]")
     
     # Create an OllamaIntegration instance
     ollama = OllamaIntegration()

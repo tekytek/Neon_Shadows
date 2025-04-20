@@ -28,6 +28,7 @@ MAX_INVENTORY_ITEMS = 20  # Maximum number of unique items in inventory
 # Ollama integration
 OLLAMA_API_URL = os.getenv("OLLAMA_API_URL", "http://localhost:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama2")
+OLLAMA_TOKEN = os.getenv("OLLAMA_TOKEN", "")  # API token for authenticated Ollama instances
 USE_OLLAMA = True  # Set to True to use Ollama, False to use fallback content
 
 # Debug mode
@@ -49,10 +50,15 @@ GAME_SETTINGS = {
     "ui_animations_enabled": True,
     "ui_animation_speed": "medium",  # slow, medium, fast
     
+    # Game features
     "auto_save": False,
     "show_hints": True,
+    
+    # Ollama integration settings
     "enable_ollama": USE_OLLAMA,
-    "ollama_api_url": OLLAMA_API_URL  # The API endpoint for Ollama
+    "ollama_api_url": OLLAMA_API_URL,  # The API endpoint for Ollama
+    "ollama_token": OLLAMA_TOKEN,     # API token for authentication
+    "ollama_model": OLLAMA_MODEL      # Model name to use
 }
 
 # Difficulty settings
